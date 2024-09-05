@@ -1,0 +1,9 @@
+.env
+
+server.go
+main.go
+
+server
+!cmd/server
+
+verceller.json

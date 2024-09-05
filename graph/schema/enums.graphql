@@ -1,0 +1,6 @@
+enum SegmentPeriod {
+    Day
+    Week
+    Month
+    Range
+}

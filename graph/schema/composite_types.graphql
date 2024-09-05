@@ -1,0 +1,59 @@
+type DeviceInfo {
+    type:                   String!
+    typeIcon:               String
+    brand:                  String!
+    model:                  String!
+    operatingSystem:        String!
+    operatingSystemName:    String!
+    operatingSystemIcon:    String
+    operatingSystemCode:    String!
+    operatingSystemVersion: String!
+    resolution:             String
+}
+
+type BrowserInfo {
+    family:              String!
+    familyDescription:   String!
+    browser:             String!
+    name:                String!
+    icon:                String
+    code:                String!
+    version:             String!
+}
+
+type Location {
+    continent:      String!
+    continentCode:  String!
+    country:        String!
+    countryCode:    String!
+    countryFlag:    String
+    region:         String!
+    regionCode:     String!
+    city:           String!
+    location:       String!
+    latitude:       String!
+    longitude:      String!
+}
+
+type CampaignInfo {
+    id:         String!
+    content:    String!
+    keyword:    String!
+    medium:     String!
+    name:       String!
+    source:     String!
+    group:      String!
+    placement:  String!
+}
+
+type ReferrerInfo {
+    type:               String
+    name:               String
+    keyword:            String
+    keywordPosition:    String
+    url:                String
+    searchEngineUrl:    String
+    searchEngineIcon:   String
+    socialNetworkUrl:   String
+    socialNetworkIcon:  String
+}

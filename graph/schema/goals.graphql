@@ -1,0 +1,31 @@
+type Goal {
+    idSite:              Int! @goTag(key: "json", value: "idsite")
+    idGoal:              Int! @goTag(key: "json", value: "idgoal")
+    name:                String!
+    description:         String!
+    matchAttribute:      String! @goTag(key: "json", value: "match_attribute")
+    pattern:             String
+    patternType:         String @goTag(key: "json", value: "pattern_type,omitempty")
+    caseSensitive:       Int @goTag(key: "json", value: "case_sensitive")
+    allowMultiple:       Int! @goTag(key: "json", value: "allow_multiple,omitempty")
+    revenue:             Int!
+    deleted:             Int!
+    eventValueAsRevenue: Int! @goTag(key: "json", value: "event_value_as_revenue,omitempty")
+
+    convertedVisits(opts: ConvertedVisitsOptions): [VisitDetails] @goField(forceResolver: true)
+}
+
+input ConvertedVisitsOptions {
+    period:    SegmentPeriod!
+    startDate: String!
+    endDate:   String
+}
+
+input GetGoalsOptions {
+    orderByName: Boolean
+}
+
+extend type Query {
+    getGoal(idSite: Int!, idGoal: Int!): Goal
+    getGoals(idSite: Int!, opts: GetGoalsOptions): [Goal]
+}

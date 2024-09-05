@@ -1,0 +1,134 @@
+type VisitDetails {
+    idSite:               Int!
+    siteName:             String!
+    siteCurrency:         String!
+    siteCurrencySymbol:   String!
+
+    idVisit:              Int!
+    visitIp:              String!
+    visitorId:            String!
+    fingerprint:          String!
+    visitServerHour:      String!
+    goalConversions:      Int!
+    actionDetails:       [VisitActionDetails]
+
+    serverDate:                  String!
+    serverDatePretty:            String!
+    serverTimestamp:             Int!
+    serverTimePretty:            String!
+    firstActionTimestamp:        Int!
+    lastActionTimestamp:         Int!
+    lastActionDateTime:          String!
+    serverDatePrettyFirstAction: String!
+    serverTimePrettyFirstAction: String!
+    userId:                      String
+
+    visitorType:              String!
+    visitorTypeIcon:          String
+    visitConverted:           Int!
+    visitConvertedIcon:       String
+    visitCount:               Int
+    visitEcommerceStatus:     String
+    visitEcommerceStatusIcon: String
+    daysSinceFirstVisit:      Int!
+    secondsSinceFirstVisit:   Int!
+    daysSinceLastEcommerceOrder: Int!
+    secondsSinceLastEcommerceOrder: Int
+
+    visitDuration:       Int!
+    visitDurationPretty: String!
+    searches:            Int!
+    actions:             Int!
+    interactions:        Int!
+    languageCode:        String!
+    language:            String!
+
+    deviceInfo:             DeviceInfo @goField(forceResolver: true)
+    deviceType:             String!
+    deviceTypeIcon:         String
+    deviceBrand:            String!
+    deviceModel:            String!
+    operatingSystem:        String!
+    operatingSystemName:    String!
+    operatingSystemIcon:    String
+    operatingSystemCode:    String!
+    operatingSystemVersion: String!
+    resolution:             String
+
+    browserInfo:                BrowserInfo @goField(forceResolver: true)
+    browserFamily:              String!
+    browserFamilyDescription:   String!
+    browser:                    String!
+    browserName:                String!
+    browserIcon:                String
+    browserCode:                String!
+    browserVersion:             String!
+
+    totalEcommerceRevenue:      Int!
+    totalEcommerceConversions:  Int!
+    totalEcommerceItems:        Int!
+    totalAbandonedCartsRevenue: Int!
+    totalAbandonedCarts:        Int!
+    totalAbandonedCartsItems:   Int!
+
+    events:         Int!
+
+    locationInfo:   Location @goField(forceResolver: true)
+    continent:      String!
+    continentCode:  String!
+    country:        String!
+    countryCode:    String!
+    countryFlag:    String
+    region:         String!
+    regionCode:     String!
+    city:           String!
+    location:       String!
+    latitude:       String!
+    longitude:      String!
+
+    visitLocalTime:          String!
+    visitLocalHour:          String!
+    daysSinceLastVisit:      Int!
+    secondsSinceLastVisit:   Int!
+
+    plugins:    String
+
+    adClickId:          String!
+    adProviderId:       String!
+    adProviderName:     String!
+    formConversions:    Int!
+    sessionReplayUrl:   String
+
+    campaignInfo:       CampaignInfo @goField(forceResolver: true)
+    campaignId:         String!
+    campaignContent:    String!
+    campaignKeyword:    String!
+    campaignMedium:     String!
+    campaignName:       String!
+    campaignSource:     String!
+    campaignGroup:      String!
+    campaignPlacement:  String!
+}
+
+type VisitActionDetails {
+    type:               String!
+    url:                String!
+    title:              String!
+    subtitle:           String!
+    pageTitle:          String!
+    pageIdAction:       Int!
+    idPageView:         String! @goTag(key: "json", value: "idpageview")
+    serverTimePretty:   String!
+    pageId:             Int!
+    timeSpent:          Int!
+    timeSpentPretty:    String!
+    pageViewPosition:   Int!
+    timestamp:          Int!
+
+    goalPageId:         Int
+
+    referrer:                   ReferrerInfo @goField(forceResolver: true)
+    referrerType:               String
+    referrerName:               String
+    referrerKeyword:            String
+}
