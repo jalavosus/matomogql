@@ -31,9 +31,7 @@ func GetGoal(ctx context.Context, idSite int, idGoal int) (*model.Goal, error) {
 		return nil, err
 	}
 
-	defer func(body io.ReadCloser) {
-		_ = body.Close()
-	}(res.Body)
+	defer closeResBody(res.Body)
 
 	bodyRaw, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -68,9 +66,7 @@ func GetGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*
 		return nil, err
 	}
 
-	defer func(body io.ReadCloser) {
-		_ = body.Close()
-	}(res.Body)
+	defer closeResBody(res.Body)
 
 	bodyRaw, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -113,9 +109,7 @@ func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.Con
 		return nil, err
 	}
 
-	defer func(body io.ReadCloser) {
-		_ = body.Close()
-	}(res.Body)
+	defer closeResBody(res.Body)
 
 	bodyRaw, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -165,9 +159,7 @@ func GetConvertedVisitsBulk(ctx context.Context, queries ...string) ([][]*model.
 		return nil, err
 	}
 
-	defer func(body io.ReadCloser) {
-		_ = body.Close()
-	}(res.Body)
+	defer closeResBody(res.Body)
 
 	bodyRaw, err := io.ReadAll(res.Body)
 	if err != nil {
