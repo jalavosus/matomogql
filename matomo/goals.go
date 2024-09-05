@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -77,6 +78,10 @@ func GetGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*
 	if err := json.Unmarshal(bodyRaw, &goals); err != nil {
 		return nil, err
 	}
+
+	sort.Slice(goals, func(i, j int) bool {
+		return goals[i].IDGoal < goals[j].IDGoal
+	})
 
 	return goals, nil
 }

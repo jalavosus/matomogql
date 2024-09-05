@@ -4,3 +4,8 @@ enum SegmentPeriod {
     Month
     Range
 }
+
+enum OrderBy {
+    ASC
+    DESC
+}

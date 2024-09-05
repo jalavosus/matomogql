@@ -86,7 +86,7 @@ type ComplexityRoot struct {
 	Goal struct {
 		AllowMultiple       func(childComplexity int) int
 		CaseSensitive       func(childComplexity int) int
-		ConvertedVisits     func(childComplexity int, opts *model.ConvertedVisitsOptions) int
+		ConvertedVisits     func(childComplexity int, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) int
 		Deleted             func(childComplexity int) int
 		Description         func(childComplexity int) int
 		EventValueAsRevenue func(childComplexity int) int
@@ -253,7 +253,7 @@ type ComplexityRoot struct {
 }
 
 type GoalResolver interface {
-	ConvertedVisits(ctx context.Context, obj *model.Goal, opts *model.ConvertedVisitsOptions) ([]*model.VisitDetails, error)
+	ConvertedVisits(ctx context.Context, obj *model.Goal, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.VisitDetails, error)
 }
 type QueryResolver interface {
 	HelloWorld(ctx context.Context) (string, error)
@@ -491,7 +491,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Goal.ConvertedVisits(childComplexity, args["opts"].(*model.ConvertedVisitsOptions)), true
+		return e.complexity.Goal.ConvertedVisits(childComplexity, args["opts"].(*model.ConvertedVisitsOptions), args["orderBy"].(*model.OrderByOptions)), true
 
 	case "Goal.deleted":
 		if e.complexity.Goal.Deleted == nil {
@@ -1542,6 +1542,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputConvertedVisitsOptions,
 		ec.unmarshalInputGetGoalsOptions,
+		ec.unmarshalInputOrderByOptions,
 	)
 	first := true
 
@@ -1623,7 +1624,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "schema/composite_types.graphql" "schema/directives.graphql" "schema/enums.graphql" "schema/goals.graphql" "schema/schema.graphql" "schema/visits.graphql"
+//go:embed "schema/composite_types.graphql" "schema/directives.graphql" "schema/enums.graphql" "schema/goals.graphql" "schema/options_params.graphql" "schema/schema.graphql" "schema/visits.graphql"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1639,6 +1640,7 @@ var sources = []*ast.Source{
 	{Name: "schema/directives.graphql", Input: sourceData("schema/directives.graphql"), BuiltIn: false},
 	{Name: "schema/enums.graphql", Input: sourceData("schema/enums.graphql"), BuiltIn: false},
 	{Name: "schema/goals.graphql", Input: sourceData("schema/goals.graphql"), BuiltIn: false},
+	{Name: "schema/options_params.graphql", Input: sourceData("schema/options_params.graphql"), BuiltIn: false},
 	{Name: "schema/schema.graphql", Input: sourceData("schema/schema.graphql"), BuiltIn: false},
 	{Name: "schema/visits.graphql", Input: sourceData("schema/visits.graphql"), BuiltIn: false},
 }
@@ -1660,6 +1662,15 @@ func (ec *executionContext) field_Goal_convertedVisits_args(ctx context.Context,
 		}
 	}
 	args["opts"] = arg0
+	var arg1 *model.OrderByOptions
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg1, err = ec.unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg1
 	return args, nil
 }
 
@@ -3385,7 +3396,7 @@ func (ec *executionContext) _Goal_convertedVisits(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Goal().ConvertedVisits(rctx, obj, fc.Args["opts"].(*model.ConvertedVisitsOptions))
+		return ec.resolvers.Goal().ConvertedVisits(rctx, obj, fc.Args["opts"].(*model.ConvertedVisitsOptions), fc.Args["orderBy"].(*model.OrderByOptions))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11723,6 +11734,33 @@ func (ec *executionContext) unmarshalInputGetGoalsOptions(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputOrderByOptions(ctx context.Context, obj interface{}) (model.OrderByOptions, error) {
+	var it model.OrderByOptions
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"timestamp"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "timestamp":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timestamp"))
+			data, err := ec.unmarshalOOrderBy2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderBy(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Timestamp = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -13799,6 +13837,30 @@ func (ec *executionContext) marshalOLocation2ᚖgithubᚗcomᚋjalavosusᚋmatom
 		return graphql.Null
 	}
 	return ec._Location(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOOrderBy2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderBy(ctx context.Context, v interface{}) (*model.OrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.OrderBy)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOOrderBy2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderBy(ctx context.Context, sel ast.SelectionSet, v *model.OrderBy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx context.Context, v interface{}) (*model.OrderByOptions, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputOrderByOptions(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOReferrerInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐReferrerInfo(ctx context.Context, sel ast.SelectionSet, v *model.ReferrerInfo) graphql.Marshaler {

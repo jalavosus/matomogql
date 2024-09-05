@@ -12,7 +12,10 @@ type Goal {
     deleted:             Int!
     eventValueAsRevenue: Int! @goTag(key: "json", value: "event_value_as_revenue,omitempty")
 
-    convertedVisits(opts: ConvertedVisitsOptions): [VisitDetails] @goField(forceResolver: true)
+    convertedVisits(
+        opts:    ConvertedVisitsOptions,
+        orderBy: OrderByOptions
+    ): [VisitDetails] @goField(forceResolver: true)
 }
 
 input ConvertedVisitsOptions {

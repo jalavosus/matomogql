@@ -13,8 +13,8 @@ import (
 )
 
 // ConvertedVisits is the resolver for the convertedVisits field.
-func (r *goalResolver) ConvertedVisits(ctx context.Context, obj *model.Goal, opts *model.ConvertedVisitsOptions) ([]*model.VisitDetails, error) {
-	return loaders.GetGoalConvertedVisits(ctx, obj.IDSite, obj.IDGoal, opts)
+func (r *goalResolver) ConvertedVisits(ctx context.Context, obj *model.Goal, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.VisitDetails, error) {
+	return loaders.GetGoalConvertedVisits(ctx, obj.IDSite, obj.IDGoal, opts, orderBy)
 }
 
 // GetGoal is the resolver for the getGoal field.

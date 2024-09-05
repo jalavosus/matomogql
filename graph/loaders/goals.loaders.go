@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"context"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -30,7 +31,7 @@ func getGoalConvertedVisits(ctx context.Context, queries []string) (rets [][]*mo
 	return
 }
 
-func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal int, opts *model.ConvertedVisitsOptions) ([]*model.VisitDetails, error) {
+func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal int, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.VisitDetails, error) {
 	var b strings.Builder
 	b.WriteString(strconv.Itoa(idSite) + ":")
 	b.WriteString(strconv.Itoa(idGoal) + ":")
@@ -41,5 +42,22 @@ func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal int, opts *m
 	}
 
 	loaders := For(ctx)
-	return loaders.GoalConvertedVisitsLoader.Load(ctx, b.String())
+	res, err := loaders.GoalConvertedVisitsLoader.Load(ctx, b.String())
+	if err != nil {
+		return nil, err
+	}
+
+	if orderBy == nil || orderBy.Timestamp == nil {
+		return res, nil
+	}
+
+	sort.Slice(res, func(i, j int) bool {
+		if orderBy.Timestamp.String() == "ASC" {
+			return res[i].ServerTimestamp < res[j].ServerTimestamp
+		}
+
+		return res[i].ServerTimestamp > res[j].ServerTimestamp
+	})
+
+	return res, nil
 }

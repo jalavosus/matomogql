@@ -82,6 +82,10 @@ type Location struct {
 	Longitude     string  `json:"longitude"`
 }
 
+type OrderByOptions struct {
+	Timestamp *OrderBy `json:"timestamp,omitempty"`
+}
+
 type Query struct {
 }
 
@@ -215,6 +219,47 @@ type VisitDetails struct {
 	CampaignSource                 string                `json:"campaignSource"`
 	CampaignGroup                  string                `json:"campaignGroup"`
 	CampaignPlacement              string                `json:"campaignPlacement"`
+}
+
+type OrderBy string
+
+const (
+	OrderByAsc  OrderBy = "ASC"
+	OrderByDesc OrderBy = "DESC"
+)
+
+var AllOrderBy = []OrderBy{
+	OrderByAsc,
+	OrderByDesc,
+}
+
+func (e OrderBy) IsValid() bool {
+	switch e {
+	case OrderByAsc, OrderByDesc:
+		return true
+	}
+	return false
+}
+
+func (e OrderBy) String() string {
+	return string(e)
+}
+
+func (e *OrderBy) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OrderBy(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderBy", str)
+	}
+	return nil
+}
+
+func (e OrderBy) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type SegmentPeriod string
