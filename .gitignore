@@ -7,3 +7,4 @@ server
 !cmd/server
 
 verceller.json
+.vercel
