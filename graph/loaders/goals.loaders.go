@@ -10,13 +10,13 @@ import (
 	"github.com/jalavosus/matomogql/matomo"
 )
 
-func getGoalConvertedVisits(ctx context.Context, queries []string) (rets [][]*model.VisitDetails, errs []error) {
-	rets = make([][]*model.VisitDetails, len(queries))
+func getGoalConvertedVisits(ctx context.Context, queries []string) (rets [][]*model.Visit, errs []error) {
+	rets = make([][]*model.Visit, len(queries))
 	errs = make([]error, len(queries))
 
 	res, err := matomo.GetConvertedVisitsBulk(ctx, queries...)
 	if err != nil {
-		for i := range queries {
+		for i := range len(queries) {
 			rets[i] = nil
 			errs[i] = err
 		}
@@ -24,14 +24,14 @@ func getGoalConvertedVisits(ctx context.Context, queries []string) (rets [][]*mo
 		return
 	}
 
-	for i := range queries {
+	for i := range len(queries) {
 		rets[i] = res[i]
 	}
 
 	return
 }
 
-func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal int, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.VisitDetails, error) {
+func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal int, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.Visit, error) {
 	var b strings.Builder
 	b.WriteString(strconv.Itoa(idSite) + ":")
 	b.WriteString(strconv.Itoa(idGoal) + ":")

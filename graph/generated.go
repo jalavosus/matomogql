@@ -41,14 +41,34 @@ type Config struct {
 type ResolverRoot interface {
 	Goal() GoalResolver
 	Query() QueryResolver
+	Visit() VisitResolver
 	VisitActionDetails() VisitActionDetailsResolver
-	VisitDetails() VisitDetailsResolver
 }
 
 type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AggregateContinentInfo struct {
+		Continent  func(childComplexity int) int
+		NumVisits  func(childComplexity int) int
+		PrettyName func(childComplexity int) int
+	}
+
+	AggregateCountryInfo struct {
+		Country    func(childComplexity int) int
+		Flag       func(childComplexity int) int
+		NumVisits  func(childComplexity int) int
+		PrettyName func(childComplexity int) int
+	}
+
+	AggregateDeviceInfo struct {
+		Count   func(childComplexity int) int
+		Devices func(childComplexity int) int
+		Icon    func(childComplexity int) int
+		Type    func(childComplexity int) int
+	}
+
 	BrowserInfo struct {
 		Browser           func(childComplexity int) int
 		Code              func(childComplexity int) int
@@ -131,28 +151,12 @@ type ComplexityRoot struct {
 		URL               func(childComplexity int) int
 	}
 
-	VisitActionDetails struct {
-		GoalPageID       func(childComplexity int) int
-		IDPageView       func(childComplexity int) int
-		PageID           func(childComplexity int) int
-		PageIDAction     func(childComplexity int) int
-		PageTitle        func(childComplexity int) int
-		PageViewPosition func(childComplexity int) int
-		Referrer         func(childComplexity int) int
-		ReferrerKeyword  func(childComplexity int) int
-		ReferrerName     func(childComplexity int) int
-		ReferrerType     func(childComplexity int) int
-		ServerTimePretty func(childComplexity int) int
-		Subtitle         func(childComplexity int) int
-		TimeSpent        func(childComplexity int) int
-		TimeSpentPretty  func(childComplexity int) int
-		Timestamp        func(childComplexity int) int
-		Title            func(childComplexity int) int
-		Type             func(childComplexity int) int
-		URL              func(childComplexity int) int
+	ShortDeviceInfo struct {
+		Count func(childComplexity int) int
+		Name  func(childComplexity int) int
 	}
 
-	VisitDetails struct {
+	Visit struct {
 		ActionDetails                  func(childComplexity int) int
 		Actions                        func(childComplexity int) int
 		AdClickID                      func(childComplexity int) int
@@ -247,30 +251,73 @@ type ComplexityRoot struct {
 		VisitLocalTime                 func(childComplexity int) int
 		VisitServerHour                func(childComplexity int) int
 		VisitorID                      func(childComplexity int) int
+		VisitorProfile                 func(childComplexity int) int
 		VisitorType                    func(childComplexity int) int
 		VisitorTypeIcon                func(childComplexity int) int
+	}
+
+	VisitActionDetails struct {
+		GoalPageID       func(childComplexity int) int
+		IDPageView       func(childComplexity int) int
+		PageID           func(childComplexity int) int
+		PageIDAction     func(childComplexity int) int
+		PageTitle        func(childComplexity int) int
+		PageViewPosition func(childComplexity int) int
+		Referrer         func(childComplexity int) int
+		ReferrerKeyword  func(childComplexity int) int
+		ReferrerName     func(childComplexity int) int
+		ReferrerType     func(childComplexity int) int
+		ServerTimePretty func(childComplexity int) int
+		Subtitle         func(childComplexity int) int
+		TimeSpent        func(childComplexity int) int
+		TimeSpentPretty  func(childComplexity int) int
+		Timestamp        func(childComplexity int) int
+		Title            func(childComplexity int) int
+		Type             func(childComplexity int) int
+		URL              func(childComplexity int) int
+	}
+
+	VisitorFirstLastVisit struct {
+		Date            func(childComplexity int) int
+		DaysAgo         func(childComplexity int) int
+		PrettyDate      func(childComplexity int) int
+		ReferrerType    func(childComplexity int) int
+		ReferrerURL     func(childComplexity int) int
+		RefferalSummary func(childComplexity int) int
+	}
+
+	VisitorProfile struct {
+		Continents func(childComplexity int) int
+		Countries  func(childComplexity int) int
+		Devices    func(childComplexity int) int
+		FirstVisit func(childComplexity int) int
+		LastVisit  func(childComplexity int) int
+		LastVisits func(childComplexity int) int
+		VisitorID  func(childComplexity int) int
 	}
 }
 
 type GoalResolver interface {
-	ConvertedVisits(ctx context.Context, obj *model.Goal, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.VisitDetails, error)
+	ConvertedVisits(ctx context.Context, obj *model.Goal, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.Visit, error)
 }
 type QueryResolver interface {
 	HelloWorld(ctx context.Context) (string, error)
 	GetGoal(ctx context.Context, idSite int, idGoal int) (*model.Goal, error)
 	GetGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
 }
+type VisitResolver interface {
+	VisitorProfile(ctx context.Context, obj *model.Visit) (*model.VisitorProfile, error)
+
+	DeviceInfo(ctx context.Context, obj *model.Visit) (*model.DeviceInfo, error)
+
+	BrowserInfo(ctx context.Context, obj *model.Visit) (*model.BrowserInfo, error)
+
+	LocationInfo(ctx context.Context, obj *model.Visit) (*model.Location, error)
+
+	CampaignInfo(ctx context.Context, obj *model.Visit) (*model.CampaignInfo, error)
+}
 type VisitActionDetailsResolver interface {
 	Referrer(ctx context.Context, obj *model.VisitActionDetails) (*model.ReferrerInfo, error)
-}
-type VisitDetailsResolver interface {
-	DeviceInfo(ctx context.Context, obj *model.VisitDetails) (*model.DeviceInfo, error)
-
-	BrowserInfo(ctx context.Context, obj *model.VisitDetails) (*model.BrowserInfo, error)
-
-	LocationInfo(ctx context.Context, obj *model.VisitDetails) (*model.Location, error)
-
-	CampaignInfo(ctx context.Context, obj *model.VisitDetails) (*model.CampaignInfo, error)
 }
 
 type executableSchema struct {
@@ -291,6 +338,83 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AggregateContinentInfo.continent":
+		if e.complexity.AggregateContinentInfo.Continent == nil {
+			break
+		}
+
+		return e.complexity.AggregateContinentInfo.Continent(childComplexity), true
+
+	case "AggregateContinentInfo.numVisits":
+		if e.complexity.AggregateContinentInfo.NumVisits == nil {
+			break
+		}
+
+		return e.complexity.AggregateContinentInfo.NumVisits(childComplexity), true
+
+	case "AggregateContinentInfo.prettyName":
+		if e.complexity.AggregateContinentInfo.PrettyName == nil {
+			break
+		}
+
+		return e.complexity.AggregateContinentInfo.PrettyName(childComplexity), true
+
+	case "AggregateCountryInfo.country":
+		if e.complexity.AggregateCountryInfo.Country == nil {
+			break
+		}
+
+		return e.complexity.AggregateCountryInfo.Country(childComplexity), true
+
+	case "AggregateCountryInfo.flag":
+		if e.complexity.AggregateCountryInfo.Flag == nil {
+			break
+		}
+
+		return e.complexity.AggregateCountryInfo.Flag(childComplexity), true
+
+	case "AggregateCountryInfo.numVisits":
+		if e.complexity.AggregateCountryInfo.NumVisits == nil {
+			break
+		}
+
+		return e.complexity.AggregateCountryInfo.NumVisits(childComplexity), true
+
+	case "AggregateCountryInfo.prettyName":
+		if e.complexity.AggregateCountryInfo.PrettyName == nil {
+			break
+		}
+
+		return e.complexity.AggregateCountryInfo.PrettyName(childComplexity), true
+
+	case "AggregateDeviceInfo.count":
+		if e.complexity.AggregateDeviceInfo.Count == nil {
+			break
+		}
+
+		return e.complexity.AggregateDeviceInfo.Count(childComplexity), true
+
+	case "AggregateDeviceInfo.devices":
+		if e.complexity.AggregateDeviceInfo.Devices == nil {
+			break
+		}
+
+		return e.complexity.AggregateDeviceInfo.Devices(childComplexity), true
+
+	case "AggregateDeviceInfo.icon":
+		if e.complexity.AggregateDeviceInfo.Icon == nil {
+			break
+		}
+
+		return e.complexity.AggregateDeviceInfo.Icon(childComplexity), true
+
+	case "AggregateDeviceInfo.type":
+		if e.complexity.AggregateDeviceInfo.Type == nil {
+			break
+		}
+
+		return e.complexity.AggregateDeviceInfo.Type(childComplexity), true
 
 	case "BrowserInfo.browser":
 		if e.complexity.BrowserInfo.Browser == nil {
@@ -734,6 +858,699 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ReferrerInfo.URL(childComplexity), true
 
+	case "ShortDeviceInfo.count":
+		if e.complexity.ShortDeviceInfo.Count == nil {
+			break
+		}
+
+		return e.complexity.ShortDeviceInfo.Count(childComplexity), true
+
+	case "ShortDeviceInfo.name":
+		if e.complexity.ShortDeviceInfo.Name == nil {
+			break
+		}
+
+		return e.complexity.ShortDeviceInfo.Name(childComplexity), true
+
+	case "Visit.actionDetails":
+		if e.complexity.Visit.ActionDetails == nil {
+			break
+		}
+
+		return e.complexity.Visit.ActionDetails(childComplexity), true
+
+	case "Visit.actions":
+		if e.complexity.Visit.Actions == nil {
+			break
+		}
+
+		return e.complexity.Visit.Actions(childComplexity), true
+
+	case "Visit.adClickId":
+		if e.complexity.Visit.AdClickID == nil {
+			break
+		}
+
+		return e.complexity.Visit.AdClickID(childComplexity), true
+
+	case "Visit.adProviderId":
+		if e.complexity.Visit.AdProviderID == nil {
+			break
+		}
+
+		return e.complexity.Visit.AdProviderID(childComplexity), true
+
+	case "Visit.adProviderName":
+		if e.complexity.Visit.AdProviderName == nil {
+			break
+		}
+
+		return e.complexity.Visit.AdProviderName(childComplexity), true
+
+	case "Visit.browser":
+		if e.complexity.Visit.Browser == nil {
+			break
+		}
+
+		return e.complexity.Visit.Browser(childComplexity), true
+
+	case "Visit.browserCode":
+		if e.complexity.Visit.BrowserCode == nil {
+			break
+		}
+
+		return e.complexity.Visit.BrowserCode(childComplexity), true
+
+	case "Visit.browserFamily":
+		if e.complexity.Visit.BrowserFamily == nil {
+			break
+		}
+
+		return e.complexity.Visit.BrowserFamily(childComplexity), true
+
+	case "Visit.browserFamilyDescription":
+		if e.complexity.Visit.BrowserFamilyDescription == nil {
+			break
+		}
+
+		return e.complexity.Visit.BrowserFamilyDescription(childComplexity), true
+
+	case "Visit.browserIcon":
+		if e.complexity.Visit.BrowserIcon == nil {
+			break
+		}
+
+		return e.complexity.Visit.BrowserIcon(childComplexity), true
+
+	case "Visit.browserInfo":
+		if e.complexity.Visit.BrowserInfo == nil {
+			break
+		}
+
+		return e.complexity.Visit.BrowserInfo(childComplexity), true
+
+	case "Visit.browserName":
+		if e.complexity.Visit.BrowserName == nil {
+			break
+		}
+
+		return e.complexity.Visit.BrowserName(childComplexity), true
+
+	case "Visit.browserVersion":
+		if e.complexity.Visit.BrowserVersion == nil {
+			break
+		}
+
+		return e.complexity.Visit.BrowserVersion(childComplexity), true
+
+	case "Visit.campaignContent":
+		if e.complexity.Visit.CampaignContent == nil {
+			break
+		}
+
+		return e.complexity.Visit.CampaignContent(childComplexity), true
+
+	case "Visit.campaignGroup":
+		if e.complexity.Visit.CampaignGroup == nil {
+			break
+		}
+
+		return e.complexity.Visit.CampaignGroup(childComplexity), true
+
+	case "Visit.campaignId":
+		if e.complexity.Visit.CampaignID == nil {
+			break
+		}
+
+		return e.complexity.Visit.CampaignID(childComplexity), true
+
+	case "Visit.campaignInfo":
+		if e.complexity.Visit.CampaignInfo == nil {
+			break
+		}
+
+		return e.complexity.Visit.CampaignInfo(childComplexity), true
+
+	case "Visit.campaignKeyword":
+		if e.complexity.Visit.CampaignKeyword == nil {
+			break
+		}
+
+		return e.complexity.Visit.CampaignKeyword(childComplexity), true
+
+	case "Visit.campaignMedium":
+		if e.complexity.Visit.CampaignMedium == nil {
+			break
+		}
+
+		return e.complexity.Visit.CampaignMedium(childComplexity), true
+
+	case "Visit.campaignName":
+		if e.complexity.Visit.CampaignName == nil {
+			break
+		}
+
+		return e.complexity.Visit.CampaignName(childComplexity), true
+
+	case "Visit.campaignPlacement":
+		if e.complexity.Visit.CampaignPlacement == nil {
+			break
+		}
+
+		return e.complexity.Visit.CampaignPlacement(childComplexity), true
+
+	case "Visit.campaignSource":
+		if e.complexity.Visit.CampaignSource == nil {
+			break
+		}
+
+		return e.complexity.Visit.CampaignSource(childComplexity), true
+
+	case "Visit.city":
+		if e.complexity.Visit.City == nil {
+			break
+		}
+
+		return e.complexity.Visit.City(childComplexity), true
+
+	case "Visit.continent":
+		if e.complexity.Visit.Continent == nil {
+			break
+		}
+
+		return e.complexity.Visit.Continent(childComplexity), true
+
+	case "Visit.continentCode":
+		if e.complexity.Visit.ContinentCode == nil {
+			break
+		}
+
+		return e.complexity.Visit.ContinentCode(childComplexity), true
+
+	case "Visit.country":
+		if e.complexity.Visit.Country == nil {
+			break
+		}
+
+		return e.complexity.Visit.Country(childComplexity), true
+
+	case "Visit.countryCode":
+		if e.complexity.Visit.CountryCode == nil {
+			break
+		}
+
+		return e.complexity.Visit.CountryCode(childComplexity), true
+
+	case "Visit.countryFlag":
+		if e.complexity.Visit.CountryFlag == nil {
+			break
+		}
+
+		return e.complexity.Visit.CountryFlag(childComplexity), true
+
+	case "Visit.daysSinceFirstVisit":
+		if e.complexity.Visit.DaysSinceFirstVisit == nil {
+			break
+		}
+
+		return e.complexity.Visit.DaysSinceFirstVisit(childComplexity), true
+
+	case "Visit.daysSinceLastEcommerceOrder":
+		if e.complexity.Visit.DaysSinceLastEcommerceOrder == nil {
+			break
+		}
+
+		return e.complexity.Visit.DaysSinceLastEcommerceOrder(childComplexity), true
+
+	case "Visit.daysSinceLastVisit":
+		if e.complexity.Visit.DaysSinceLastVisit == nil {
+			break
+		}
+
+		return e.complexity.Visit.DaysSinceLastVisit(childComplexity), true
+
+	case "Visit.deviceBrand":
+		if e.complexity.Visit.DeviceBrand == nil {
+			break
+		}
+
+		return e.complexity.Visit.DeviceBrand(childComplexity), true
+
+	case "Visit.deviceInfo":
+		if e.complexity.Visit.DeviceInfo == nil {
+			break
+		}
+
+		return e.complexity.Visit.DeviceInfo(childComplexity), true
+
+	case "Visit.deviceModel":
+		if e.complexity.Visit.DeviceModel == nil {
+			break
+		}
+
+		return e.complexity.Visit.DeviceModel(childComplexity), true
+
+	case "Visit.deviceType":
+		if e.complexity.Visit.DeviceType == nil {
+			break
+		}
+
+		return e.complexity.Visit.DeviceType(childComplexity), true
+
+	case "Visit.deviceTypeIcon":
+		if e.complexity.Visit.DeviceTypeIcon == nil {
+			break
+		}
+
+		return e.complexity.Visit.DeviceTypeIcon(childComplexity), true
+
+	case "Visit.events":
+		if e.complexity.Visit.Events == nil {
+			break
+		}
+
+		return e.complexity.Visit.Events(childComplexity), true
+
+	case "Visit.fingerprint":
+		if e.complexity.Visit.Fingerprint == nil {
+			break
+		}
+
+		return e.complexity.Visit.Fingerprint(childComplexity), true
+
+	case "Visit.firstActionTimestamp":
+		if e.complexity.Visit.FirstActionTimestamp == nil {
+			break
+		}
+
+		return e.complexity.Visit.FirstActionTimestamp(childComplexity), true
+
+	case "Visit.formConversions":
+		if e.complexity.Visit.FormConversions == nil {
+			break
+		}
+
+		return e.complexity.Visit.FormConversions(childComplexity), true
+
+	case "Visit.goalConversions":
+		if e.complexity.Visit.GoalConversions == nil {
+			break
+		}
+
+		return e.complexity.Visit.GoalConversions(childComplexity), true
+
+	case "Visit.idSite":
+		if e.complexity.Visit.IDSite == nil {
+			break
+		}
+
+		return e.complexity.Visit.IDSite(childComplexity), true
+
+	case "Visit.idVisit":
+		if e.complexity.Visit.IDVisit == nil {
+			break
+		}
+
+		return e.complexity.Visit.IDVisit(childComplexity), true
+
+	case "Visit.interactions":
+		if e.complexity.Visit.Interactions == nil {
+			break
+		}
+
+		return e.complexity.Visit.Interactions(childComplexity), true
+
+	case "Visit.language":
+		if e.complexity.Visit.Language == nil {
+			break
+		}
+
+		return e.complexity.Visit.Language(childComplexity), true
+
+	case "Visit.languageCode":
+		if e.complexity.Visit.LanguageCode == nil {
+			break
+		}
+
+		return e.complexity.Visit.LanguageCode(childComplexity), true
+
+	case "Visit.lastActionDateTime":
+		if e.complexity.Visit.LastActionDateTime == nil {
+			break
+		}
+
+		return e.complexity.Visit.LastActionDateTime(childComplexity), true
+
+	case "Visit.lastActionTimestamp":
+		if e.complexity.Visit.LastActionTimestamp == nil {
+			break
+		}
+
+		return e.complexity.Visit.LastActionTimestamp(childComplexity), true
+
+	case "Visit.latitude":
+		if e.complexity.Visit.Latitude == nil {
+			break
+		}
+
+		return e.complexity.Visit.Latitude(childComplexity), true
+
+	case "Visit.location":
+		if e.complexity.Visit.Location == nil {
+			break
+		}
+
+		return e.complexity.Visit.Location(childComplexity), true
+
+	case "Visit.locationInfo":
+		if e.complexity.Visit.LocationInfo == nil {
+			break
+		}
+
+		return e.complexity.Visit.LocationInfo(childComplexity), true
+
+	case "Visit.longitude":
+		if e.complexity.Visit.Longitude == nil {
+			break
+		}
+
+		return e.complexity.Visit.Longitude(childComplexity), true
+
+	case "Visit.operatingSystem":
+		if e.complexity.Visit.OperatingSystem == nil {
+			break
+		}
+
+		return e.complexity.Visit.OperatingSystem(childComplexity), true
+
+	case "Visit.operatingSystemCode":
+		if e.complexity.Visit.OperatingSystemCode == nil {
+			break
+		}
+
+		return e.complexity.Visit.OperatingSystemCode(childComplexity), true
+
+	case "Visit.operatingSystemIcon":
+		if e.complexity.Visit.OperatingSystemIcon == nil {
+			break
+		}
+
+		return e.complexity.Visit.OperatingSystemIcon(childComplexity), true
+
+	case "Visit.operatingSystemName":
+		if e.complexity.Visit.OperatingSystemName == nil {
+			break
+		}
+
+		return e.complexity.Visit.OperatingSystemName(childComplexity), true
+
+	case "Visit.operatingSystemVersion":
+		if e.complexity.Visit.OperatingSystemVersion == nil {
+			break
+		}
+
+		return e.complexity.Visit.OperatingSystemVersion(childComplexity), true
+
+	case "Visit.plugins":
+		if e.complexity.Visit.Plugins == nil {
+			break
+		}
+
+		return e.complexity.Visit.Plugins(childComplexity), true
+
+	case "Visit.region":
+		if e.complexity.Visit.Region == nil {
+			break
+		}
+
+		return e.complexity.Visit.Region(childComplexity), true
+
+	case "Visit.regionCode":
+		if e.complexity.Visit.RegionCode == nil {
+			break
+		}
+
+		return e.complexity.Visit.RegionCode(childComplexity), true
+
+	case "Visit.resolution":
+		if e.complexity.Visit.Resolution == nil {
+			break
+		}
+
+		return e.complexity.Visit.Resolution(childComplexity), true
+
+	case "Visit.searches":
+		if e.complexity.Visit.Searches == nil {
+			break
+		}
+
+		return e.complexity.Visit.Searches(childComplexity), true
+
+	case "Visit.secondsSinceFirstVisit":
+		if e.complexity.Visit.SecondsSinceFirstVisit == nil {
+			break
+		}
+
+		return e.complexity.Visit.SecondsSinceFirstVisit(childComplexity), true
+
+	case "Visit.secondsSinceLastEcommerceOrder":
+		if e.complexity.Visit.SecondsSinceLastEcommerceOrder == nil {
+			break
+		}
+
+		return e.complexity.Visit.SecondsSinceLastEcommerceOrder(childComplexity), true
+
+	case "Visit.secondsSinceLastVisit":
+		if e.complexity.Visit.SecondsSinceLastVisit == nil {
+			break
+		}
+
+		return e.complexity.Visit.SecondsSinceLastVisit(childComplexity), true
+
+	case "Visit.serverDate":
+		if e.complexity.Visit.ServerDate == nil {
+			break
+		}
+
+		return e.complexity.Visit.ServerDate(childComplexity), true
+
+	case "Visit.serverDatePretty":
+		if e.complexity.Visit.ServerDatePretty == nil {
+			break
+		}
+
+		return e.complexity.Visit.ServerDatePretty(childComplexity), true
+
+	case "Visit.serverDatePrettyFirstAction":
+		if e.complexity.Visit.ServerDatePrettyFirstAction == nil {
+			break
+		}
+
+		return e.complexity.Visit.ServerDatePrettyFirstAction(childComplexity), true
+
+	case "Visit.serverTimePretty":
+		if e.complexity.Visit.ServerTimePretty == nil {
+			break
+		}
+
+		return e.complexity.Visit.ServerTimePretty(childComplexity), true
+
+	case "Visit.serverTimePrettyFirstAction":
+		if e.complexity.Visit.ServerTimePrettyFirstAction == nil {
+			break
+		}
+
+		return e.complexity.Visit.ServerTimePrettyFirstAction(childComplexity), true
+
+	case "Visit.serverTimestamp":
+		if e.complexity.Visit.ServerTimestamp == nil {
+			break
+		}
+
+		return e.complexity.Visit.ServerTimestamp(childComplexity), true
+
+	case "Visit.sessionReplayUrl":
+		if e.complexity.Visit.SessionReplayURL == nil {
+			break
+		}
+
+		return e.complexity.Visit.SessionReplayURL(childComplexity), true
+
+	case "Visit.siteCurrency":
+		if e.complexity.Visit.SiteCurrency == nil {
+			break
+		}
+
+		return e.complexity.Visit.SiteCurrency(childComplexity), true
+
+	case "Visit.siteCurrencySymbol":
+		if e.complexity.Visit.SiteCurrencySymbol == nil {
+			break
+		}
+
+		return e.complexity.Visit.SiteCurrencySymbol(childComplexity), true
+
+	case "Visit.siteName":
+		if e.complexity.Visit.SiteName == nil {
+			break
+		}
+
+		return e.complexity.Visit.SiteName(childComplexity), true
+
+	case "Visit.totalAbandonedCarts":
+		if e.complexity.Visit.TotalAbandonedCarts == nil {
+			break
+		}
+
+		return e.complexity.Visit.TotalAbandonedCarts(childComplexity), true
+
+	case "Visit.totalAbandonedCartsItems":
+		if e.complexity.Visit.TotalAbandonedCartsItems == nil {
+			break
+		}
+
+		return e.complexity.Visit.TotalAbandonedCartsItems(childComplexity), true
+
+	case "Visit.totalAbandonedCartsRevenue":
+		if e.complexity.Visit.TotalAbandonedCartsRevenue == nil {
+			break
+		}
+
+		return e.complexity.Visit.TotalAbandonedCartsRevenue(childComplexity), true
+
+	case "Visit.totalEcommerceConversions":
+		if e.complexity.Visit.TotalEcommerceConversions == nil {
+			break
+		}
+
+		return e.complexity.Visit.TotalEcommerceConversions(childComplexity), true
+
+	case "Visit.totalEcommerceItems":
+		if e.complexity.Visit.TotalEcommerceItems == nil {
+			break
+		}
+
+		return e.complexity.Visit.TotalEcommerceItems(childComplexity), true
+
+	case "Visit.totalEcommerceRevenue":
+		if e.complexity.Visit.TotalEcommerceRevenue == nil {
+			break
+		}
+
+		return e.complexity.Visit.TotalEcommerceRevenue(childComplexity), true
+
+	case "Visit.userId":
+		if e.complexity.Visit.UserID == nil {
+			break
+		}
+
+		return e.complexity.Visit.UserID(childComplexity), true
+
+	case "Visit.visitConverted":
+		if e.complexity.Visit.VisitConverted == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitConverted(childComplexity), true
+
+	case "Visit.visitConvertedIcon":
+		if e.complexity.Visit.VisitConvertedIcon == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitConvertedIcon(childComplexity), true
+
+	case "Visit.visitCount":
+		if e.complexity.Visit.VisitCount == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitCount(childComplexity), true
+
+	case "Visit.visitDuration":
+		if e.complexity.Visit.VisitDuration == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitDuration(childComplexity), true
+
+	case "Visit.visitDurationPretty":
+		if e.complexity.Visit.VisitDurationPretty == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitDurationPretty(childComplexity), true
+
+	case "Visit.visitEcommerceStatus":
+		if e.complexity.Visit.VisitEcommerceStatus == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitEcommerceStatus(childComplexity), true
+
+	case "Visit.visitEcommerceStatusIcon":
+		if e.complexity.Visit.VisitEcommerceStatusIcon == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitEcommerceStatusIcon(childComplexity), true
+
+	case "Visit.visitIp":
+		if e.complexity.Visit.VisitIP == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitIP(childComplexity), true
+
+	case "Visit.visitLocalHour":
+		if e.complexity.Visit.VisitLocalHour == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitLocalHour(childComplexity), true
+
+	case "Visit.visitLocalTime":
+		if e.complexity.Visit.VisitLocalTime == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitLocalTime(childComplexity), true
+
+	case "Visit.visitServerHour":
+		if e.complexity.Visit.VisitServerHour == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitServerHour(childComplexity), true
+
+	case "Visit.visitorId":
+		if e.complexity.Visit.VisitorID == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitorID(childComplexity), true
+
+	case "Visit.visitorProfile":
+		if e.complexity.Visit.VisitorProfile == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitorProfile(childComplexity), true
+
+	case "Visit.visitorType":
+		if e.complexity.Visit.VisitorType == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitorType(childComplexity), true
+
+	case "Visit.visitorTypeIcon":
+		if e.complexity.Visit.VisitorTypeIcon == nil {
+			break
+		}
+
+		return e.complexity.Visit.VisitorTypeIcon(childComplexity), true
+
 	case "VisitActionDetails.goalPageId":
 		if e.complexity.VisitActionDetails.GoalPageID == nil {
 			break
@@ -860,677 +1677,96 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.VisitActionDetails.URL(childComplexity), true
 
-	case "VisitDetails.actionDetails":
-		if e.complexity.VisitDetails.ActionDetails == nil {
+	case "VisitorFirstLastVisit.date":
+		if e.complexity.VisitorFirstLastVisit.Date == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.ActionDetails(childComplexity), true
+		return e.complexity.VisitorFirstLastVisit.Date(childComplexity), true
 
-	case "VisitDetails.actions":
-		if e.complexity.VisitDetails.Actions == nil {
+	case "VisitorFirstLastVisit.daysAgo":
+		if e.complexity.VisitorFirstLastVisit.DaysAgo == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.Actions(childComplexity), true
+		return e.complexity.VisitorFirstLastVisit.DaysAgo(childComplexity), true
 
-	case "VisitDetails.adClickId":
-		if e.complexity.VisitDetails.AdClickID == nil {
+	case "VisitorFirstLastVisit.prettyDate":
+		if e.complexity.VisitorFirstLastVisit.PrettyDate == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.AdClickID(childComplexity), true
+		return e.complexity.VisitorFirstLastVisit.PrettyDate(childComplexity), true
 
-	case "VisitDetails.adProviderId":
-		if e.complexity.VisitDetails.AdProviderID == nil {
+	case "VisitorFirstLastVisit.referrerType":
+		if e.complexity.VisitorFirstLastVisit.ReferrerType == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.AdProviderID(childComplexity), true
+		return e.complexity.VisitorFirstLastVisit.ReferrerType(childComplexity), true
 
-	case "VisitDetails.adProviderName":
-		if e.complexity.VisitDetails.AdProviderName == nil {
+	case "VisitorFirstLastVisit.referrerUrl":
+		if e.complexity.VisitorFirstLastVisit.ReferrerURL == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.AdProviderName(childComplexity), true
+		return e.complexity.VisitorFirstLastVisit.ReferrerURL(childComplexity), true
 
-	case "VisitDetails.browser":
-		if e.complexity.VisitDetails.Browser == nil {
+	case "VisitorFirstLastVisit.refferalSummary":
+		if e.complexity.VisitorFirstLastVisit.RefferalSummary == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.Browser(childComplexity), true
+		return e.complexity.VisitorFirstLastVisit.RefferalSummary(childComplexity), true
 
-	case "VisitDetails.browserCode":
-		if e.complexity.VisitDetails.BrowserCode == nil {
+	case "VisitorProfile.continents":
+		if e.complexity.VisitorProfile.Continents == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.BrowserCode(childComplexity), true
+		return e.complexity.VisitorProfile.Continents(childComplexity), true
 
-	case "VisitDetails.browserFamily":
-		if e.complexity.VisitDetails.BrowserFamily == nil {
+	case "VisitorProfile.countries":
+		if e.complexity.VisitorProfile.Countries == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.BrowserFamily(childComplexity), true
+		return e.complexity.VisitorProfile.Countries(childComplexity), true
 
-	case "VisitDetails.browserFamilyDescription":
-		if e.complexity.VisitDetails.BrowserFamilyDescription == nil {
+	case "VisitorProfile.devices":
+		if e.complexity.VisitorProfile.Devices == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.BrowserFamilyDescription(childComplexity), true
+		return e.complexity.VisitorProfile.Devices(childComplexity), true
 
-	case "VisitDetails.browserIcon":
-		if e.complexity.VisitDetails.BrowserIcon == nil {
+	case "VisitorProfile.firstVisit":
+		if e.complexity.VisitorProfile.FirstVisit == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.BrowserIcon(childComplexity), true
+		return e.complexity.VisitorProfile.FirstVisit(childComplexity), true
 
-	case "VisitDetails.browserInfo":
-		if e.complexity.VisitDetails.BrowserInfo == nil {
+	case "VisitorProfile.lastVisit":
+		if e.complexity.VisitorProfile.LastVisit == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.BrowserInfo(childComplexity), true
+		return e.complexity.VisitorProfile.LastVisit(childComplexity), true
 
-	case "VisitDetails.browserName":
-		if e.complexity.VisitDetails.BrowserName == nil {
+	case "VisitorProfile.lastVisits":
+		if e.complexity.VisitorProfile.LastVisits == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.BrowserName(childComplexity), true
+		return e.complexity.VisitorProfile.LastVisits(childComplexity), true
 
-	case "VisitDetails.browserVersion":
-		if e.complexity.VisitDetails.BrowserVersion == nil {
+	case "VisitorProfile.visitorId":
+		if e.complexity.VisitorProfile.VisitorID == nil {
 			break
 		}
 
-		return e.complexity.VisitDetails.BrowserVersion(childComplexity), true
-
-	case "VisitDetails.campaignContent":
-		if e.complexity.VisitDetails.CampaignContent == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.CampaignContent(childComplexity), true
-
-	case "VisitDetails.campaignGroup":
-		if e.complexity.VisitDetails.CampaignGroup == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.CampaignGroup(childComplexity), true
-
-	case "VisitDetails.campaignId":
-		if e.complexity.VisitDetails.CampaignID == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.CampaignID(childComplexity), true
-
-	case "VisitDetails.campaignInfo":
-		if e.complexity.VisitDetails.CampaignInfo == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.CampaignInfo(childComplexity), true
-
-	case "VisitDetails.campaignKeyword":
-		if e.complexity.VisitDetails.CampaignKeyword == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.CampaignKeyword(childComplexity), true
-
-	case "VisitDetails.campaignMedium":
-		if e.complexity.VisitDetails.CampaignMedium == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.CampaignMedium(childComplexity), true
-
-	case "VisitDetails.campaignName":
-		if e.complexity.VisitDetails.CampaignName == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.CampaignName(childComplexity), true
-
-	case "VisitDetails.campaignPlacement":
-		if e.complexity.VisitDetails.CampaignPlacement == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.CampaignPlacement(childComplexity), true
-
-	case "VisitDetails.campaignSource":
-		if e.complexity.VisitDetails.CampaignSource == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.CampaignSource(childComplexity), true
-
-	case "VisitDetails.city":
-		if e.complexity.VisitDetails.City == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.City(childComplexity), true
-
-	case "VisitDetails.continent":
-		if e.complexity.VisitDetails.Continent == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Continent(childComplexity), true
-
-	case "VisitDetails.continentCode":
-		if e.complexity.VisitDetails.ContinentCode == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.ContinentCode(childComplexity), true
-
-	case "VisitDetails.country":
-		if e.complexity.VisitDetails.Country == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Country(childComplexity), true
-
-	case "VisitDetails.countryCode":
-		if e.complexity.VisitDetails.CountryCode == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.CountryCode(childComplexity), true
-
-	case "VisitDetails.countryFlag":
-		if e.complexity.VisitDetails.CountryFlag == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.CountryFlag(childComplexity), true
-
-	case "VisitDetails.daysSinceFirstVisit":
-		if e.complexity.VisitDetails.DaysSinceFirstVisit == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.DaysSinceFirstVisit(childComplexity), true
-
-	case "VisitDetails.daysSinceLastEcommerceOrder":
-		if e.complexity.VisitDetails.DaysSinceLastEcommerceOrder == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.DaysSinceLastEcommerceOrder(childComplexity), true
-
-	case "VisitDetails.daysSinceLastVisit":
-		if e.complexity.VisitDetails.DaysSinceLastVisit == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.DaysSinceLastVisit(childComplexity), true
-
-	case "VisitDetails.deviceBrand":
-		if e.complexity.VisitDetails.DeviceBrand == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.DeviceBrand(childComplexity), true
-
-	case "VisitDetails.deviceInfo":
-		if e.complexity.VisitDetails.DeviceInfo == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.DeviceInfo(childComplexity), true
-
-	case "VisitDetails.deviceModel":
-		if e.complexity.VisitDetails.DeviceModel == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.DeviceModel(childComplexity), true
-
-	case "VisitDetails.deviceType":
-		if e.complexity.VisitDetails.DeviceType == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.DeviceType(childComplexity), true
-
-	case "VisitDetails.deviceTypeIcon":
-		if e.complexity.VisitDetails.DeviceTypeIcon == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.DeviceTypeIcon(childComplexity), true
-
-	case "VisitDetails.events":
-		if e.complexity.VisitDetails.Events == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Events(childComplexity), true
-
-	case "VisitDetails.fingerprint":
-		if e.complexity.VisitDetails.Fingerprint == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Fingerprint(childComplexity), true
-
-	case "VisitDetails.firstActionTimestamp":
-		if e.complexity.VisitDetails.FirstActionTimestamp == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.FirstActionTimestamp(childComplexity), true
-
-	case "VisitDetails.formConversions":
-		if e.complexity.VisitDetails.FormConversions == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.FormConversions(childComplexity), true
-
-	case "VisitDetails.goalConversions":
-		if e.complexity.VisitDetails.GoalConversions == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.GoalConversions(childComplexity), true
-
-	case "VisitDetails.idSite":
-		if e.complexity.VisitDetails.IDSite == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.IDSite(childComplexity), true
-
-	case "VisitDetails.idVisit":
-		if e.complexity.VisitDetails.IDVisit == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.IDVisit(childComplexity), true
-
-	case "VisitDetails.interactions":
-		if e.complexity.VisitDetails.Interactions == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Interactions(childComplexity), true
-
-	case "VisitDetails.language":
-		if e.complexity.VisitDetails.Language == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Language(childComplexity), true
-
-	case "VisitDetails.languageCode":
-		if e.complexity.VisitDetails.LanguageCode == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.LanguageCode(childComplexity), true
-
-	case "VisitDetails.lastActionDateTime":
-		if e.complexity.VisitDetails.LastActionDateTime == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.LastActionDateTime(childComplexity), true
-
-	case "VisitDetails.lastActionTimestamp":
-		if e.complexity.VisitDetails.LastActionTimestamp == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.LastActionTimestamp(childComplexity), true
-
-	case "VisitDetails.latitude":
-		if e.complexity.VisitDetails.Latitude == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Latitude(childComplexity), true
-
-	case "VisitDetails.location":
-		if e.complexity.VisitDetails.Location == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Location(childComplexity), true
-
-	case "VisitDetails.locationInfo":
-		if e.complexity.VisitDetails.LocationInfo == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.LocationInfo(childComplexity), true
-
-	case "VisitDetails.longitude":
-		if e.complexity.VisitDetails.Longitude == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Longitude(childComplexity), true
-
-	case "VisitDetails.operatingSystem":
-		if e.complexity.VisitDetails.OperatingSystem == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.OperatingSystem(childComplexity), true
-
-	case "VisitDetails.operatingSystemCode":
-		if e.complexity.VisitDetails.OperatingSystemCode == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.OperatingSystemCode(childComplexity), true
-
-	case "VisitDetails.operatingSystemIcon":
-		if e.complexity.VisitDetails.OperatingSystemIcon == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.OperatingSystemIcon(childComplexity), true
-
-	case "VisitDetails.operatingSystemName":
-		if e.complexity.VisitDetails.OperatingSystemName == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.OperatingSystemName(childComplexity), true
-
-	case "VisitDetails.operatingSystemVersion":
-		if e.complexity.VisitDetails.OperatingSystemVersion == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.OperatingSystemVersion(childComplexity), true
-
-	case "VisitDetails.plugins":
-		if e.complexity.VisitDetails.Plugins == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Plugins(childComplexity), true
-
-	case "VisitDetails.region":
-		if e.complexity.VisitDetails.Region == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Region(childComplexity), true
-
-	case "VisitDetails.regionCode":
-		if e.complexity.VisitDetails.RegionCode == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.RegionCode(childComplexity), true
-
-	case "VisitDetails.resolution":
-		if e.complexity.VisitDetails.Resolution == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Resolution(childComplexity), true
-
-	case "VisitDetails.searches":
-		if e.complexity.VisitDetails.Searches == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.Searches(childComplexity), true
-
-	case "VisitDetails.secondsSinceFirstVisit":
-		if e.complexity.VisitDetails.SecondsSinceFirstVisit == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.SecondsSinceFirstVisit(childComplexity), true
-
-	case "VisitDetails.secondsSinceLastEcommerceOrder":
-		if e.complexity.VisitDetails.SecondsSinceLastEcommerceOrder == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.SecondsSinceLastEcommerceOrder(childComplexity), true
-
-	case "VisitDetails.secondsSinceLastVisit":
-		if e.complexity.VisitDetails.SecondsSinceLastVisit == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.SecondsSinceLastVisit(childComplexity), true
-
-	case "VisitDetails.serverDate":
-		if e.complexity.VisitDetails.ServerDate == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.ServerDate(childComplexity), true
-
-	case "VisitDetails.serverDatePretty":
-		if e.complexity.VisitDetails.ServerDatePretty == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.ServerDatePretty(childComplexity), true
-
-	case "VisitDetails.serverDatePrettyFirstAction":
-		if e.complexity.VisitDetails.ServerDatePrettyFirstAction == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.ServerDatePrettyFirstAction(childComplexity), true
-
-	case "VisitDetails.serverTimePretty":
-		if e.complexity.VisitDetails.ServerTimePretty == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.ServerTimePretty(childComplexity), true
-
-	case "VisitDetails.serverTimePrettyFirstAction":
-		if e.complexity.VisitDetails.ServerTimePrettyFirstAction == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.ServerTimePrettyFirstAction(childComplexity), true
-
-	case "VisitDetails.serverTimestamp":
-		if e.complexity.VisitDetails.ServerTimestamp == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.ServerTimestamp(childComplexity), true
-
-	case "VisitDetails.sessionReplayUrl":
-		if e.complexity.VisitDetails.SessionReplayURL == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.SessionReplayURL(childComplexity), true
-
-	case "VisitDetails.siteCurrency":
-		if e.complexity.VisitDetails.SiteCurrency == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.SiteCurrency(childComplexity), true
-
-	case "VisitDetails.siteCurrencySymbol":
-		if e.complexity.VisitDetails.SiteCurrencySymbol == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.SiteCurrencySymbol(childComplexity), true
-
-	case "VisitDetails.siteName":
-		if e.complexity.VisitDetails.SiteName == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.SiteName(childComplexity), true
-
-	case "VisitDetails.totalAbandonedCarts":
-		if e.complexity.VisitDetails.TotalAbandonedCarts == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.TotalAbandonedCarts(childComplexity), true
-
-	case "VisitDetails.totalAbandonedCartsItems":
-		if e.complexity.VisitDetails.TotalAbandonedCartsItems == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.TotalAbandonedCartsItems(childComplexity), true
-
-	case "VisitDetails.totalAbandonedCartsRevenue":
-		if e.complexity.VisitDetails.TotalAbandonedCartsRevenue == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.TotalAbandonedCartsRevenue(childComplexity), true
-
-	case "VisitDetails.totalEcommerceConversions":
-		if e.complexity.VisitDetails.TotalEcommerceConversions == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.TotalEcommerceConversions(childComplexity), true
-
-	case "VisitDetails.totalEcommerceItems":
-		if e.complexity.VisitDetails.TotalEcommerceItems == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.TotalEcommerceItems(childComplexity), true
-
-	case "VisitDetails.totalEcommerceRevenue":
-		if e.complexity.VisitDetails.TotalEcommerceRevenue == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.TotalEcommerceRevenue(childComplexity), true
-
-	case "VisitDetails.userId":
-		if e.complexity.VisitDetails.UserID == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.UserID(childComplexity), true
-
-	case "VisitDetails.visitConverted":
-		if e.complexity.VisitDetails.VisitConverted == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitConverted(childComplexity), true
-
-	case "VisitDetails.visitConvertedIcon":
-		if e.complexity.VisitDetails.VisitConvertedIcon == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitConvertedIcon(childComplexity), true
-
-	case "VisitDetails.visitCount":
-		if e.complexity.VisitDetails.VisitCount == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitCount(childComplexity), true
-
-	case "VisitDetails.visitDuration":
-		if e.complexity.VisitDetails.VisitDuration == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitDuration(childComplexity), true
-
-	case "VisitDetails.visitDurationPretty":
-		if e.complexity.VisitDetails.VisitDurationPretty == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitDurationPretty(childComplexity), true
-
-	case "VisitDetails.visitEcommerceStatus":
-		if e.complexity.VisitDetails.VisitEcommerceStatus == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitEcommerceStatus(childComplexity), true
-
-	case "VisitDetails.visitEcommerceStatusIcon":
-		if e.complexity.VisitDetails.VisitEcommerceStatusIcon == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitEcommerceStatusIcon(childComplexity), true
-
-	case "VisitDetails.visitIp":
-		if e.complexity.VisitDetails.VisitIP == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitIP(childComplexity), true
-
-	case "VisitDetails.visitLocalHour":
-		if e.complexity.VisitDetails.VisitLocalHour == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitLocalHour(childComplexity), true
-
-	case "VisitDetails.visitLocalTime":
-		if e.complexity.VisitDetails.VisitLocalTime == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitLocalTime(childComplexity), true
-
-	case "VisitDetails.visitServerHour":
-		if e.complexity.VisitDetails.VisitServerHour == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitServerHour(childComplexity), true
-
-	case "VisitDetails.visitorId":
-		if e.complexity.VisitDetails.VisitorID == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitorID(childComplexity), true
-
-	case "VisitDetails.visitorType":
-		if e.complexity.VisitDetails.VisitorType == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitorType(childComplexity), true
-
-	case "VisitDetails.visitorTypeIcon":
-		if e.complexity.VisitDetails.VisitorTypeIcon == nil {
-			break
-		}
-
-		return e.complexity.VisitDetails.VisitorTypeIcon(childComplexity), true
+		return e.complexity.VisitorProfile.VisitorID(childComplexity), true
 
 	}
 	return 0, false
@@ -1624,7 +1860,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "schema/composite_types.graphql" "schema/directives.graphql" "schema/enums.graphql" "schema/goals.graphql" "schema/options_params.graphql" "schema/schema.graphql" "schema/visits.graphql"
+//go:embed "schema/aggregate_types.graphql" "schema/composite_types.graphql" "schema/directives.graphql" "schema/enums.graphql" "schema/goals.graphql" "schema/options_params.graphql" "schema/schema.graphql" "schema/visitors.graphql" "schema/visits.graphql"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1636,12 +1872,14 @@ func sourceData(filename string) string {
 }
 
 var sources = []*ast.Source{
+	{Name: "schema/aggregate_types.graphql", Input: sourceData("schema/aggregate_types.graphql"), BuiltIn: false},
 	{Name: "schema/composite_types.graphql", Input: sourceData("schema/composite_types.graphql"), BuiltIn: false},
 	{Name: "schema/directives.graphql", Input: sourceData("schema/directives.graphql"), BuiltIn: false},
 	{Name: "schema/enums.graphql", Input: sourceData("schema/enums.graphql"), BuiltIn: false},
 	{Name: "schema/goals.graphql", Input: sourceData("schema/goals.graphql"), BuiltIn: false},
 	{Name: "schema/options_params.graphql", Input: sourceData("schema/options_params.graphql"), BuiltIn: false},
 	{Name: "schema/schema.graphql", Input: sourceData("schema/schema.graphql"), BuiltIn: false},
+	{Name: "schema/visitors.graphql", Input: sourceData("schema/visitors.graphql"), BuiltIn: false},
 	{Name: "schema/visits.graphql", Input: sourceData("schema/visits.graphql"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1774,6 +2012,487 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AggregateContinentInfo_continent(ctx context.Context, field graphql.CollectedField, obj *model.AggregateContinentInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AggregateContinentInfo_continent(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Continent, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AggregateContinentInfo_continent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AggregateContinentInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AggregateContinentInfo_numVisits(ctx context.Context, field graphql.CollectedField, obj *model.AggregateContinentInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AggregateContinentInfo_numVisits(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumVisits, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AggregateContinentInfo_numVisits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AggregateContinentInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AggregateContinentInfo_prettyName(ctx context.Context, field graphql.CollectedField, obj *model.AggregateContinentInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AggregateContinentInfo_prettyName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrettyName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AggregateContinentInfo_prettyName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AggregateContinentInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AggregateCountryInfo_country(ctx context.Context, field graphql.CollectedField, obj *model.AggregateCountryInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AggregateCountryInfo_country(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Country, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AggregateCountryInfo_country(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AggregateCountryInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AggregateCountryInfo_numVisits(ctx context.Context, field graphql.CollectedField, obj *model.AggregateCountryInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AggregateCountryInfo_numVisits(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumVisits, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AggregateCountryInfo_numVisits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AggregateCountryInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AggregateCountryInfo_flag(ctx context.Context, field graphql.CollectedField, obj *model.AggregateCountryInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AggregateCountryInfo_flag(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Flag, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AggregateCountryInfo_flag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AggregateCountryInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AggregateCountryInfo_prettyName(ctx context.Context, field graphql.CollectedField, obj *model.AggregateCountryInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AggregateCountryInfo_prettyName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrettyName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AggregateCountryInfo_prettyName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AggregateCountryInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AggregateDeviceInfo_type(ctx context.Context, field graphql.CollectedField, obj *model.AggregateDeviceInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AggregateDeviceInfo_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AggregateDeviceInfo_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AggregateDeviceInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AggregateDeviceInfo_count(ctx context.Context, field graphql.CollectedField, obj *model.AggregateDeviceInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AggregateDeviceInfo_count(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Count, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AggregateDeviceInfo_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AggregateDeviceInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AggregateDeviceInfo_icon(ctx context.Context, field graphql.CollectedField, obj *model.AggregateDeviceInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AggregateDeviceInfo_icon(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Icon, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AggregateDeviceInfo_icon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AggregateDeviceInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AggregateDeviceInfo_devices(ctx context.Context, field graphql.CollectedField, obj *model.AggregateDeviceInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AggregateDeviceInfo_devices(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Devices, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.ShortDeviceInfo)
+	fc.Result = res
+	return ec.marshalOShortDeviceInfo2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐShortDeviceInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AggregateDeviceInfo_devices(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AggregateDeviceInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_ShortDeviceInfo_name(ctx, field)
+			case "count":
+				return ec.fieldContext_ShortDeviceInfo_count(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ShortDeviceInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _BrowserInfo_family(ctx context.Context, field graphql.CollectedField, obj *model.BrowserInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BrowserInfo_family(ctx, field)
@@ -3405,9 +4124,9 @@ func (ec *executionContext) _Goal_convertedVisits(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.VisitDetails)
+	res := resTmp.([]*model.Visit)
 	fc.Result = res
-	return ec.marshalOVisitDetails2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitDetails(ctx, field.Selections, res)
+	return ec.marshalOVisit2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Goal_convertedVisits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3419,199 +4138,201 @@ func (ec *executionContext) fieldContext_Goal_convertedVisits(ctx context.Contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "idSite":
-				return ec.fieldContext_VisitDetails_idSite(ctx, field)
+				return ec.fieldContext_Visit_idSite(ctx, field)
 			case "siteName":
-				return ec.fieldContext_VisitDetails_siteName(ctx, field)
+				return ec.fieldContext_Visit_siteName(ctx, field)
 			case "siteCurrency":
-				return ec.fieldContext_VisitDetails_siteCurrency(ctx, field)
+				return ec.fieldContext_Visit_siteCurrency(ctx, field)
 			case "siteCurrencySymbol":
-				return ec.fieldContext_VisitDetails_siteCurrencySymbol(ctx, field)
+				return ec.fieldContext_Visit_siteCurrencySymbol(ctx, field)
 			case "idVisit":
-				return ec.fieldContext_VisitDetails_idVisit(ctx, field)
+				return ec.fieldContext_Visit_idVisit(ctx, field)
 			case "visitIp":
-				return ec.fieldContext_VisitDetails_visitIp(ctx, field)
+				return ec.fieldContext_Visit_visitIp(ctx, field)
 			case "visitorId":
-				return ec.fieldContext_VisitDetails_visitorId(ctx, field)
+				return ec.fieldContext_Visit_visitorId(ctx, field)
 			case "fingerprint":
-				return ec.fieldContext_VisitDetails_fingerprint(ctx, field)
+				return ec.fieldContext_Visit_fingerprint(ctx, field)
+			case "visitorProfile":
+				return ec.fieldContext_Visit_visitorProfile(ctx, field)
 			case "visitServerHour":
-				return ec.fieldContext_VisitDetails_visitServerHour(ctx, field)
+				return ec.fieldContext_Visit_visitServerHour(ctx, field)
 			case "goalConversions":
-				return ec.fieldContext_VisitDetails_goalConversions(ctx, field)
+				return ec.fieldContext_Visit_goalConversions(ctx, field)
 			case "actionDetails":
-				return ec.fieldContext_VisitDetails_actionDetails(ctx, field)
+				return ec.fieldContext_Visit_actionDetails(ctx, field)
 			case "serverDate":
-				return ec.fieldContext_VisitDetails_serverDate(ctx, field)
+				return ec.fieldContext_Visit_serverDate(ctx, field)
 			case "serverDatePretty":
-				return ec.fieldContext_VisitDetails_serverDatePretty(ctx, field)
+				return ec.fieldContext_Visit_serverDatePretty(ctx, field)
 			case "serverTimestamp":
-				return ec.fieldContext_VisitDetails_serverTimestamp(ctx, field)
+				return ec.fieldContext_Visit_serverTimestamp(ctx, field)
 			case "serverTimePretty":
-				return ec.fieldContext_VisitDetails_serverTimePretty(ctx, field)
+				return ec.fieldContext_Visit_serverTimePretty(ctx, field)
 			case "firstActionTimestamp":
-				return ec.fieldContext_VisitDetails_firstActionTimestamp(ctx, field)
+				return ec.fieldContext_Visit_firstActionTimestamp(ctx, field)
 			case "lastActionTimestamp":
-				return ec.fieldContext_VisitDetails_lastActionTimestamp(ctx, field)
+				return ec.fieldContext_Visit_lastActionTimestamp(ctx, field)
 			case "lastActionDateTime":
-				return ec.fieldContext_VisitDetails_lastActionDateTime(ctx, field)
+				return ec.fieldContext_Visit_lastActionDateTime(ctx, field)
 			case "serverDatePrettyFirstAction":
-				return ec.fieldContext_VisitDetails_serverDatePrettyFirstAction(ctx, field)
+				return ec.fieldContext_Visit_serverDatePrettyFirstAction(ctx, field)
 			case "serverTimePrettyFirstAction":
-				return ec.fieldContext_VisitDetails_serverTimePrettyFirstAction(ctx, field)
+				return ec.fieldContext_Visit_serverTimePrettyFirstAction(ctx, field)
 			case "userId":
-				return ec.fieldContext_VisitDetails_userId(ctx, field)
+				return ec.fieldContext_Visit_userId(ctx, field)
 			case "visitorType":
-				return ec.fieldContext_VisitDetails_visitorType(ctx, field)
+				return ec.fieldContext_Visit_visitorType(ctx, field)
 			case "visitorTypeIcon":
-				return ec.fieldContext_VisitDetails_visitorTypeIcon(ctx, field)
+				return ec.fieldContext_Visit_visitorTypeIcon(ctx, field)
 			case "visitConverted":
-				return ec.fieldContext_VisitDetails_visitConverted(ctx, field)
+				return ec.fieldContext_Visit_visitConverted(ctx, field)
 			case "visitConvertedIcon":
-				return ec.fieldContext_VisitDetails_visitConvertedIcon(ctx, field)
+				return ec.fieldContext_Visit_visitConvertedIcon(ctx, field)
 			case "visitCount":
-				return ec.fieldContext_VisitDetails_visitCount(ctx, field)
+				return ec.fieldContext_Visit_visitCount(ctx, field)
 			case "visitEcommerceStatus":
-				return ec.fieldContext_VisitDetails_visitEcommerceStatus(ctx, field)
+				return ec.fieldContext_Visit_visitEcommerceStatus(ctx, field)
 			case "visitEcommerceStatusIcon":
-				return ec.fieldContext_VisitDetails_visitEcommerceStatusIcon(ctx, field)
+				return ec.fieldContext_Visit_visitEcommerceStatusIcon(ctx, field)
 			case "daysSinceFirstVisit":
-				return ec.fieldContext_VisitDetails_daysSinceFirstVisit(ctx, field)
+				return ec.fieldContext_Visit_daysSinceFirstVisit(ctx, field)
 			case "secondsSinceFirstVisit":
-				return ec.fieldContext_VisitDetails_secondsSinceFirstVisit(ctx, field)
+				return ec.fieldContext_Visit_secondsSinceFirstVisit(ctx, field)
 			case "daysSinceLastEcommerceOrder":
-				return ec.fieldContext_VisitDetails_daysSinceLastEcommerceOrder(ctx, field)
+				return ec.fieldContext_Visit_daysSinceLastEcommerceOrder(ctx, field)
 			case "secondsSinceLastEcommerceOrder":
-				return ec.fieldContext_VisitDetails_secondsSinceLastEcommerceOrder(ctx, field)
+				return ec.fieldContext_Visit_secondsSinceLastEcommerceOrder(ctx, field)
 			case "visitDuration":
-				return ec.fieldContext_VisitDetails_visitDuration(ctx, field)
+				return ec.fieldContext_Visit_visitDuration(ctx, field)
 			case "visitDurationPretty":
-				return ec.fieldContext_VisitDetails_visitDurationPretty(ctx, field)
+				return ec.fieldContext_Visit_visitDurationPretty(ctx, field)
 			case "searches":
-				return ec.fieldContext_VisitDetails_searches(ctx, field)
+				return ec.fieldContext_Visit_searches(ctx, field)
 			case "actions":
-				return ec.fieldContext_VisitDetails_actions(ctx, field)
+				return ec.fieldContext_Visit_actions(ctx, field)
 			case "interactions":
-				return ec.fieldContext_VisitDetails_interactions(ctx, field)
+				return ec.fieldContext_Visit_interactions(ctx, field)
 			case "languageCode":
-				return ec.fieldContext_VisitDetails_languageCode(ctx, field)
+				return ec.fieldContext_Visit_languageCode(ctx, field)
 			case "language":
-				return ec.fieldContext_VisitDetails_language(ctx, field)
+				return ec.fieldContext_Visit_language(ctx, field)
 			case "deviceInfo":
-				return ec.fieldContext_VisitDetails_deviceInfo(ctx, field)
+				return ec.fieldContext_Visit_deviceInfo(ctx, field)
 			case "deviceType":
-				return ec.fieldContext_VisitDetails_deviceType(ctx, field)
+				return ec.fieldContext_Visit_deviceType(ctx, field)
 			case "deviceTypeIcon":
-				return ec.fieldContext_VisitDetails_deviceTypeIcon(ctx, field)
+				return ec.fieldContext_Visit_deviceTypeIcon(ctx, field)
 			case "deviceBrand":
-				return ec.fieldContext_VisitDetails_deviceBrand(ctx, field)
+				return ec.fieldContext_Visit_deviceBrand(ctx, field)
 			case "deviceModel":
-				return ec.fieldContext_VisitDetails_deviceModel(ctx, field)
+				return ec.fieldContext_Visit_deviceModel(ctx, field)
 			case "operatingSystem":
-				return ec.fieldContext_VisitDetails_operatingSystem(ctx, field)
+				return ec.fieldContext_Visit_operatingSystem(ctx, field)
 			case "operatingSystemName":
-				return ec.fieldContext_VisitDetails_operatingSystemName(ctx, field)
+				return ec.fieldContext_Visit_operatingSystemName(ctx, field)
 			case "operatingSystemIcon":
-				return ec.fieldContext_VisitDetails_operatingSystemIcon(ctx, field)
+				return ec.fieldContext_Visit_operatingSystemIcon(ctx, field)
 			case "operatingSystemCode":
-				return ec.fieldContext_VisitDetails_operatingSystemCode(ctx, field)
+				return ec.fieldContext_Visit_operatingSystemCode(ctx, field)
 			case "operatingSystemVersion":
-				return ec.fieldContext_VisitDetails_operatingSystemVersion(ctx, field)
+				return ec.fieldContext_Visit_operatingSystemVersion(ctx, field)
 			case "resolution":
-				return ec.fieldContext_VisitDetails_resolution(ctx, field)
+				return ec.fieldContext_Visit_resolution(ctx, field)
 			case "browserInfo":
-				return ec.fieldContext_VisitDetails_browserInfo(ctx, field)
+				return ec.fieldContext_Visit_browserInfo(ctx, field)
 			case "browserFamily":
-				return ec.fieldContext_VisitDetails_browserFamily(ctx, field)
+				return ec.fieldContext_Visit_browserFamily(ctx, field)
 			case "browserFamilyDescription":
-				return ec.fieldContext_VisitDetails_browserFamilyDescription(ctx, field)
+				return ec.fieldContext_Visit_browserFamilyDescription(ctx, field)
 			case "browser":
-				return ec.fieldContext_VisitDetails_browser(ctx, field)
+				return ec.fieldContext_Visit_browser(ctx, field)
 			case "browserName":
-				return ec.fieldContext_VisitDetails_browserName(ctx, field)
+				return ec.fieldContext_Visit_browserName(ctx, field)
 			case "browserIcon":
-				return ec.fieldContext_VisitDetails_browserIcon(ctx, field)
+				return ec.fieldContext_Visit_browserIcon(ctx, field)
 			case "browserCode":
-				return ec.fieldContext_VisitDetails_browserCode(ctx, field)
+				return ec.fieldContext_Visit_browserCode(ctx, field)
 			case "browserVersion":
-				return ec.fieldContext_VisitDetails_browserVersion(ctx, field)
+				return ec.fieldContext_Visit_browserVersion(ctx, field)
 			case "totalEcommerceRevenue":
-				return ec.fieldContext_VisitDetails_totalEcommerceRevenue(ctx, field)
+				return ec.fieldContext_Visit_totalEcommerceRevenue(ctx, field)
 			case "totalEcommerceConversions":
-				return ec.fieldContext_VisitDetails_totalEcommerceConversions(ctx, field)
+				return ec.fieldContext_Visit_totalEcommerceConversions(ctx, field)
 			case "totalEcommerceItems":
-				return ec.fieldContext_VisitDetails_totalEcommerceItems(ctx, field)
+				return ec.fieldContext_Visit_totalEcommerceItems(ctx, field)
 			case "totalAbandonedCartsRevenue":
-				return ec.fieldContext_VisitDetails_totalAbandonedCartsRevenue(ctx, field)
+				return ec.fieldContext_Visit_totalAbandonedCartsRevenue(ctx, field)
 			case "totalAbandonedCarts":
-				return ec.fieldContext_VisitDetails_totalAbandonedCarts(ctx, field)
+				return ec.fieldContext_Visit_totalAbandonedCarts(ctx, field)
 			case "totalAbandonedCartsItems":
-				return ec.fieldContext_VisitDetails_totalAbandonedCartsItems(ctx, field)
+				return ec.fieldContext_Visit_totalAbandonedCartsItems(ctx, field)
 			case "events":
-				return ec.fieldContext_VisitDetails_events(ctx, field)
+				return ec.fieldContext_Visit_events(ctx, field)
 			case "locationInfo":
-				return ec.fieldContext_VisitDetails_locationInfo(ctx, field)
+				return ec.fieldContext_Visit_locationInfo(ctx, field)
 			case "continent":
-				return ec.fieldContext_VisitDetails_continent(ctx, field)
+				return ec.fieldContext_Visit_continent(ctx, field)
 			case "continentCode":
-				return ec.fieldContext_VisitDetails_continentCode(ctx, field)
+				return ec.fieldContext_Visit_continentCode(ctx, field)
 			case "country":
-				return ec.fieldContext_VisitDetails_country(ctx, field)
+				return ec.fieldContext_Visit_country(ctx, field)
 			case "countryCode":
-				return ec.fieldContext_VisitDetails_countryCode(ctx, field)
+				return ec.fieldContext_Visit_countryCode(ctx, field)
 			case "countryFlag":
-				return ec.fieldContext_VisitDetails_countryFlag(ctx, field)
+				return ec.fieldContext_Visit_countryFlag(ctx, field)
 			case "region":
-				return ec.fieldContext_VisitDetails_region(ctx, field)
+				return ec.fieldContext_Visit_region(ctx, field)
 			case "regionCode":
-				return ec.fieldContext_VisitDetails_regionCode(ctx, field)
+				return ec.fieldContext_Visit_regionCode(ctx, field)
 			case "city":
-				return ec.fieldContext_VisitDetails_city(ctx, field)
+				return ec.fieldContext_Visit_city(ctx, field)
 			case "location":
-				return ec.fieldContext_VisitDetails_location(ctx, field)
+				return ec.fieldContext_Visit_location(ctx, field)
 			case "latitude":
-				return ec.fieldContext_VisitDetails_latitude(ctx, field)
+				return ec.fieldContext_Visit_latitude(ctx, field)
 			case "longitude":
-				return ec.fieldContext_VisitDetails_longitude(ctx, field)
+				return ec.fieldContext_Visit_longitude(ctx, field)
 			case "visitLocalTime":
-				return ec.fieldContext_VisitDetails_visitLocalTime(ctx, field)
+				return ec.fieldContext_Visit_visitLocalTime(ctx, field)
 			case "visitLocalHour":
-				return ec.fieldContext_VisitDetails_visitLocalHour(ctx, field)
+				return ec.fieldContext_Visit_visitLocalHour(ctx, field)
 			case "daysSinceLastVisit":
-				return ec.fieldContext_VisitDetails_daysSinceLastVisit(ctx, field)
+				return ec.fieldContext_Visit_daysSinceLastVisit(ctx, field)
 			case "secondsSinceLastVisit":
-				return ec.fieldContext_VisitDetails_secondsSinceLastVisit(ctx, field)
+				return ec.fieldContext_Visit_secondsSinceLastVisit(ctx, field)
 			case "plugins":
-				return ec.fieldContext_VisitDetails_plugins(ctx, field)
+				return ec.fieldContext_Visit_plugins(ctx, field)
 			case "adClickId":
-				return ec.fieldContext_VisitDetails_adClickId(ctx, field)
+				return ec.fieldContext_Visit_adClickId(ctx, field)
 			case "adProviderId":
-				return ec.fieldContext_VisitDetails_adProviderId(ctx, field)
+				return ec.fieldContext_Visit_adProviderId(ctx, field)
 			case "adProviderName":
-				return ec.fieldContext_VisitDetails_adProviderName(ctx, field)
+				return ec.fieldContext_Visit_adProviderName(ctx, field)
 			case "formConversions":
-				return ec.fieldContext_VisitDetails_formConversions(ctx, field)
+				return ec.fieldContext_Visit_formConversions(ctx, field)
 			case "sessionReplayUrl":
-				return ec.fieldContext_VisitDetails_sessionReplayUrl(ctx, field)
+				return ec.fieldContext_Visit_sessionReplayUrl(ctx, field)
 			case "campaignInfo":
-				return ec.fieldContext_VisitDetails_campaignInfo(ctx, field)
+				return ec.fieldContext_Visit_campaignInfo(ctx, field)
 			case "campaignId":
-				return ec.fieldContext_VisitDetails_campaignId(ctx, field)
+				return ec.fieldContext_Visit_campaignId(ctx, field)
 			case "campaignContent":
-				return ec.fieldContext_VisitDetails_campaignContent(ctx, field)
+				return ec.fieldContext_Visit_campaignContent(ctx, field)
 			case "campaignKeyword":
-				return ec.fieldContext_VisitDetails_campaignKeyword(ctx, field)
+				return ec.fieldContext_Visit_campaignKeyword(ctx, field)
 			case "campaignMedium":
-				return ec.fieldContext_VisitDetails_campaignMedium(ctx, field)
+				return ec.fieldContext_Visit_campaignMedium(ctx, field)
 			case "campaignName":
-				return ec.fieldContext_VisitDetails_campaignName(ctx, field)
+				return ec.fieldContext_Visit_campaignName(ctx, field)
 			case "campaignSource":
-				return ec.fieldContext_VisitDetails_campaignSource(ctx, field)
+				return ec.fieldContext_Visit_campaignSource(ctx, field)
 			case "campaignGroup":
-				return ec.fieldContext_VisitDetails_campaignGroup(ctx, field)
+				return ec.fieldContext_Visit_campaignGroup(ctx, field)
 			case "campaignPlacement":
-				return ec.fieldContext_VisitDetails_campaignPlacement(ctx, field)
+				return ec.fieldContext_Visit_campaignPlacement(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type VisitDetails", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Visit", field.Name)
 		},
 	}
 	defer func() {
@@ -4811,6 +5532,4436 @@ func (ec *executionContext) fieldContext_ReferrerInfo_socialNetworkIcon(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _ShortDeviceInfo_name(ctx context.Context, field graphql.CollectedField, obj *model.ShortDeviceInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ShortDeviceInfo_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ShortDeviceInfo_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShortDeviceInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ShortDeviceInfo_count(ctx context.Context, field graphql.CollectedField, obj *model.ShortDeviceInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ShortDeviceInfo_count(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Count, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ShortDeviceInfo_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShortDeviceInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_idSite(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_idSite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IDSite, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_idSite(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_siteName(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_siteName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SiteName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_siteName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_siteCurrency(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_siteCurrency(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SiteCurrency, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_siteCurrency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_siteCurrencySymbol(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_siteCurrencySymbol(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SiteCurrencySymbol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_siteCurrencySymbol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_idVisit(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_idVisit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IDVisit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_idVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitIp(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitIp(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitIP, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitIp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitorId(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitorId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitorID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitorId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_fingerprint(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_fingerprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Fingerprint, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_fingerprint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitorProfile(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitorProfile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Visit().VisitorProfile(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.VisitorProfile)
+	fc.Result = res
+	return ec.marshalOVisitorProfile2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorProfile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitorProfile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "visitorId":
+				return ec.fieldContext_VisitorProfile_visitorId(ctx, field)
+			case "firstVisit":
+				return ec.fieldContext_VisitorProfile_firstVisit(ctx, field)
+			case "lastVisit":
+				return ec.fieldContext_VisitorProfile_lastVisit(ctx, field)
+			case "lastVisits":
+				return ec.fieldContext_VisitorProfile_lastVisits(ctx, field)
+			case "devices":
+				return ec.fieldContext_VisitorProfile_devices(ctx, field)
+			case "countries":
+				return ec.fieldContext_VisitorProfile_countries(ctx, field)
+			case "continents":
+				return ec.fieldContext_VisitorProfile_continents(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VisitorProfile", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitServerHour(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitServerHour(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitServerHour, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitServerHour(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_goalConversions(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_goalConversions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GoalConversions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_goalConversions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_actionDetails(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_actionDetails(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ActionDetails, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.VisitActionDetails)
+	fc.Result = res
+	return ec.marshalOVisitActionDetails2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitActionDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_actionDetails(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_VisitActionDetails_type(ctx, field)
+			case "url":
+				return ec.fieldContext_VisitActionDetails_url(ctx, field)
+			case "title":
+				return ec.fieldContext_VisitActionDetails_title(ctx, field)
+			case "subtitle":
+				return ec.fieldContext_VisitActionDetails_subtitle(ctx, field)
+			case "pageTitle":
+				return ec.fieldContext_VisitActionDetails_pageTitle(ctx, field)
+			case "pageIdAction":
+				return ec.fieldContext_VisitActionDetails_pageIdAction(ctx, field)
+			case "idPageView":
+				return ec.fieldContext_VisitActionDetails_idPageView(ctx, field)
+			case "serverTimePretty":
+				return ec.fieldContext_VisitActionDetails_serverTimePretty(ctx, field)
+			case "pageId":
+				return ec.fieldContext_VisitActionDetails_pageId(ctx, field)
+			case "timeSpent":
+				return ec.fieldContext_VisitActionDetails_timeSpent(ctx, field)
+			case "timeSpentPretty":
+				return ec.fieldContext_VisitActionDetails_timeSpentPretty(ctx, field)
+			case "pageViewPosition":
+				return ec.fieldContext_VisitActionDetails_pageViewPosition(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_VisitActionDetails_timestamp(ctx, field)
+			case "goalPageId":
+				return ec.fieldContext_VisitActionDetails_goalPageId(ctx, field)
+			case "referrer":
+				return ec.fieldContext_VisitActionDetails_referrer(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_VisitActionDetails_referrerType(ctx, field)
+			case "referrerName":
+				return ec.fieldContext_VisitActionDetails_referrerName(ctx, field)
+			case "referrerKeyword":
+				return ec.fieldContext_VisitActionDetails_referrerKeyword(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VisitActionDetails", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_serverDate(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_serverDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServerDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_serverDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_serverDatePretty(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_serverDatePretty(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServerDatePretty, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_serverDatePretty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_serverTimestamp(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_serverTimestamp(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServerTimestamp, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_serverTimestamp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_serverTimePretty(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_serverTimePretty(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServerTimePretty, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_serverTimePretty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_firstActionTimestamp(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_firstActionTimestamp(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FirstActionTimestamp, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_firstActionTimestamp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_lastActionTimestamp(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_lastActionTimestamp(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastActionTimestamp, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_lastActionTimestamp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_lastActionDateTime(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_lastActionDateTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastActionDateTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_lastActionDateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_serverDatePrettyFirstAction(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_serverDatePrettyFirstAction(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServerDatePrettyFirstAction, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_serverDatePrettyFirstAction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_serverTimePrettyFirstAction(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_serverTimePrettyFirstAction(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServerTimePrettyFirstAction, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_serverTimePrettyFirstAction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_userId(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_userId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_userId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitorType(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitorType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitorType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitorType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitorTypeIcon(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitorTypeIcon(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitorTypeIcon, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitorTypeIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitConverted(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitConverted(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitConverted, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitConverted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitConvertedIcon(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitConvertedIcon(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitConvertedIcon, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitConvertedIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitCount(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitEcommerceStatus(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitEcommerceStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitEcommerceStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitEcommerceStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitEcommerceStatusIcon(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitEcommerceStatusIcon(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitEcommerceStatusIcon, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitEcommerceStatusIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_daysSinceFirstVisit(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_daysSinceFirstVisit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DaysSinceFirstVisit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_daysSinceFirstVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_secondsSinceFirstVisit(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_secondsSinceFirstVisit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecondsSinceFirstVisit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_secondsSinceFirstVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_daysSinceLastEcommerceOrder(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_daysSinceLastEcommerceOrder(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DaysSinceLastEcommerceOrder, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_daysSinceLastEcommerceOrder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_secondsSinceLastEcommerceOrder(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_secondsSinceLastEcommerceOrder(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecondsSinceLastEcommerceOrder, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_secondsSinceLastEcommerceOrder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitDuration(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitDuration(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitDuration, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitDuration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitDurationPretty(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitDurationPretty(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitDurationPretty, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitDurationPretty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_searches(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_searches(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Searches, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_searches(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_actions(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_actions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Actions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_actions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_interactions(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_interactions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Interactions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_interactions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_languageCode(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_languageCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LanguageCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_languageCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_language(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_language(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Language, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_language(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_deviceInfo(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_deviceInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Visit().DeviceInfo(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.DeviceInfo)
+	fc.Result = res
+	return ec.marshalODeviceInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDeviceInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_deviceInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_DeviceInfo_type(ctx, field)
+			case "typeIcon":
+				return ec.fieldContext_DeviceInfo_typeIcon(ctx, field)
+			case "brand":
+				return ec.fieldContext_DeviceInfo_brand(ctx, field)
+			case "model":
+				return ec.fieldContext_DeviceInfo_model(ctx, field)
+			case "operatingSystem":
+				return ec.fieldContext_DeviceInfo_operatingSystem(ctx, field)
+			case "operatingSystemName":
+				return ec.fieldContext_DeviceInfo_operatingSystemName(ctx, field)
+			case "operatingSystemIcon":
+				return ec.fieldContext_DeviceInfo_operatingSystemIcon(ctx, field)
+			case "operatingSystemCode":
+				return ec.fieldContext_DeviceInfo_operatingSystemCode(ctx, field)
+			case "operatingSystemVersion":
+				return ec.fieldContext_DeviceInfo_operatingSystemVersion(ctx, field)
+			case "resolution":
+				return ec.fieldContext_DeviceInfo_resolution(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeviceInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_deviceType(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_deviceType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeviceType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_deviceType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_deviceTypeIcon(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_deviceTypeIcon(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeviceTypeIcon, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_deviceTypeIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_deviceBrand(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_deviceBrand(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeviceBrand, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_deviceBrand(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_deviceModel(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_deviceModel(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeviceModel, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_deviceModel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_operatingSystem(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_operatingSystem(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OperatingSystem, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_operatingSystem(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_operatingSystemName(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_operatingSystemName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OperatingSystemName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_operatingSystemName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_operatingSystemIcon(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_operatingSystemIcon(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OperatingSystemIcon, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_operatingSystemIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_operatingSystemCode(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_operatingSystemCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OperatingSystemCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_operatingSystemCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_operatingSystemVersion(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_operatingSystemVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OperatingSystemVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_operatingSystemVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_resolution(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_resolution(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Resolution, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_resolution(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_browserInfo(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_browserInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Visit().BrowserInfo(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.BrowserInfo)
+	fc.Result = res
+	return ec.marshalOBrowserInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐBrowserInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_browserInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "family":
+				return ec.fieldContext_BrowserInfo_family(ctx, field)
+			case "familyDescription":
+				return ec.fieldContext_BrowserInfo_familyDescription(ctx, field)
+			case "browser":
+				return ec.fieldContext_BrowserInfo_browser(ctx, field)
+			case "name":
+				return ec.fieldContext_BrowserInfo_name(ctx, field)
+			case "icon":
+				return ec.fieldContext_BrowserInfo_icon(ctx, field)
+			case "code":
+				return ec.fieldContext_BrowserInfo_code(ctx, field)
+			case "version":
+				return ec.fieldContext_BrowserInfo_version(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BrowserInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_browserFamily(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_browserFamily(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BrowserFamily, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_browserFamily(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_browserFamilyDescription(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_browserFamilyDescription(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BrowserFamilyDescription, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_browserFamilyDescription(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_browser(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_browser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Browser, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_browser(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_browserName(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_browserName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BrowserName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_browserName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_browserIcon(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_browserIcon(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BrowserIcon, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_browserIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_browserCode(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_browserCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BrowserCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_browserCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_browserVersion(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_browserVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BrowserVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_browserVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_totalEcommerceRevenue(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_totalEcommerceRevenue(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalEcommerceRevenue, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_totalEcommerceRevenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_totalEcommerceConversions(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_totalEcommerceConversions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalEcommerceConversions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_totalEcommerceConversions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_totalEcommerceItems(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_totalEcommerceItems(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalEcommerceItems, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_totalEcommerceItems(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_totalAbandonedCartsRevenue(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_totalAbandonedCartsRevenue(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalAbandonedCartsRevenue, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_totalAbandonedCartsRevenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_totalAbandonedCarts(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_totalAbandonedCarts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalAbandonedCarts, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_totalAbandonedCarts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_totalAbandonedCartsItems(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_totalAbandonedCartsItems(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalAbandonedCartsItems, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_totalAbandonedCartsItems(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_events(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_events(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Events, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_events(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_locationInfo(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_locationInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Visit().LocationInfo(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Location)
+	fc.Result = res
+	return ec.marshalOLocation2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLocation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_locationInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "continent":
+				return ec.fieldContext_Location_continent(ctx, field)
+			case "continentCode":
+				return ec.fieldContext_Location_continentCode(ctx, field)
+			case "country":
+				return ec.fieldContext_Location_country(ctx, field)
+			case "countryCode":
+				return ec.fieldContext_Location_countryCode(ctx, field)
+			case "countryFlag":
+				return ec.fieldContext_Location_countryFlag(ctx, field)
+			case "region":
+				return ec.fieldContext_Location_region(ctx, field)
+			case "regionCode":
+				return ec.fieldContext_Location_regionCode(ctx, field)
+			case "city":
+				return ec.fieldContext_Location_city(ctx, field)
+			case "location":
+				return ec.fieldContext_Location_location(ctx, field)
+			case "latitude":
+				return ec.fieldContext_Location_latitude(ctx, field)
+			case "longitude":
+				return ec.fieldContext_Location_longitude(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_continent(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_continent(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Continent, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_continent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_continentCode(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_continentCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ContinentCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_continentCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_country(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_country(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Country, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_country(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_countryCode(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_countryCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CountryCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_countryCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_countryFlag(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_countryFlag(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CountryFlag, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_countryFlag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_region(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_region(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Region, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_region(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_regionCode(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_regionCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RegionCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_regionCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_city(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_city(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.City, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_city(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_location(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_location(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Location, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_location(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_latitude(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_latitude(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Latitude, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_latitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_longitude(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_longitude(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Longitude, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_longitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitLocalTime(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitLocalTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitLocalTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitLocalTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_visitLocalHour(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_visitLocalHour(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VisitLocalHour, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_visitLocalHour(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_daysSinceLastVisit(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_daysSinceLastVisit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DaysSinceLastVisit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_daysSinceLastVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_secondsSinceLastVisit(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_secondsSinceLastVisit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecondsSinceLastVisit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_secondsSinceLastVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_plugins(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_plugins(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Plugins, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_plugins(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_adClickId(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_adClickId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AdClickID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_adClickId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_adProviderId(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_adProviderId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AdProviderID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_adProviderId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_adProviderName(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_adProviderName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AdProviderName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_adProviderName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_formConversions(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_formConversions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FormConversions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_formConversions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_sessionReplayUrl(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_sessionReplayUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SessionReplayURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_sessionReplayUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_campaignInfo(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_campaignInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Visit().CampaignInfo(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.CampaignInfo)
+	fc.Result = res
+	return ec.marshalOCampaignInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐCampaignInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_campaignInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CampaignInfo_id(ctx, field)
+			case "content":
+				return ec.fieldContext_CampaignInfo_content(ctx, field)
+			case "keyword":
+				return ec.fieldContext_CampaignInfo_keyword(ctx, field)
+			case "medium":
+				return ec.fieldContext_CampaignInfo_medium(ctx, field)
+			case "name":
+				return ec.fieldContext_CampaignInfo_name(ctx, field)
+			case "source":
+				return ec.fieldContext_CampaignInfo_source(ctx, field)
+			case "group":
+				return ec.fieldContext_CampaignInfo_group(ctx, field)
+			case "placement":
+				return ec.fieldContext_CampaignInfo_placement(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CampaignInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_campaignId(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_campaignId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CampaignID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_campaignId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_campaignContent(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_campaignContent(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CampaignContent, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_campaignContent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_campaignKeyword(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_campaignKeyword(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CampaignKeyword, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_campaignKeyword(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_campaignMedium(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_campaignMedium(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CampaignMedium, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_campaignMedium(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_campaignName(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_campaignName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CampaignName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_campaignName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_campaignSource(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_campaignSource(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CampaignSource, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_campaignSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_campaignGroup(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_campaignGroup(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CampaignGroup, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_campaignGroup(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_campaignPlacement(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_campaignPlacement(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CampaignPlacement, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_campaignPlacement(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VisitActionDetails_type(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VisitActionDetails_type(ctx, field)
 	if err != nil {
@@ -5608,8 +10759,8 @@ func (ec *executionContext) fieldContext_VisitActionDetails_referrerKeyword(_ co
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitDetails_idSite(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_idSite(ctx, field)
+func (ec *executionContext) _VisitorFirstLastVisit_date(ctx context.Context, field graphql.CollectedField, obj *model.VisitorFirstLastVisit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorFirstLastVisit_date(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5622,7 +10773,7 @@ func (ec *executionContext) _VisitDetails_idSite(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.IDSite, nil
+		return obj.Date, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5639,9 +10790,9 @@ func (ec *executionContext) _VisitDetails_idSite(ctx context.Context, field grap
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitDetails_idSite(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorFirstLastVisit_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
+		Object:     "VisitorFirstLastVisit",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5652,8 +10803,8 @@ func (ec *executionContext) fieldContext_VisitDetails_idSite(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitDetails_siteName(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_siteName(ctx, field)
+func (ec *executionContext) _VisitorFirstLastVisit_prettyDate(ctx context.Context, field graphql.CollectedField, obj *model.VisitorFirstLastVisit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorFirstLastVisit_prettyDate(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5666,7 +10817,7 @@ func (ec *executionContext) _VisitDetails_siteName(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SiteName, nil
+		return obj.PrettyDate, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5683,9 +10834,9 @@ func (ec *executionContext) _VisitDetails_siteName(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitDetails_siteName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorFirstLastVisit_prettyDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
+		Object:     "VisitorFirstLastVisit",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5696,8 +10847,8 @@ func (ec *executionContext) fieldContext_VisitDetails_siteName(_ context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitDetails_siteCurrency(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_siteCurrency(ctx, field)
+func (ec *executionContext) _VisitorFirstLastVisit_daysAgo(ctx context.Context, field graphql.CollectedField, obj *model.VisitorFirstLastVisit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorFirstLastVisit_daysAgo(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5710,95 +10861,7 @@ func (ec *executionContext) _VisitDetails_siteCurrency(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SiteCurrency, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_siteCurrency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_siteCurrencySymbol(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_siteCurrencySymbol(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SiteCurrencySymbol, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_siteCurrencySymbol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_idVisit(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_idVisit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IDVisit, nil
+		return obj.DaysAgo, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5815,9 +10878,9 @@ func (ec *executionContext) _VisitDetails_idVisit(ctx context.Context, field gra
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitDetails_idVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorFirstLastVisit_daysAgo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
+		Object:     "VisitorFirstLastVisit",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5828,8 +10891,8 @@ func (ec *executionContext) fieldContext_VisitDetails_idVisit(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitDetails_visitIp(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitIp(ctx, field)
+func (ec *executionContext) _VisitorFirstLastVisit_referrerType(ctx context.Context, field graphql.CollectedField, obj *model.VisitorFirstLastVisit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorFirstLastVisit_referrerType(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5842,7 +10905,7 @@ func (ec *executionContext) _VisitDetails_visitIp(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.VisitIP, nil
+		return obj.ReferrerType, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5859,9 +10922,9 @@ func (ec *executionContext) _VisitDetails_visitIp(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitDetails_visitIp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorFirstLastVisit_referrerType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
+		Object:     "VisitorFirstLastVisit",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5872,8 +10935,96 @@ func (ec *executionContext) fieldContext_VisitDetails_visitIp(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitDetails_visitorId(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitorId(ctx, field)
+func (ec *executionContext) _VisitorFirstLastVisit_referrerUrl(ctx context.Context, field graphql.CollectedField, obj *model.VisitorFirstLastVisit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorFirstLastVisit_referrerUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReferrerURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitorFirstLastVisit_referrerUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitorFirstLastVisit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VisitorFirstLastVisit_refferalSummary(ctx context.Context, field graphql.CollectedField, obj *model.VisitorFirstLastVisit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorFirstLastVisit_refferalSummary(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RefferalSummary, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitorFirstLastVisit_refferalSummary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitorFirstLastVisit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VisitorProfile_visitorId(ctx context.Context, field graphql.CollectedField, obj *model.VisitorProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorProfile_visitorId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5903,9 +11054,9 @@ func (ec *executionContext) _VisitDetails_visitorId(ctx context.Context, field g
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitDetails_visitorId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorProfile_visitorId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
+		Object:     "VisitorProfile",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5916,8 +11067,8 @@ func (ec *executionContext) fieldContext_VisitDetails_visitorId(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitDetails_fingerprint(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_fingerprint(ctx, field)
+func (ec *executionContext) _VisitorProfile_firstVisit(ctx context.Context, field graphql.CollectedField, obj *model.VisitorProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorProfile_firstVisit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5930,7 +11081,7 @@ func (ec *executionContext) _VisitDetails_fingerprint(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Fingerprint, nil
+		return obj.FirstVisit, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5942,193 +11093,40 @@ func (ec *executionContext) _VisitDetails_fingerprint(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*model.VisitorFirstLastVisit)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNVisitorFirstLastVisit2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorFirstLastVisit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitDetails_fingerprint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorProfile_firstVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitServerHour(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitServerHour(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitServerHour, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitServerHour(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_goalConversions(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_goalConversions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.GoalConversions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_goalConversions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_actionDetails(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_actionDetails(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ActionDetails, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.VisitActionDetails)
-	fc.Result = res
-	return ec.marshalOVisitActionDetails2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitActionDetails(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_actionDetails(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
+		Object:     "VisitorProfile",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "type":
-				return ec.fieldContext_VisitActionDetails_type(ctx, field)
-			case "url":
-				return ec.fieldContext_VisitActionDetails_url(ctx, field)
-			case "title":
-				return ec.fieldContext_VisitActionDetails_title(ctx, field)
-			case "subtitle":
-				return ec.fieldContext_VisitActionDetails_subtitle(ctx, field)
-			case "pageTitle":
-				return ec.fieldContext_VisitActionDetails_pageTitle(ctx, field)
-			case "pageIdAction":
-				return ec.fieldContext_VisitActionDetails_pageIdAction(ctx, field)
-			case "idPageView":
-				return ec.fieldContext_VisitActionDetails_idPageView(ctx, field)
-			case "serverTimePretty":
-				return ec.fieldContext_VisitActionDetails_serverTimePretty(ctx, field)
-			case "pageId":
-				return ec.fieldContext_VisitActionDetails_pageId(ctx, field)
-			case "timeSpent":
-				return ec.fieldContext_VisitActionDetails_timeSpent(ctx, field)
-			case "timeSpentPretty":
-				return ec.fieldContext_VisitActionDetails_timeSpentPretty(ctx, field)
-			case "pageViewPosition":
-				return ec.fieldContext_VisitActionDetails_pageViewPosition(ctx, field)
-			case "timestamp":
-				return ec.fieldContext_VisitActionDetails_timestamp(ctx, field)
-			case "goalPageId":
-				return ec.fieldContext_VisitActionDetails_goalPageId(ctx, field)
-			case "referrer":
-				return ec.fieldContext_VisitActionDetails_referrer(ctx, field)
+			case "date":
+				return ec.fieldContext_VisitorFirstLastVisit_date(ctx, field)
+			case "prettyDate":
+				return ec.fieldContext_VisitorFirstLastVisit_prettyDate(ctx, field)
+			case "daysAgo":
+				return ec.fieldContext_VisitorFirstLastVisit_daysAgo(ctx, field)
 			case "referrerType":
-				return ec.fieldContext_VisitActionDetails_referrerType(ctx, field)
-			case "referrerName":
-				return ec.fieldContext_VisitActionDetails_referrerName(ctx, field)
-			case "referrerKeyword":
-				return ec.fieldContext_VisitActionDetails_referrerKeyword(ctx, field)
+				return ec.fieldContext_VisitorFirstLastVisit_referrerType(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_VisitorFirstLastVisit_referrerUrl(ctx, field)
+			case "refferalSummary":
+				return ec.fieldContext_VisitorFirstLastVisit_refferalSummary(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type VisitActionDetails", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type VisitorFirstLastVisit", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitDetails_serverDate(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_serverDate(ctx, field)
+func (ec *executionContext) _VisitorProfile_lastVisit(ctx context.Context, field graphql.CollectedField, obj *model.VisitorProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorProfile_lastVisit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6141,7 +11139,7 @@ func (ec *executionContext) _VisitDetails_serverDate(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ServerDate, nil
+		return obj.LastVisit, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6153,26 +11151,40 @@ func (ec *executionContext) _VisitDetails_serverDate(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*model.VisitorFirstLastVisit)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNVisitorFirstLastVisit2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorFirstLastVisit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitDetails_serverDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorProfile_lastVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
+		Object:     "VisitorProfile",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "date":
+				return ec.fieldContext_VisitorFirstLastVisit_date(ctx, field)
+			case "prettyDate":
+				return ec.fieldContext_VisitorFirstLastVisit_prettyDate(ctx, field)
+			case "daysAgo":
+				return ec.fieldContext_VisitorFirstLastVisit_daysAgo(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_VisitorFirstLastVisit_referrerType(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_VisitorFirstLastVisit_referrerUrl(ctx, field)
+			case "refferalSummary":
+				return ec.fieldContext_VisitorFirstLastVisit_refferalSummary(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VisitorFirstLastVisit", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitDetails_serverDatePretty(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_serverDatePretty(ctx, field)
+func (ec *executionContext) _VisitorProfile_lastVisits(ctx context.Context, field graphql.CollectedField, obj *model.VisitorProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorProfile_lastVisits(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6185,38 +11197,231 @@ func (ec *executionContext) _VisitDetails_serverDatePretty(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ServerDatePretty, nil
+		return obj.LastVisits, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]*model.Visit)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOVisit2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitDetails_serverDatePretty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorProfile_lastVisits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
+		Object:     "VisitorProfile",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_Visit_idSite(ctx, field)
+			case "siteName":
+				return ec.fieldContext_Visit_siteName(ctx, field)
+			case "siteCurrency":
+				return ec.fieldContext_Visit_siteCurrency(ctx, field)
+			case "siteCurrencySymbol":
+				return ec.fieldContext_Visit_siteCurrencySymbol(ctx, field)
+			case "idVisit":
+				return ec.fieldContext_Visit_idVisit(ctx, field)
+			case "visitIp":
+				return ec.fieldContext_Visit_visitIp(ctx, field)
+			case "visitorId":
+				return ec.fieldContext_Visit_visitorId(ctx, field)
+			case "fingerprint":
+				return ec.fieldContext_Visit_fingerprint(ctx, field)
+			case "visitorProfile":
+				return ec.fieldContext_Visit_visitorProfile(ctx, field)
+			case "visitServerHour":
+				return ec.fieldContext_Visit_visitServerHour(ctx, field)
+			case "goalConversions":
+				return ec.fieldContext_Visit_goalConversions(ctx, field)
+			case "actionDetails":
+				return ec.fieldContext_Visit_actionDetails(ctx, field)
+			case "serverDate":
+				return ec.fieldContext_Visit_serverDate(ctx, field)
+			case "serverDatePretty":
+				return ec.fieldContext_Visit_serverDatePretty(ctx, field)
+			case "serverTimestamp":
+				return ec.fieldContext_Visit_serverTimestamp(ctx, field)
+			case "serverTimePretty":
+				return ec.fieldContext_Visit_serverTimePretty(ctx, field)
+			case "firstActionTimestamp":
+				return ec.fieldContext_Visit_firstActionTimestamp(ctx, field)
+			case "lastActionTimestamp":
+				return ec.fieldContext_Visit_lastActionTimestamp(ctx, field)
+			case "lastActionDateTime":
+				return ec.fieldContext_Visit_lastActionDateTime(ctx, field)
+			case "serverDatePrettyFirstAction":
+				return ec.fieldContext_Visit_serverDatePrettyFirstAction(ctx, field)
+			case "serverTimePrettyFirstAction":
+				return ec.fieldContext_Visit_serverTimePrettyFirstAction(ctx, field)
+			case "userId":
+				return ec.fieldContext_Visit_userId(ctx, field)
+			case "visitorType":
+				return ec.fieldContext_Visit_visitorType(ctx, field)
+			case "visitorTypeIcon":
+				return ec.fieldContext_Visit_visitorTypeIcon(ctx, field)
+			case "visitConverted":
+				return ec.fieldContext_Visit_visitConverted(ctx, field)
+			case "visitConvertedIcon":
+				return ec.fieldContext_Visit_visitConvertedIcon(ctx, field)
+			case "visitCount":
+				return ec.fieldContext_Visit_visitCount(ctx, field)
+			case "visitEcommerceStatus":
+				return ec.fieldContext_Visit_visitEcommerceStatus(ctx, field)
+			case "visitEcommerceStatusIcon":
+				return ec.fieldContext_Visit_visitEcommerceStatusIcon(ctx, field)
+			case "daysSinceFirstVisit":
+				return ec.fieldContext_Visit_daysSinceFirstVisit(ctx, field)
+			case "secondsSinceFirstVisit":
+				return ec.fieldContext_Visit_secondsSinceFirstVisit(ctx, field)
+			case "daysSinceLastEcommerceOrder":
+				return ec.fieldContext_Visit_daysSinceLastEcommerceOrder(ctx, field)
+			case "secondsSinceLastEcommerceOrder":
+				return ec.fieldContext_Visit_secondsSinceLastEcommerceOrder(ctx, field)
+			case "visitDuration":
+				return ec.fieldContext_Visit_visitDuration(ctx, field)
+			case "visitDurationPretty":
+				return ec.fieldContext_Visit_visitDurationPretty(ctx, field)
+			case "searches":
+				return ec.fieldContext_Visit_searches(ctx, field)
+			case "actions":
+				return ec.fieldContext_Visit_actions(ctx, field)
+			case "interactions":
+				return ec.fieldContext_Visit_interactions(ctx, field)
+			case "languageCode":
+				return ec.fieldContext_Visit_languageCode(ctx, field)
+			case "language":
+				return ec.fieldContext_Visit_language(ctx, field)
+			case "deviceInfo":
+				return ec.fieldContext_Visit_deviceInfo(ctx, field)
+			case "deviceType":
+				return ec.fieldContext_Visit_deviceType(ctx, field)
+			case "deviceTypeIcon":
+				return ec.fieldContext_Visit_deviceTypeIcon(ctx, field)
+			case "deviceBrand":
+				return ec.fieldContext_Visit_deviceBrand(ctx, field)
+			case "deviceModel":
+				return ec.fieldContext_Visit_deviceModel(ctx, field)
+			case "operatingSystem":
+				return ec.fieldContext_Visit_operatingSystem(ctx, field)
+			case "operatingSystemName":
+				return ec.fieldContext_Visit_operatingSystemName(ctx, field)
+			case "operatingSystemIcon":
+				return ec.fieldContext_Visit_operatingSystemIcon(ctx, field)
+			case "operatingSystemCode":
+				return ec.fieldContext_Visit_operatingSystemCode(ctx, field)
+			case "operatingSystemVersion":
+				return ec.fieldContext_Visit_operatingSystemVersion(ctx, field)
+			case "resolution":
+				return ec.fieldContext_Visit_resolution(ctx, field)
+			case "browserInfo":
+				return ec.fieldContext_Visit_browserInfo(ctx, field)
+			case "browserFamily":
+				return ec.fieldContext_Visit_browserFamily(ctx, field)
+			case "browserFamilyDescription":
+				return ec.fieldContext_Visit_browserFamilyDescription(ctx, field)
+			case "browser":
+				return ec.fieldContext_Visit_browser(ctx, field)
+			case "browserName":
+				return ec.fieldContext_Visit_browserName(ctx, field)
+			case "browserIcon":
+				return ec.fieldContext_Visit_browserIcon(ctx, field)
+			case "browserCode":
+				return ec.fieldContext_Visit_browserCode(ctx, field)
+			case "browserVersion":
+				return ec.fieldContext_Visit_browserVersion(ctx, field)
+			case "totalEcommerceRevenue":
+				return ec.fieldContext_Visit_totalEcommerceRevenue(ctx, field)
+			case "totalEcommerceConversions":
+				return ec.fieldContext_Visit_totalEcommerceConversions(ctx, field)
+			case "totalEcommerceItems":
+				return ec.fieldContext_Visit_totalEcommerceItems(ctx, field)
+			case "totalAbandonedCartsRevenue":
+				return ec.fieldContext_Visit_totalAbandonedCartsRevenue(ctx, field)
+			case "totalAbandonedCarts":
+				return ec.fieldContext_Visit_totalAbandonedCarts(ctx, field)
+			case "totalAbandonedCartsItems":
+				return ec.fieldContext_Visit_totalAbandonedCartsItems(ctx, field)
+			case "events":
+				return ec.fieldContext_Visit_events(ctx, field)
+			case "locationInfo":
+				return ec.fieldContext_Visit_locationInfo(ctx, field)
+			case "continent":
+				return ec.fieldContext_Visit_continent(ctx, field)
+			case "continentCode":
+				return ec.fieldContext_Visit_continentCode(ctx, field)
+			case "country":
+				return ec.fieldContext_Visit_country(ctx, field)
+			case "countryCode":
+				return ec.fieldContext_Visit_countryCode(ctx, field)
+			case "countryFlag":
+				return ec.fieldContext_Visit_countryFlag(ctx, field)
+			case "region":
+				return ec.fieldContext_Visit_region(ctx, field)
+			case "regionCode":
+				return ec.fieldContext_Visit_regionCode(ctx, field)
+			case "city":
+				return ec.fieldContext_Visit_city(ctx, field)
+			case "location":
+				return ec.fieldContext_Visit_location(ctx, field)
+			case "latitude":
+				return ec.fieldContext_Visit_latitude(ctx, field)
+			case "longitude":
+				return ec.fieldContext_Visit_longitude(ctx, field)
+			case "visitLocalTime":
+				return ec.fieldContext_Visit_visitLocalTime(ctx, field)
+			case "visitLocalHour":
+				return ec.fieldContext_Visit_visitLocalHour(ctx, field)
+			case "daysSinceLastVisit":
+				return ec.fieldContext_Visit_daysSinceLastVisit(ctx, field)
+			case "secondsSinceLastVisit":
+				return ec.fieldContext_Visit_secondsSinceLastVisit(ctx, field)
+			case "plugins":
+				return ec.fieldContext_Visit_plugins(ctx, field)
+			case "adClickId":
+				return ec.fieldContext_Visit_adClickId(ctx, field)
+			case "adProviderId":
+				return ec.fieldContext_Visit_adProviderId(ctx, field)
+			case "adProviderName":
+				return ec.fieldContext_Visit_adProviderName(ctx, field)
+			case "formConversions":
+				return ec.fieldContext_Visit_formConversions(ctx, field)
+			case "sessionReplayUrl":
+				return ec.fieldContext_Visit_sessionReplayUrl(ctx, field)
+			case "campaignInfo":
+				return ec.fieldContext_Visit_campaignInfo(ctx, field)
+			case "campaignId":
+				return ec.fieldContext_Visit_campaignId(ctx, field)
+			case "campaignContent":
+				return ec.fieldContext_Visit_campaignContent(ctx, field)
+			case "campaignKeyword":
+				return ec.fieldContext_Visit_campaignKeyword(ctx, field)
+			case "campaignMedium":
+				return ec.fieldContext_Visit_campaignMedium(ctx, field)
+			case "campaignName":
+				return ec.fieldContext_Visit_campaignName(ctx, field)
+			case "campaignSource":
+				return ec.fieldContext_Visit_campaignSource(ctx, field)
+			case "campaignGroup":
+				return ec.fieldContext_Visit_campaignGroup(ctx, field)
+			case "campaignPlacement":
+				return ec.fieldContext_Visit_campaignPlacement(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Visit", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitDetails_serverTimestamp(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_serverTimestamp(ctx, field)
+func (ec *executionContext) _VisitorProfile_devices(ctx context.Context, field graphql.CollectedField, obj *model.VisitorProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorProfile_devices(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6229,1180 +11434,45 @@ func (ec *executionContext) _VisitDetails_serverTimestamp(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ServerTimestamp, nil
+		return obj.Devices, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.([]*model.AggregateDeviceInfo)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalOAggregateDeviceInfo2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateDeviceInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitDetails_serverTimestamp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorProfile_devices(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
+		Object:     "VisitorProfile",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_serverTimePretty(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_serverTimePretty(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ServerTimePretty, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_serverTimePretty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_firstActionTimestamp(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_firstActionTimestamp(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.FirstActionTimestamp, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_firstActionTimestamp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_lastActionTimestamp(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_lastActionTimestamp(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LastActionTimestamp, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_lastActionTimestamp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_lastActionDateTime(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_lastActionDateTime(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LastActionDateTime, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_lastActionDateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_serverDatePrettyFirstAction(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_serverDatePrettyFirstAction(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ServerDatePrettyFirstAction, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_serverDatePrettyFirstAction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_serverTimePrettyFirstAction(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_serverTimePrettyFirstAction(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ServerTimePrettyFirstAction, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_serverTimePrettyFirstAction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_userId(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_userId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UserID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_userId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitorType(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitorType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitorType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitorType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitorTypeIcon(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitorTypeIcon(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitorTypeIcon, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitorTypeIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitConverted(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitConverted(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitConverted, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitConverted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitConvertedIcon(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitConvertedIcon(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitConvertedIcon, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitConvertedIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitCount(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitEcommerceStatus(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitEcommerceStatus(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitEcommerceStatus, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitEcommerceStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitEcommerceStatusIcon(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitEcommerceStatusIcon(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitEcommerceStatusIcon, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitEcommerceStatusIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_daysSinceFirstVisit(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_daysSinceFirstVisit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DaysSinceFirstVisit, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_daysSinceFirstVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_secondsSinceFirstVisit(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_secondsSinceFirstVisit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SecondsSinceFirstVisit, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_secondsSinceFirstVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_daysSinceLastEcommerceOrder(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_daysSinceLastEcommerceOrder(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DaysSinceLastEcommerceOrder, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_daysSinceLastEcommerceOrder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_secondsSinceLastEcommerceOrder(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_secondsSinceLastEcommerceOrder(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SecondsSinceLastEcommerceOrder, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_secondsSinceLastEcommerceOrder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitDuration(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitDuration(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitDuration, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitDuration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitDurationPretty(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitDurationPretty(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitDurationPretty, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitDurationPretty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_searches(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_searches(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Searches, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_searches(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_actions(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_actions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Actions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_actions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_interactions(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_interactions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Interactions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_interactions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_languageCode(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_languageCode(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LanguageCode, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_languageCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_language(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_language(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Language, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_language(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_deviceInfo(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_deviceInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.VisitDetails().DeviceInfo(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.DeviceInfo)
-	fc.Result = res
-	return ec.marshalODeviceInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDeviceInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_deviceInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "type":
-				return ec.fieldContext_DeviceInfo_type(ctx, field)
-			case "typeIcon":
-				return ec.fieldContext_DeviceInfo_typeIcon(ctx, field)
-			case "brand":
-				return ec.fieldContext_DeviceInfo_brand(ctx, field)
-			case "model":
-				return ec.fieldContext_DeviceInfo_model(ctx, field)
-			case "operatingSystem":
-				return ec.fieldContext_DeviceInfo_operatingSystem(ctx, field)
-			case "operatingSystemName":
-				return ec.fieldContext_DeviceInfo_operatingSystemName(ctx, field)
-			case "operatingSystemIcon":
-				return ec.fieldContext_DeviceInfo_operatingSystemIcon(ctx, field)
-			case "operatingSystemCode":
-				return ec.fieldContext_DeviceInfo_operatingSystemCode(ctx, field)
-			case "operatingSystemVersion":
-				return ec.fieldContext_DeviceInfo_operatingSystemVersion(ctx, field)
-			case "resolution":
-				return ec.fieldContext_DeviceInfo_resolution(ctx, field)
+				return ec.fieldContext_AggregateDeviceInfo_type(ctx, field)
+			case "count":
+				return ec.fieldContext_AggregateDeviceInfo_count(ctx, field)
+			case "icon":
+				return ec.fieldContext_AggregateDeviceInfo_icon(ctx, field)
+			case "devices":
+				return ec.fieldContext_AggregateDeviceInfo_devices(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DeviceInfo", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type AggregateDeviceInfo", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitDetails_deviceType(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_deviceType(ctx, field)
+func (ec *executionContext) _VisitorProfile_countries(ctx context.Context, field graphql.CollectedField, obj *model.VisitorProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorProfile_countries(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7415,482 +11485,45 @@ func (ec *executionContext) _VisitDetails_deviceType(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DeviceType, nil
+		return obj.Countries, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]*model.AggregateCountryInfo)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOAggregateCountryInfo2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateCountryInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitDetails_deviceType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorProfile_countries(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
+		Object:     "VisitorProfile",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_deviceTypeIcon(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_deviceTypeIcon(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DeviceTypeIcon, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_deviceTypeIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_deviceBrand(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_deviceBrand(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DeviceBrand, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_deviceBrand(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_deviceModel(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_deviceModel(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DeviceModel, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_deviceModel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_operatingSystem(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_operatingSystem(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OperatingSystem, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_operatingSystem(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_operatingSystemName(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_operatingSystemName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OperatingSystemName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_operatingSystemName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_operatingSystemIcon(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_operatingSystemIcon(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OperatingSystemIcon, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_operatingSystemIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_operatingSystemCode(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_operatingSystemCode(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OperatingSystemCode, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_operatingSystemCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_operatingSystemVersion(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_operatingSystemVersion(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OperatingSystemVersion, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_operatingSystemVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_resolution(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_resolution(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Resolution, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_resolution(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_browserInfo(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_browserInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.VisitDetails().BrowserInfo(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.BrowserInfo)
-	fc.Result = res
-	return ec.marshalOBrowserInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐBrowserInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_browserInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "family":
-				return ec.fieldContext_BrowserInfo_family(ctx, field)
-			case "familyDescription":
-				return ec.fieldContext_BrowserInfo_familyDescription(ctx, field)
-			case "browser":
-				return ec.fieldContext_BrowserInfo_browser(ctx, field)
-			case "name":
-				return ec.fieldContext_BrowserInfo_name(ctx, field)
-			case "icon":
-				return ec.fieldContext_BrowserInfo_icon(ctx, field)
-			case "code":
-				return ec.fieldContext_BrowserInfo_code(ctx, field)
-			case "version":
-				return ec.fieldContext_BrowserInfo_version(ctx, field)
+			case "country":
+				return ec.fieldContext_AggregateCountryInfo_country(ctx, field)
+			case "numVisits":
+				return ec.fieldContext_AggregateCountryInfo_numVisits(ctx, field)
+			case "flag":
+				return ec.fieldContext_AggregateCountryInfo_flag(ctx, field)
+			case "prettyName":
+				return ec.fieldContext_AggregateCountryInfo_prettyName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type BrowserInfo", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type AggregateCountryInfo", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitDetails_browserFamily(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_browserFamily(ctx, field)
+func (ec *executionContext) _VisitorProfile_continents(ctx context.Context, field graphql.CollectedField, obj *model.VisitorProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorProfile_continents(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7903,1991 +11536,36 @@ func (ec *executionContext) _VisitDetails_browserFamily(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.BrowserFamily, nil
+		return obj.Continents, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]*model.AggregateContinentInfo)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOAggregateContinentInfo2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateContinentInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitDetails_browserFamily(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorProfile_continents(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
+		Object:     "VisitorProfile",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_browserFamilyDescription(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_browserFamilyDescription(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.BrowserFamilyDescription, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_browserFamilyDescription(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_browser(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_browser(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Browser, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_browser(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_browserName(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_browserName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.BrowserName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_browserName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_browserIcon(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_browserIcon(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.BrowserIcon, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_browserIcon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_browserCode(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_browserCode(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.BrowserCode, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_browserCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_browserVersion(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_browserVersion(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.BrowserVersion, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_browserVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_totalEcommerceRevenue(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_totalEcommerceRevenue(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalEcommerceRevenue, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_totalEcommerceRevenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_totalEcommerceConversions(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_totalEcommerceConversions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalEcommerceConversions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_totalEcommerceConversions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_totalEcommerceItems(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_totalEcommerceItems(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalEcommerceItems, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_totalEcommerceItems(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_totalAbandonedCartsRevenue(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_totalAbandonedCartsRevenue(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalAbandonedCartsRevenue, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_totalAbandonedCartsRevenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_totalAbandonedCarts(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_totalAbandonedCarts(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalAbandonedCarts, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_totalAbandonedCarts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_totalAbandonedCartsItems(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_totalAbandonedCartsItems(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalAbandonedCartsItems, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_totalAbandonedCartsItems(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_events(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_events(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Events, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_events(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_locationInfo(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_locationInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.VisitDetails().LocationInfo(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Location)
-	fc.Result = res
-	return ec.marshalOLocation2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLocation(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_locationInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "continent":
-				return ec.fieldContext_Location_continent(ctx, field)
-			case "continentCode":
-				return ec.fieldContext_Location_continentCode(ctx, field)
-			case "country":
-				return ec.fieldContext_Location_country(ctx, field)
-			case "countryCode":
-				return ec.fieldContext_Location_countryCode(ctx, field)
-			case "countryFlag":
-				return ec.fieldContext_Location_countryFlag(ctx, field)
-			case "region":
-				return ec.fieldContext_Location_region(ctx, field)
-			case "regionCode":
-				return ec.fieldContext_Location_regionCode(ctx, field)
-			case "city":
-				return ec.fieldContext_Location_city(ctx, field)
-			case "location":
-				return ec.fieldContext_Location_location(ctx, field)
-			case "latitude":
-				return ec.fieldContext_Location_latitude(ctx, field)
-			case "longitude":
-				return ec.fieldContext_Location_longitude(ctx, field)
+				return ec.fieldContext_AggregateContinentInfo_continent(ctx, field)
+			case "numVisits":
+				return ec.fieldContext_AggregateContinentInfo_numVisits(ctx, field)
+			case "prettyName":
+				return ec.fieldContext_AggregateContinentInfo_prettyName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_continent(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_continent(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Continent, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_continent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_continentCode(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_continentCode(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContinentCode, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_continentCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_country(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_country(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Country, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_country(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_countryCode(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_countryCode(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CountryCode, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_countryCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_countryFlag(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_countryFlag(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CountryFlag, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_countryFlag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_region(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_region(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Region, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_region(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_regionCode(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_regionCode(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.RegionCode, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_regionCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_city(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_city(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.City, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_city(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_location(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_location(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Location, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_location(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_latitude(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_latitude(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Latitude, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_latitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_longitude(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_longitude(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Longitude, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_longitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitLocalTime(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitLocalTime(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitLocalTime, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitLocalTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_visitLocalHour(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_visitLocalHour(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VisitLocalHour, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_visitLocalHour(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_daysSinceLastVisit(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_daysSinceLastVisit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DaysSinceLastVisit, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_daysSinceLastVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_secondsSinceLastVisit(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_secondsSinceLastVisit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SecondsSinceLastVisit, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_secondsSinceLastVisit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_plugins(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_plugins(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Plugins, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_plugins(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_adClickId(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_adClickId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AdClickID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_adClickId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_adProviderId(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_adProviderId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AdProviderID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_adProviderId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_adProviderName(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_adProviderName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AdProviderName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_adProviderName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_formConversions(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_formConversions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.FormConversions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_formConversions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_sessionReplayUrl(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_sessionReplayUrl(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SessionReplayURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_sessionReplayUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_campaignInfo(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_campaignInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.VisitDetails().CampaignInfo(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.CampaignInfo)
-	fc.Result = res
-	return ec.marshalOCampaignInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐCampaignInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_campaignInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_CampaignInfo_id(ctx, field)
-			case "content":
-				return ec.fieldContext_CampaignInfo_content(ctx, field)
-			case "keyword":
-				return ec.fieldContext_CampaignInfo_keyword(ctx, field)
-			case "medium":
-				return ec.fieldContext_CampaignInfo_medium(ctx, field)
-			case "name":
-				return ec.fieldContext_CampaignInfo_name(ctx, field)
-			case "source":
-				return ec.fieldContext_CampaignInfo_source(ctx, field)
-			case "group":
-				return ec.fieldContext_CampaignInfo_group(ctx, field)
-			case "placement":
-				return ec.fieldContext_CampaignInfo_placement(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type CampaignInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_campaignId(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_campaignId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CampaignID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_campaignId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_campaignContent(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_campaignContent(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CampaignContent, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_campaignContent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_campaignKeyword(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_campaignKeyword(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CampaignKeyword, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_campaignKeyword(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_campaignMedium(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_campaignMedium(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CampaignMedium, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_campaignMedium(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_campaignName(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_campaignName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CampaignName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_campaignName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_campaignSource(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_campaignSource(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CampaignSource, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_campaignSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_campaignGroup(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_campaignGroup(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CampaignGroup, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_campaignGroup(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VisitDetails_campaignPlacement(ctx context.Context, field graphql.CollectedField, obj *model.VisitDetails) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitDetails_campaignPlacement(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CampaignPlacement, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VisitDetails_campaignPlacement(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VisitDetails",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, fmt.Errorf("no field named %q was found under type AggregateContinentInfo", field.Name)
 		},
 	}
 	return fc, nil
@@ -11769,6 +13447,154 @@ func (ec *executionContext) unmarshalInputOrderByOptions(ctx context.Context, ob
 
 // region    **************************** object.gotpl ****************************
 
+var aggregateContinentInfoImplementors = []string{"AggregateContinentInfo"}
+
+func (ec *executionContext) _AggregateContinentInfo(ctx context.Context, sel ast.SelectionSet, obj *model.AggregateContinentInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aggregateContinentInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AggregateContinentInfo")
+		case "continent":
+			out.Values[i] = ec._AggregateContinentInfo_continent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "numVisits":
+			out.Values[i] = ec._AggregateContinentInfo_numVisits(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "prettyName":
+			out.Values[i] = ec._AggregateContinentInfo_prettyName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var aggregateCountryInfoImplementors = []string{"AggregateCountryInfo"}
+
+func (ec *executionContext) _AggregateCountryInfo(ctx context.Context, sel ast.SelectionSet, obj *model.AggregateCountryInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aggregateCountryInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AggregateCountryInfo")
+		case "country":
+			out.Values[i] = ec._AggregateCountryInfo_country(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "numVisits":
+			out.Values[i] = ec._AggregateCountryInfo_numVisits(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "flag":
+			out.Values[i] = ec._AggregateCountryInfo_flag(ctx, field, obj)
+		case "prettyName":
+			out.Values[i] = ec._AggregateCountryInfo_prettyName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var aggregateDeviceInfoImplementors = []string{"AggregateDeviceInfo"}
+
+func (ec *executionContext) _AggregateDeviceInfo(ctx context.Context, sel ast.SelectionSet, obj *model.AggregateDeviceInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aggregateDeviceInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AggregateDeviceInfo")
+		case "type":
+			out.Values[i] = ec._AggregateDeviceInfo_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._AggregateDeviceInfo_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "icon":
+			out.Values[i] = ec._AggregateDeviceInfo_icon(ctx, field, obj)
+		case "devices":
+			out.Values[i] = ec._AggregateDeviceInfo_devices(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var browserInfoImplementors = []string{"BrowserInfo"}
 
 func (ec *executionContext) _BrowserInfo(ctx context.Context, sel ast.SelectionSet, obj *model.BrowserInfo) graphql.Marshaler {
@@ -12350,6 +14176,664 @@ func (ec *executionContext) _ReferrerInfo(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var shortDeviceInfoImplementors = []string{"ShortDeviceInfo"}
+
+func (ec *executionContext) _ShortDeviceInfo(ctx context.Context, sel ast.SelectionSet, obj *model.ShortDeviceInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, shortDeviceInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ShortDeviceInfo")
+		case "name":
+			out.Values[i] = ec._ShortDeviceInfo_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._ShortDeviceInfo_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var visitImplementors = []string{"Visit"}
+
+func (ec *executionContext) _Visit(ctx context.Context, sel ast.SelectionSet, obj *model.Visit) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, visitImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Visit")
+		case "idSite":
+			out.Values[i] = ec._Visit_idSite(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "siteName":
+			out.Values[i] = ec._Visit_siteName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "siteCurrency":
+			out.Values[i] = ec._Visit_siteCurrency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "siteCurrencySymbol":
+			out.Values[i] = ec._Visit_siteCurrencySymbol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "idVisit":
+			out.Values[i] = ec._Visit_idVisit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "visitIp":
+			out.Values[i] = ec._Visit_visitIp(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "visitorId":
+			out.Values[i] = ec._Visit_visitorId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "fingerprint":
+			out.Values[i] = ec._Visit_fingerprint(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "visitorProfile":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Visit_visitorProfile(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "visitServerHour":
+			out.Values[i] = ec._Visit_visitServerHour(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "goalConversions":
+			out.Values[i] = ec._Visit_goalConversions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "actionDetails":
+			out.Values[i] = ec._Visit_actionDetails(ctx, field, obj)
+		case "serverDate":
+			out.Values[i] = ec._Visit_serverDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "serverDatePretty":
+			out.Values[i] = ec._Visit_serverDatePretty(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "serverTimestamp":
+			out.Values[i] = ec._Visit_serverTimestamp(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "serverTimePretty":
+			out.Values[i] = ec._Visit_serverTimePretty(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "firstActionTimestamp":
+			out.Values[i] = ec._Visit_firstActionTimestamp(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lastActionTimestamp":
+			out.Values[i] = ec._Visit_lastActionTimestamp(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lastActionDateTime":
+			out.Values[i] = ec._Visit_lastActionDateTime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "serverDatePrettyFirstAction":
+			out.Values[i] = ec._Visit_serverDatePrettyFirstAction(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "serverTimePrettyFirstAction":
+			out.Values[i] = ec._Visit_serverTimePrettyFirstAction(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "userId":
+			out.Values[i] = ec._Visit_userId(ctx, field, obj)
+		case "visitorType":
+			out.Values[i] = ec._Visit_visitorType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "visitorTypeIcon":
+			out.Values[i] = ec._Visit_visitorTypeIcon(ctx, field, obj)
+		case "visitConverted":
+			out.Values[i] = ec._Visit_visitConverted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "visitConvertedIcon":
+			out.Values[i] = ec._Visit_visitConvertedIcon(ctx, field, obj)
+		case "visitCount":
+			out.Values[i] = ec._Visit_visitCount(ctx, field, obj)
+		case "visitEcommerceStatus":
+			out.Values[i] = ec._Visit_visitEcommerceStatus(ctx, field, obj)
+		case "visitEcommerceStatusIcon":
+			out.Values[i] = ec._Visit_visitEcommerceStatusIcon(ctx, field, obj)
+		case "daysSinceFirstVisit":
+			out.Values[i] = ec._Visit_daysSinceFirstVisit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "secondsSinceFirstVisit":
+			out.Values[i] = ec._Visit_secondsSinceFirstVisit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "daysSinceLastEcommerceOrder":
+			out.Values[i] = ec._Visit_daysSinceLastEcommerceOrder(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "secondsSinceLastEcommerceOrder":
+			out.Values[i] = ec._Visit_secondsSinceLastEcommerceOrder(ctx, field, obj)
+		case "visitDuration":
+			out.Values[i] = ec._Visit_visitDuration(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "visitDurationPretty":
+			out.Values[i] = ec._Visit_visitDurationPretty(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "searches":
+			out.Values[i] = ec._Visit_searches(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "actions":
+			out.Values[i] = ec._Visit_actions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "interactions":
+			out.Values[i] = ec._Visit_interactions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "languageCode":
+			out.Values[i] = ec._Visit_languageCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "language":
+			out.Values[i] = ec._Visit_language(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "deviceInfo":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Visit_deviceInfo(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "deviceType":
+			out.Values[i] = ec._Visit_deviceType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "deviceTypeIcon":
+			out.Values[i] = ec._Visit_deviceTypeIcon(ctx, field, obj)
+		case "deviceBrand":
+			out.Values[i] = ec._Visit_deviceBrand(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "deviceModel":
+			out.Values[i] = ec._Visit_deviceModel(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "operatingSystem":
+			out.Values[i] = ec._Visit_operatingSystem(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "operatingSystemName":
+			out.Values[i] = ec._Visit_operatingSystemName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "operatingSystemIcon":
+			out.Values[i] = ec._Visit_operatingSystemIcon(ctx, field, obj)
+		case "operatingSystemCode":
+			out.Values[i] = ec._Visit_operatingSystemCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "operatingSystemVersion":
+			out.Values[i] = ec._Visit_operatingSystemVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "resolution":
+			out.Values[i] = ec._Visit_resolution(ctx, field, obj)
+		case "browserInfo":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Visit_browserInfo(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "browserFamily":
+			out.Values[i] = ec._Visit_browserFamily(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "browserFamilyDescription":
+			out.Values[i] = ec._Visit_browserFamilyDescription(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "browser":
+			out.Values[i] = ec._Visit_browser(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "browserName":
+			out.Values[i] = ec._Visit_browserName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "browserIcon":
+			out.Values[i] = ec._Visit_browserIcon(ctx, field, obj)
+		case "browserCode":
+			out.Values[i] = ec._Visit_browserCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "browserVersion":
+			out.Values[i] = ec._Visit_browserVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "totalEcommerceRevenue":
+			out.Values[i] = ec._Visit_totalEcommerceRevenue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "totalEcommerceConversions":
+			out.Values[i] = ec._Visit_totalEcommerceConversions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "totalEcommerceItems":
+			out.Values[i] = ec._Visit_totalEcommerceItems(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "totalAbandonedCartsRevenue":
+			out.Values[i] = ec._Visit_totalAbandonedCartsRevenue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "totalAbandonedCarts":
+			out.Values[i] = ec._Visit_totalAbandonedCarts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "totalAbandonedCartsItems":
+			out.Values[i] = ec._Visit_totalAbandonedCartsItems(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "events":
+			out.Values[i] = ec._Visit_events(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "locationInfo":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Visit_locationInfo(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "continent":
+			out.Values[i] = ec._Visit_continent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "continentCode":
+			out.Values[i] = ec._Visit_continentCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "country":
+			out.Values[i] = ec._Visit_country(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "countryCode":
+			out.Values[i] = ec._Visit_countryCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "countryFlag":
+			out.Values[i] = ec._Visit_countryFlag(ctx, field, obj)
+		case "region":
+			out.Values[i] = ec._Visit_region(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "regionCode":
+			out.Values[i] = ec._Visit_regionCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "city":
+			out.Values[i] = ec._Visit_city(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "location":
+			out.Values[i] = ec._Visit_location(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "latitude":
+			out.Values[i] = ec._Visit_latitude(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "longitude":
+			out.Values[i] = ec._Visit_longitude(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "visitLocalTime":
+			out.Values[i] = ec._Visit_visitLocalTime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "visitLocalHour":
+			out.Values[i] = ec._Visit_visitLocalHour(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "daysSinceLastVisit":
+			out.Values[i] = ec._Visit_daysSinceLastVisit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "secondsSinceLastVisit":
+			out.Values[i] = ec._Visit_secondsSinceLastVisit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "plugins":
+			out.Values[i] = ec._Visit_plugins(ctx, field, obj)
+		case "adClickId":
+			out.Values[i] = ec._Visit_adClickId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "adProviderId":
+			out.Values[i] = ec._Visit_adProviderId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "adProviderName":
+			out.Values[i] = ec._Visit_adProviderName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "formConversions":
+			out.Values[i] = ec._Visit_formConversions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sessionReplayUrl":
+			out.Values[i] = ec._Visit_sessionReplayUrl(ctx, field, obj)
+		case "campaignInfo":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Visit_campaignInfo(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "campaignId":
+			out.Values[i] = ec._Visit_campaignId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "campaignContent":
+			out.Values[i] = ec._Visit_campaignContent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "campaignKeyword":
+			out.Values[i] = ec._Visit_campaignKeyword(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "campaignMedium":
+			out.Values[i] = ec._Visit_campaignMedium(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "campaignName":
+			out.Values[i] = ec._Visit_campaignName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "campaignSource":
+			out.Values[i] = ec._Visit_campaignSource(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "campaignGroup":
+			out.Values[i] = ec._Visit_campaignGroup(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "campaignPlacement":
+			out.Values[i] = ec._Visit_campaignPlacement(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var visitActionDetailsImplementors = []string{"VisitActionDetails"}
 
 func (ec *executionContext) _VisitActionDetails(ctx context.Context, sel ast.SelectionSet, obj *model.VisitActionDetails) graphql.Marshaler {
@@ -12490,564 +14974,104 @@ func (ec *executionContext) _VisitActionDetails(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var visitDetailsImplementors = []string{"VisitDetails"}
+var visitorFirstLastVisitImplementors = []string{"VisitorFirstLastVisit"}
 
-func (ec *executionContext) _VisitDetails(ctx context.Context, sel ast.SelectionSet, obj *model.VisitDetails) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, visitDetailsImplementors)
+func (ec *executionContext) _VisitorFirstLastVisit(ctx context.Context, sel ast.SelectionSet, obj *model.VisitorFirstLastVisit) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, visitorFirstLastVisitImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("VisitDetails")
-		case "idSite":
-			out.Values[i] = ec._VisitDetails_idSite(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("VisitorFirstLastVisit")
+		case "date":
+			out.Values[i] = ec._VisitorFirstLastVisit_date(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "siteName":
-			out.Values[i] = ec._VisitDetails_siteName(ctx, field, obj)
+		case "prettyDate":
+			out.Values[i] = ec._VisitorFirstLastVisit_prettyDate(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "siteCurrency":
-			out.Values[i] = ec._VisitDetails_siteCurrency(ctx, field, obj)
+		case "daysAgo":
+			out.Values[i] = ec._VisitorFirstLastVisit_daysAgo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "siteCurrencySymbol":
-			out.Values[i] = ec._VisitDetails_siteCurrencySymbol(ctx, field, obj)
+		case "referrerType":
+			out.Values[i] = ec._VisitorFirstLastVisit_referrerType(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "idVisit":
-			out.Values[i] = ec._VisitDetails_idVisit(ctx, field, obj)
+		case "referrerUrl":
+			out.Values[i] = ec._VisitorFirstLastVisit_referrerUrl(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "visitIp":
-			out.Values[i] = ec._VisitDetails_visitIp(ctx, field, obj)
+		case "refferalSummary":
+			out.Values[i] = ec._VisitorFirstLastVisit_refferalSummary(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var visitorProfileImplementors = []string{"VisitorProfile"}
+
+func (ec *executionContext) _VisitorProfile(ctx context.Context, sel ast.SelectionSet, obj *model.VisitorProfile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, visitorProfileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("VisitorProfile")
 		case "visitorId":
-			out.Values[i] = ec._VisitDetails_visitorId(ctx, field, obj)
+			out.Values[i] = ec._VisitorProfile_visitorId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "fingerprint":
-			out.Values[i] = ec._VisitDetails_fingerprint(ctx, field, obj)
+		case "firstVisit":
+			out.Values[i] = ec._VisitorProfile_firstVisit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "visitServerHour":
-			out.Values[i] = ec._VisitDetails_visitServerHour(ctx, field, obj)
+		case "lastVisit":
+			out.Values[i] = ec._VisitorProfile_lastVisit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "goalConversions":
-			out.Values[i] = ec._VisitDetails_goalConversions(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "actionDetails":
-			out.Values[i] = ec._VisitDetails_actionDetails(ctx, field, obj)
-		case "serverDate":
-			out.Values[i] = ec._VisitDetails_serverDate(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "serverDatePretty":
-			out.Values[i] = ec._VisitDetails_serverDatePretty(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "serverTimestamp":
-			out.Values[i] = ec._VisitDetails_serverTimestamp(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "serverTimePretty":
-			out.Values[i] = ec._VisitDetails_serverTimePretty(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "firstActionTimestamp":
-			out.Values[i] = ec._VisitDetails_firstActionTimestamp(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "lastActionTimestamp":
-			out.Values[i] = ec._VisitDetails_lastActionTimestamp(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "lastActionDateTime":
-			out.Values[i] = ec._VisitDetails_lastActionDateTime(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "serverDatePrettyFirstAction":
-			out.Values[i] = ec._VisitDetails_serverDatePrettyFirstAction(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "serverTimePrettyFirstAction":
-			out.Values[i] = ec._VisitDetails_serverTimePrettyFirstAction(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "userId":
-			out.Values[i] = ec._VisitDetails_userId(ctx, field, obj)
-		case "visitorType":
-			out.Values[i] = ec._VisitDetails_visitorType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "visitorTypeIcon":
-			out.Values[i] = ec._VisitDetails_visitorTypeIcon(ctx, field, obj)
-		case "visitConverted":
-			out.Values[i] = ec._VisitDetails_visitConverted(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "visitConvertedIcon":
-			out.Values[i] = ec._VisitDetails_visitConvertedIcon(ctx, field, obj)
-		case "visitCount":
-			out.Values[i] = ec._VisitDetails_visitCount(ctx, field, obj)
-		case "visitEcommerceStatus":
-			out.Values[i] = ec._VisitDetails_visitEcommerceStatus(ctx, field, obj)
-		case "visitEcommerceStatusIcon":
-			out.Values[i] = ec._VisitDetails_visitEcommerceStatusIcon(ctx, field, obj)
-		case "daysSinceFirstVisit":
-			out.Values[i] = ec._VisitDetails_daysSinceFirstVisit(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "secondsSinceFirstVisit":
-			out.Values[i] = ec._VisitDetails_secondsSinceFirstVisit(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "daysSinceLastEcommerceOrder":
-			out.Values[i] = ec._VisitDetails_daysSinceLastEcommerceOrder(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "secondsSinceLastEcommerceOrder":
-			out.Values[i] = ec._VisitDetails_secondsSinceLastEcommerceOrder(ctx, field, obj)
-		case "visitDuration":
-			out.Values[i] = ec._VisitDetails_visitDuration(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "visitDurationPretty":
-			out.Values[i] = ec._VisitDetails_visitDurationPretty(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "searches":
-			out.Values[i] = ec._VisitDetails_searches(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "actions":
-			out.Values[i] = ec._VisitDetails_actions(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "interactions":
-			out.Values[i] = ec._VisitDetails_interactions(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "languageCode":
-			out.Values[i] = ec._VisitDetails_languageCode(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "language":
-			out.Values[i] = ec._VisitDetails_language(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deviceInfo":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._VisitDetails_deviceInfo(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "deviceType":
-			out.Values[i] = ec._VisitDetails_deviceType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deviceTypeIcon":
-			out.Values[i] = ec._VisitDetails_deviceTypeIcon(ctx, field, obj)
-		case "deviceBrand":
-			out.Values[i] = ec._VisitDetails_deviceBrand(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deviceModel":
-			out.Values[i] = ec._VisitDetails_deviceModel(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "operatingSystem":
-			out.Values[i] = ec._VisitDetails_operatingSystem(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "operatingSystemName":
-			out.Values[i] = ec._VisitDetails_operatingSystemName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "operatingSystemIcon":
-			out.Values[i] = ec._VisitDetails_operatingSystemIcon(ctx, field, obj)
-		case "operatingSystemCode":
-			out.Values[i] = ec._VisitDetails_operatingSystemCode(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "operatingSystemVersion":
-			out.Values[i] = ec._VisitDetails_operatingSystemVersion(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "resolution":
-			out.Values[i] = ec._VisitDetails_resolution(ctx, field, obj)
-		case "browserInfo":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._VisitDetails_browserInfo(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "browserFamily":
-			out.Values[i] = ec._VisitDetails_browserFamily(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "browserFamilyDescription":
-			out.Values[i] = ec._VisitDetails_browserFamilyDescription(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "browser":
-			out.Values[i] = ec._VisitDetails_browser(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "browserName":
-			out.Values[i] = ec._VisitDetails_browserName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "browserIcon":
-			out.Values[i] = ec._VisitDetails_browserIcon(ctx, field, obj)
-		case "browserCode":
-			out.Values[i] = ec._VisitDetails_browserCode(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "browserVersion":
-			out.Values[i] = ec._VisitDetails_browserVersion(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalEcommerceRevenue":
-			out.Values[i] = ec._VisitDetails_totalEcommerceRevenue(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalEcommerceConversions":
-			out.Values[i] = ec._VisitDetails_totalEcommerceConversions(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalEcommerceItems":
-			out.Values[i] = ec._VisitDetails_totalEcommerceItems(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalAbandonedCartsRevenue":
-			out.Values[i] = ec._VisitDetails_totalAbandonedCartsRevenue(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalAbandonedCarts":
-			out.Values[i] = ec._VisitDetails_totalAbandonedCarts(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalAbandonedCartsItems":
-			out.Values[i] = ec._VisitDetails_totalAbandonedCartsItems(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "events":
-			out.Values[i] = ec._VisitDetails_events(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "locationInfo":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._VisitDetails_locationInfo(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "continent":
-			out.Values[i] = ec._VisitDetails_continent(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "continentCode":
-			out.Values[i] = ec._VisitDetails_continentCode(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "country":
-			out.Values[i] = ec._VisitDetails_country(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "countryCode":
-			out.Values[i] = ec._VisitDetails_countryCode(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "countryFlag":
-			out.Values[i] = ec._VisitDetails_countryFlag(ctx, field, obj)
-		case "region":
-			out.Values[i] = ec._VisitDetails_region(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "regionCode":
-			out.Values[i] = ec._VisitDetails_regionCode(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "city":
-			out.Values[i] = ec._VisitDetails_city(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "location":
-			out.Values[i] = ec._VisitDetails_location(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "latitude":
-			out.Values[i] = ec._VisitDetails_latitude(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "longitude":
-			out.Values[i] = ec._VisitDetails_longitude(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "visitLocalTime":
-			out.Values[i] = ec._VisitDetails_visitLocalTime(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "visitLocalHour":
-			out.Values[i] = ec._VisitDetails_visitLocalHour(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "daysSinceLastVisit":
-			out.Values[i] = ec._VisitDetails_daysSinceLastVisit(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "secondsSinceLastVisit":
-			out.Values[i] = ec._VisitDetails_secondsSinceLastVisit(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "plugins":
-			out.Values[i] = ec._VisitDetails_plugins(ctx, field, obj)
-		case "adClickId":
-			out.Values[i] = ec._VisitDetails_adClickId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "adProviderId":
-			out.Values[i] = ec._VisitDetails_adProviderId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "adProviderName":
-			out.Values[i] = ec._VisitDetails_adProviderName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "formConversions":
-			out.Values[i] = ec._VisitDetails_formConversions(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "sessionReplayUrl":
-			out.Values[i] = ec._VisitDetails_sessionReplayUrl(ctx, field, obj)
-		case "campaignInfo":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._VisitDetails_campaignInfo(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "campaignId":
-			out.Values[i] = ec._VisitDetails_campaignId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "campaignContent":
-			out.Values[i] = ec._VisitDetails_campaignContent(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "campaignKeyword":
-			out.Values[i] = ec._VisitDetails_campaignKeyword(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "campaignMedium":
-			out.Values[i] = ec._VisitDetails_campaignMedium(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "campaignName":
-			out.Values[i] = ec._VisitDetails_campaignName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "campaignSource":
-			out.Values[i] = ec._VisitDetails_campaignSource(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "campaignGroup":
-			out.Values[i] = ec._VisitDetails_campaignGroup(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "campaignPlacement":
-			out.Values[i] = ec._VisitDetails_campaignPlacement(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
+		case "lastVisits":
+			out.Values[i] = ec._VisitorProfile_lastVisits(ctx, field, obj)
+		case "devices":
+			out.Values[i] = ec._VisitorProfile_devices(ctx, field, obj)
+		case "countries":
+			out.Values[i] = ec._VisitorProfile_countries(ctx, field, obj)
+		case "continents":
+			out.Values[i] = ec._VisitorProfile_continents(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13452,6 +15476,16 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNVisitorFirstLastVisit2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorFirstLastVisit(ctx context.Context, sel ast.SelectionSet, v *model.VisitorFirstLastVisit) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._VisitorFirstLastVisit(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
 	return ec.___Directive(ctx, sel, &v)
 }
@@ -13705,6 +15739,150 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOAggregateContinentInfo2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateContinentInfo(ctx context.Context, sel ast.SelectionSet, v []*model.AggregateContinentInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOAggregateContinentInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateContinentInfo(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOAggregateContinentInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateContinentInfo(ctx context.Context, sel ast.SelectionSet, v *model.AggregateContinentInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AggregateContinentInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAggregateCountryInfo2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateCountryInfo(ctx context.Context, sel ast.SelectionSet, v []*model.AggregateCountryInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOAggregateCountryInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateCountryInfo(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOAggregateCountryInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateCountryInfo(ctx context.Context, sel ast.SelectionSet, v *model.AggregateCountryInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AggregateCountryInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAggregateDeviceInfo2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateDeviceInfo(ctx context.Context, sel ast.SelectionSet, v []*model.AggregateDeviceInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOAggregateDeviceInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateDeviceInfo(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOAggregateDeviceInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐAggregateDeviceInfo(ctx context.Context, sel ast.SelectionSet, v *model.AggregateDeviceInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AggregateDeviceInfo(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -13870,6 +16048,54 @@ func (ec *executionContext) marshalOReferrerInfo2ᚖgithubᚗcomᚋjalavosusᚋm
 	return ec._ReferrerInfo(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOShortDeviceInfo2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐShortDeviceInfo(ctx context.Context, sel ast.SelectionSet, v []*model.ShortDeviceInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOShortDeviceInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐShortDeviceInfo(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOShortDeviceInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐShortDeviceInfo(ctx context.Context, sel ast.SelectionSet, v *model.ShortDeviceInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ShortDeviceInfo(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
 	if v == nil {
 		return nil, nil
@@ -13924,6 +16150,54 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
+func (ec *executionContext) marshalOVisit2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx context.Context, sel ast.SelectionSet, v []*model.Visit) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOVisit2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOVisit2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx context.Context, sel ast.SelectionSet, v *model.Visit) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Visit(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOVisitActionDetails2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitActionDetails(ctx context.Context, sel ast.SelectionSet, v []*model.VisitActionDetails) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -13972,52 +16246,11 @@ func (ec *executionContext) marshalOVisitActionDetails2ᚖgithubᚗcomᚋjalavos
 	return ec._VisitActionDetails(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOVisitDetails2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitDetails(ctx context.Context, sel ast.SelectionSet, v []*model.VisitDetails) graphql.Marshaler {
+func (ec *executionContext) marshalOVisitorProfile2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorProfile(ctx context.Context, sel ast.SelectionSet, v *model.VisitorProfile) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOVisitDetails2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitDetails(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOVisitDetails2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitDetails(ctx context.Context, sel ast.SelectionSet, v *model.VisitDetails) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._VisitDetails(ctx, sel, v)
+	return ec._VisitorProfile(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

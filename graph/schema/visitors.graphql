@@ -1,0 +1,22 @@
+
+type VisitorProfile {
+    visitorId:  String!
+
+    firstVisit: VisitorFirstLastVisit!
+    lastVisit:  VisitorFirstLastVisit!
+
+    lastVisits: [Visit]
+
+    devices:    [AggregateDeviceInfo]
+    countries:  [AggregateCountryInfo]
+    continents: [AggregateContinentInfo]
+}
+
+type VisitorFirstLastVisit {
+    date:       Int!
+    prettyDate: String!
+    daysAgo:    Int!
+    referrerType:    String!
+    referrerUrl:     String!
+    refferalSummary: String!
+}

@@ -86,7 +86,7 @@ func GetGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*
 	return goals, nil
 }
 
-func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.ConvertedVisitsOptions) ([]*model.VisitDetails, error) {
+func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.ConvertedVisitsOptions) ([]*model.Visit, error) {
 	params, endpoint := buildRequestParams(idSite, "Live.getLastVisitsDetails")
 	params.Set("segment", fmt.Sprintf("visitConvertedGoalId==%d", idGoal))
 	params.Set("expanded", "1")
@@ -121,7 +121,7 @@ func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.Con
 		return nil, err
 	}
 
-	var visitDetails []*model.VisitDetails
+	var visitDetails []*model.Visit
 	if err := json.Unmarshal(bodyRaw, &visitDetails); err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.Con
 	return visitDetails, nil
 }
 
-func GetConvertedVisitsBulk(ctx context.Context, queries ...string) ([][]*model.VisitDetails, error) {
+func GetConvertedVisitsBulk(ctx context.Context, queries ...string) ([][]*model.Visit, error) {
 	var (
 		vals, endpoint = buildRequestParams(-1, "API.getBulkRequest")
 	)
@@ -171,7 +171,7 @@ func GetConvertedVisitsBulk(ctx context.Context, queries ...string) ([][]*model.
 		return nil, err
 	}
 
-	var visitDetails [][]*model.VisitDetails
+	var visitDetails [][]*model.Visit
 	if err := json.Unmarshal(bodyRaw, &visitDetails); err != nil {
 		return nil, err
 	}

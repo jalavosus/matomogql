@@ -15,7 +15,7 @@ type Goal {
     convertedVisits(
         opts:    ConvertedVisitsOptions,
         orderBy: OrderByOptions
-    ): [VisitDetails] @goField(forceResolver: true)
+    ): [Visit] @goField(forceResolver: true)
 }
 
 input ConvertedVisitsOptions {

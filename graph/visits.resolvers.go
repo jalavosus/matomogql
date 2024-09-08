@@ -7,20 +7,17 @@ package graph
 import (
 	"context"
 
+	"github.com/jalavosus/matomogql/graph/loaders"
 	"github.com/jalavosus/matomogql/graph/model"
 )
 
-// Referrer is the resolver for the referrer field.
-func (r *visitActionDetailsResolver) Referrer(ctx context.Context, obj *model.VisitActionDetails) (*model.ReferrerInfo, error) {
-	return &model.ReferrerInfo{
-		Type:    obj.ReferrerType,
-		Name:    obj.ReferrerName,
-		Keyword: obj.ReferrerKeyword,
-	}, nil
+// VisitorProfile is the resolver for the visitorProfile field.
+func (r *visitResolver) VisitorProfile(ctx context.Context, obj *model.Visit) (*model.VisitorProfile, error) {
+	return loaders.GetVisitorProfile(ctx, obj.IDSite, obj.VisitorID)
 }
 
 // DeviceInfo is the resolver for the deviceInfo field.
-func (r *visitDetailsResolver) DeviceInfo(ctx context.Context, obj *model.VisitDetails) (*model.DeviceInfo, error) {
+func (r *visitResolver) DeviceInfo(ctx context.Context, obj *model.Visit) (*model.DeviceInfo, error) {
 	return &model.DeviceInfo{
 		Type:                   obj.DeviceType,
 		TypeIcon:               obj.DeviceTypeIcon,
@@ -36,7 +33,7 @@ func (r *visitDetailsResolver) DeviceInfo(ctx context.Context, obj *model.VisitD
 }
 
 // BrowserInfo is the resolver for the browserInfo field.
-func (r *visitDetailsResolver) BrowserInfo(ctx context.Context, obj *model.VisitDetails) (*model.BrowserInfo, error) {
+func (r *visitResolver) BrowserInfo(ctx context.Context, obj *model.Visit) (*model.BrowserInfo, error) {
 	return &model.BrowserInfo{
 		Family:            obj.BrowserFamily,
 		FamilyDescription: obj.BrowserFamilyDescription,
@@ -49,7 +46,7 @@ func (r *visitDetailsResolver) BrowserInfo(ctx context.Context, obj *model.Visit
 }
 
 // LocationInfo is the resolver for the locationInfo field.
-func (r *visitDetailsResolver) LocationInfo(ctx context.Context, obj *model.VisitDetails) (*model.Location, error) {
+func (r *visitResolver) LocationInfo(ctx context.Context, obj *model.Visit) (*model.Location, error) {
 	return &model.Location{
 		Continent:     obj.Continent,
 		ContinentCode: obj.ContinentCode,
@@ -66,7 +63,7 @@ func (r *visitDetailsResolver) LocationInfo(ctx context.Context, obj *model.Visi
 }
 
 // CampaignInfo is the resolver for the campaignInfo field.
-func (r *visitDetailsResolver) CampaignInfo(ctx context.Context, obj *model.VisitDetails) (*model.CampaignInfo, error) {
+func (r *visitResolver) CampaignInfo(ctx context.Context, obj *model.Visit) (*model.CampaignInfo, error) {
 	return &model.CampaignInfo{
 		ID:        obj.CampaignID,
 		Content:   obj.CampaignContent,
@@ -79,13 +76,22 @@ func (r *visitDetailsResolver) CampaignInfo(ctx context.Context, obj *model.Visi
 	}, nil
 }
 
+// Referrer is the resolver for the referrer field.
+func (r *visitActionDetailsResolver) Referrer(ctx context.Context, obj *model.VisitActionDetails) (*model.ReferrerInfo, error) {
+	return &model.ReferrerInfo{
+		Type:    obj.ReferrerType,
+		Name:    obj.ReferrerName,
+		Keyword: obj.ReferrerKeyword,
+	}, nil
+}
+
+// Visit returns VisitResolver implementation.
+func (r *Resolver) Visit() VisitResolver { return &visitResolver{r} }
+
 // VisitActionDetails returns VisitActionDetailsResolver implementation.
 func (r *Resolver) VisitActionDetails() VisitActionDetailsResolver {
 	return &visitActionDetailsResolver{r}
 }
 
-// VisitDetails returns VisitDetailsResolver implementation.
-func (r *Resolver) VisitDetails() VisitDetailsResolver { return &visitDetailsResolver{r} }
-
+type visitResolver struct{ *Resolver }
 type visitActionDetailsResolver struct{ *Resolver }
-type visitDetailsResolver struct{ *Resolver }

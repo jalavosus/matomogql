@@ -8,6 +8,26 @@ import (
 	"strconv"
 )
 
+type AggregateContinentInfo struct {
+	Continent  string `json:"continent"`
+	NumVisits  int    `json:"nb_visits"`
+	PrettyName string `json:"prettyName"`
+}
+
+type AggregateCountryInfo struct {
+	Country    string  `json:"country"`
+	NumVisits  int     `json:"nb_visits"`
+	Flag       *string `json:"flag,omitempty"`
+	PrettyName string  `json:"prettyName"`
+}
+
+type AggregateDeviceInfo struct {
+	Type    string             `json:"type"`
+	Count   int                `json:"count"`
+	Icon    *string            `json:"icon,omitempty"`
+	Devices []*ShortDeviceInfo `json:"devices,omitempty"`
+}
+
 type BrowserInfo struct {
 	Family            string  `json:"family"`
 	FamilyDescription string  `json:"familyDescription"`
@@ -53,19 +73,19 @@ type GetGoalsOptions struct {
 }
 
 type Goal struct {
-	IDSite              int             `json:"idsite"`
-	IDGoal              int             `json:"idgoal"`
-	Name                string          `json:"name"`
-	Description         string          `json:"description"`
-	MatchAttribute      string          `json:"match_attribute"`
-	Pattern             *string         `json:"pattern,omitempty"`
-	PatternType         *string         `json:"pattern_type,omitempty"`
-	CaseSensitive       *int            `json:"case_sensitive"`
-	AllowMultiple       int             `json:"allow_multiple,omitempty"`
-	Revenue             int             `json:"revenue"`
-	Deleted             int             `json:"deleted"`
-	EventValueAsRevenue int             `json:"event_value_as_revenue,omitempty"`
-	ConvertedVisits     []*VisitDetails `json:"convertedVisits,omitempty"`
+	IDSite              int      `json:"idsite"`
+	IDGoal              int      `json:"idgoal"`
+	Name                string   `json:"name"`
+	Description         string   `json:"description"`
+	MatchAttribute      string   `json:"match_attribute"`
+	Pattern             *string  `json:"pattern,omitempty"`
+	PatternType         *string  `json:"pattern_type,omitempty"`
+	CaseSensitive       *int     `json:"case_sensitive"`
+	AllowMultiple       int      `json:"allow_multiple,omitempty"`
+	Revenue             int      `json:"revenue"`
+	Deleted             int      `json:"deleted"`
+	EventValueAsRevenue int      `json:"event_value_as_revenue,omitempty"`
+	ConvertedVisits     []*Visit `json:"convertedVisits,omitempty"`
 }
 
 type Location struct {
@@ -101,28 +121,12 @@ type ReferrerInfo struct {
 	SocialNetworkIcon *string `json:"socialNetworkIcon,omitempty"`
 }
 
-type VisitActionDetails struct {
-	Type             string        `json:"type"`
-	URL              string        `json:"url"`
-	Title            string        `json:"title"`
-	Subtitle         string        `json:"subtitle"`
-	PageTitle        string        `json:"pageTitle"`
-	PageIDAction     int           `json:"pageIdAction"`
-	IDPageView       string        `json:"idpageview"`
-	ServerTimePretty string        `json:"serverTimePretty"`
-	PageID           int           `json:"pageId"`
-	TimeSpent        int           `json:"timeSpent"`
-	TimeSpentPretty  string        `json:"timeSpentPretty"`
-	PageViewPosition int           `json:"pageViewPosition"`
-	Timestamp        int           `json:"timestamp"`
-	GoalPageID       *int          `json:"goalPageId,omitempty"`
-	Referrer         *ReferrerInfo `json:"referrer,omitempty"`
-	ReferrerType     *string       `json:"referrerType,omitempty"`
-	ReferrerName     *string       `json:"referrerName,omitempty"`
-	ReferrerKeyword  *string       `json:"referrerKeyword,omitempty"`
+type ShortDeviceInfo struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
 }
 
-type VisitDetails struct {
+type Visit struct {
 	IDSite                         int                   `json:"idSite"`
 	SiteName                       string                `json:"siteName"`
 	SiteCurrency                   string                `json:"siteCurrency"`
@@ -131,6 +135,7 @@ type VisitDetails struct {
 	VisitIP                        string                `json:"visitIp"`
 	VisitorID                      string                `json:"visitorId"`
 	Fingerprint                    string                `json:"fingerprint"`
+	VisitorProfile                 *VisitorProfile       `json:"visitorProfile,omitempty"`
 	VisitServerHour                string                `json:"visitServerHour"`
 	GoalConversions                int                   `json:"goalConversions"`
 	ActionDetails                  []*VisitActionDetails `json:"actionDetails,omitempty"`
@@ -219,6 +224,46 @@ type VisitDetails struct {
 	CampaignSource                 string                `json:"campaignSource"`
 	CampaignGroup                  string                `json:"campaignGroup"`
 	CampaignPlacement              string                `json:"campaignPlacement"`
+}
+
+type VisitActionDetails struct {
+	Type             string        `json:"type"`
+	URL              string        `json:"url"`
+	Title            string        `json:"title"`
+	Subtitle         string        `json:"subtitle"`
+	PageTitle        string        `json:"pageTitle"`
+	PageIDAction     int           `json:"pageIdAction"`
+	IDPageView       string        `json:"idpageview"`
+	ServerTimePretty string        `json:"serverTimePretty"`
+	PageID           int           `json:"pageId"`
+	TimeSpent        int           `json:"timeSpent"`
+	TimeSpentPretty  string        `json:"timeSpentPretty"`
+	PageViewPosition int           `json:"pageViewPosition"`
+	Timestamp        int           `json:"timestamp"`
+	GoalPageID       *int          `json:"goalPageId,omitempty"`
+	Referrer         *ReferrerInfo `json:"referrer,omitempty"`
+	ReferrerType     *string       `json:"referrerType,omitempty"`
+	ReferrerName     *string       `json:"referrerName,omitempty"`
+	ReferrerKeyword  *string       `json:"referrerKeyword,omitempty"`
+}
+
+type VisitorFirstLastVisit struct {
+	Date            int    `json:"date"`
+	PrettyDate      string `json:"prettyDate"`
+	DaysAgo         int    `json:"daysAgo"`
+	ReferrerType    string `json:"referrerType"`
+	ReferrerURL     string `json:"referrerUrl"`
+	RefferalSummary string `json:"refferalSummary"`
+}
+
+type VisitorProfile struct {
+	VisitorID  string                    `json:"visitorId"`
+	FirstVisit *VisitorFirstLastVisit    `json:"firstVisit"`
+	LastVisit  *VisitorFirstLastVisit    `json:"lastVisit"`
+	LastVisits []*Visit                  `json:"lastVisits,omitempty"`
+	Devices    []*AggregateDeviceInfo    `json:"devices,omitempty"`
+	Countries  []*AggregateCountryInfo   `json:"countries,omitempty"`
+	Continents []*AggregateContinentInfo `json:"continents,omitempty"`
 }
 
 type OrderBy string

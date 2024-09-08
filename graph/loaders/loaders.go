@@ -17,15 +17,21 @@ const (
 )
 
 type Loaders struct {
-	GoalConvertedVisitsLoader *dataloadgen.Loader[string, []*model.VisitDetails]
+	GoalConvertedVisitsLoader *dataloadgen.Loader[string, []*model.Visit]
+	VisitorProfilesLoader     *dataloadgen.Loader[string, *model.VisitorProfile]
 }
 
 func NewLoaders() *Loaders {
 	return &Loaders{
 		GoalConvertedVisitsLoader: dataloadgen.NewLoader(
 			getGoalConvertedVisits,
-			dataloadgen.WithWait(15*time.Millisecond),
+			dataloadgen.WithWait(8*time.Millisecond),
 			dataloadgen.WithBatchCapacity(8),
+		),
+		VisitorProfilesLoader: dataloadgen.NewLoader(
+			getVisitorProfiles,
+			dataloadgen.WithWait(8*time.Millisecond),
+			dataloadgen.WithBatchCapacity(10),
 		),
 	}
 }

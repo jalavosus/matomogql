@@ -1,13 +1,16 @@
-type VisitDetails {
+type Visit {
     idSite:               Int!
     siteName:             String!
     siteCurrency:         String!
     siteCurrencySymbol:   String!
 
     idVisit:              Int!
+
     visitIp:              String!
     visitorId:            String!
     fingerprint:          String!
+    visitorProfile:       VisitorProfile @goField(forceResolver: true)
+
     visitServerHour:      String!
     goalConversions:      Int!
     actionDetails:       [VisitActionDetails]

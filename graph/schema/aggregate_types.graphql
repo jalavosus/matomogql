@@ -1,0 +1,25 @@
+type AggregateDeviceInfo {
+    type:     String!
+    count:    Int!
+    icon:     String
+    devices: [ShortDeviceInfo]
+}
+
+type ShortDeviceInfo {
+    name:  String!
+    count: Int!
+}
+
+type AggregateContinentInfo {
+    continent:  String!
+    numVisits:  Int! @goTag(key: "json", value: "nb_visits")
+    prettyName: String!
+}
+
+type AggregateCountryInfo {
+    country:    String!
+    numVisits:  Int! @goTag(key: "json", value: "nb_visits")
+    flag:       String
+    prettyName: String!
+#    cities:    [String!]
+}
