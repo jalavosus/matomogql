@@ -10,14 +10,16 @@ import (
 	"github.com/jalavosus/matomogql/graph/loaders"
 )
 
-func MakeServer() *http.ServeMux {
+func MakeServer(enablePlayground bool) http.Handler {
 	execSchema := graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}})
 
 	var srv = loaders.Middleware(handler.NewDefaultServer(execSchema))
 
 	mux := http.NewServeMux()
-	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	mux.Handle("/query", srv)
+	if enablePlayground {
+		mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	}
 
 	return mux
 }
