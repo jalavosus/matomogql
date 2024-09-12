@@ -13,7 +13,7 @@ import (
 	"github.com/jalavosus/matomogql/graph/model"
 )
 
-func GetGoal(ctx context.Context, idSite int, idGoal int) (*model.Goal, error) {
+func GetGoal(ctx context.Context, idSite, idGoal int) (*model.Goal, error) {
 	params, endpoint := buildRequestParams(idSite, "Goals.getGoal")
 	params.Set("idGoal", strconv.Itoa(idGoal))
 	endpoint = endpoint + "?" + params.Encode()
@@ -21,7 +21,7 @@ func GetGoal(ctx context.Context, idSite int, idGoal int) (*model.Goal, error) {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func GetGoal(ctx context.Context, idSite int, idGoal int) (*model.Goal, error) {
 		return nil, err
 	}
 
-	defer closeResBody(res.Body)
+	defer res.Body.Close()
 
 	bodyRaw, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -69,7 +69,7 @@ func GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoa
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoa
 		return nil, err
 	}
 
-	defer closeResBody(res.Body)
+	defer res.Body.Close()
 
 	bodyRaw, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -120,7 +120,7 @@ func GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) (
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) (
 		return nil, err
 	}
 
-	defer closeResBody(res.Body)
+	defer res.Body.Close()
 
 	bodyRaw, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -163,7 +163,7 @@ func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.Con
 	params.Set("period", strings.ToLower(opts.Period.String()))
 
 	var date = opts.StartDate
-	if endDate, ok := opts.EndDate.ValueOK(); ok && len(*endDate) > 0 {
+	if endDate, ok := opts.EndDate.ValueOK(); ok && *endDate != "" {
 		date += "," + *endDate
 	}
 	params.Set("date", date)
@@ -173,7 +173,7 @@ func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.Con
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.Con
 		return nil, err
 	}
 
-	defer closeResBody(res.Body)
+	defer res.Body.Close()
 
 	bodyRaw, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -223,7 +223,7 @@ func GetConvertedVisitsBulk(ctx context.Context, queries ...string) ([][]*model.
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +233,7 @@ func GetConvertedVisitsBulk(ctx context.Context, queries ...string) ([][]*model.
 		return nil, err
 	}
 
-	defer closeResBody(res.Body)
+	defer res.Body.Close()
 
 	bodyRaw, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -249,12 +249,12 @@ func GetConvertedVisitsBulk(ctx context.Context, queries ...string) ([][]*model.
 }
 
 type convertedVisitsQuery struct {
-	idSite    int
-	idGoal    int
 	period    string
 	startDate string
 	endDate   string
 	date      string
+	idSite    int
+	idGoal    int
 }
 
 // format: idSite:idGoal:period:startDate:endDate
@@ -269,7 +269,7 @@ func parseConvertedVisitsQuery(query string) (parsedQuery convertedVisitsQuery) 
 	parsedQuery.endDate = split[4]
 
 	parsedQuery.date = parsedQuery.startDate
-	if len(parsedQuery.endDate) > 0 {
+	if parsedQuery.endDate != "" {
 		parsedQuery.date = parsedQuery.date + "," + parsedQuery.endDate
 	}
 

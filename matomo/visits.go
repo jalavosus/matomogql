@@ -22,19 +22,19 @@ func GetVisitorProfile(ctx context.Context, idSite int, visitorId string) (*mode
 
 	endpoint = endpoint + "?" + params.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := httpClient.Do(req)
+	res, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	defer closeResBody(resp.Body)
+	defer res.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -77,19 +77,19 @@ func GetVisitorProfilesBulk(ctx context.Context, queries ...string) ([]*model.Vi
 
 	endpoint = endpoint + "?" + vals.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := httpClient.Do(req)
+	res, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	defer closeResBody(resp.Body)
+	defer res.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +103,8 @@ func GetVisitorProfilesBulk(ctx context.Context, queries ...string) ([]*model.Vi
 }
 
 type parsedVisitorProfilesQuery struct {
-	idSite    int
 	visitorId string
+	idSite    int
 }
 
 func parseGetVisitorProfilesQuery(query string) (parsed parsedVisitorProfilesQuery) {

@@ -1,7 +1,6 @@
 package matomo
 
 import (
-	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -34,8 +33,4 @@ func buildRequestParams(idSite int, method string) (values url.Values, endpoint 
 	values.Set("token_auth", apiKey)
 
 	return
-}
-
-func closeResBody(body io.ReadCloser) {
-	_ = body.Close()
 }
