@@ -213,7 +213,11 @@ func GetConvertedVisitsBulk(ctx context.Context, queries ...[6]string) ([][]*mod
 		queryVals, _ := buildRequestParams(parsedQuery.idSite, "Live.getLastVisitsDetails")
 		queryVals.Set("expanded", "1")
 		queryVals.Set("filterLimit", "-1")
-		queryVals.Set("segment", fmt.Sprintf("visitConvertedGoalId==%d", parsedQuery.idGoal))
+		if parsedQuery.searchSegment != "" {
+			queryVals.Set("segment", parsedQuery.searchSegment)
+		} else {
+			queryVals.Set("segment", fmt.Sprintf("visitConvertedGoalId==%d", parsedQuery.idGoal))
+		}
 		if parsedQuery.period != "" {
 			queryVals.Set("period", strings.ToLower(parsedQuery.period))
 		}
@@ -259,12 +263,11 @@ func GetConvertedVisitsBulk(ctx context.Context, queries ...[6]string) ([][]*mod
 }
 
 type convertedVisitsQuery struct {
-	period    string
-	startDate string
-	endDate   string
-	date      string
-	idSite    int
-	idGoal    int
+	period        string
+	date          string
+	idGoal        int
+	idSite        int
+	searchSegment string
 }
 
 func parseConvertedVisitsQuery(query [6]string) (parsedQuery convertedVisitsQuery) {
@@ -273,12 +276,14 @@ func parseConvertedVisitsQuery(query [6]string) (parsedQuery convertedVisitsQuer
 	parsedQuery.idSite, _ = strconv.Atoi(query[0])
 	parsedQuery.idGoal, _ = strconv.Atoi(query[1])
 	parsedQuery.period = query[2]
-	parsedQuery.startDate = query[3]
-	parsedQuery.endDate = query[4]
 
-	parsedQuery.date = parsedQuery.startDate
-	if parsedQuery.endDate != "" {
-		parsedQuery.date = parsedQuery.date + "," + parsedQuery.endDate
+	parsedQuery.date = query[3]
+	if endDate := query[4]; endDate != "" {
+		parsedQuery.date = parsedQuery.date + "," + endDate
+	}
+
+	if segment := query[5]; segment != "" {
+		parsedQuery.searchSegment = segment
 	}
 
 	return

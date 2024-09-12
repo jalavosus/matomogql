@@ -39,6 +39,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	EcommerceGoal() EcommerceGoalResolver
 	Goal() GoalResolver
 	Query() QueryResolver
 	Visit() VisitResolver
@@ -103,6 +104,23 @@ type ComplexityRoot struct {
 		TypeIcon               func(childComplexity int) int
 	}
 
+	EcommerceGoal struct {
+		AveragePrice              func(childComplexity int) int
+		AverageQuantity           func(childComplexity int) int
+		ConversionRate            func(childComplexity int) int
+		ConversionRatePercent     func(childComplexity int) int
+		ConvertedVisits           func(childComplexity int, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) int
+		IDSite                    func(childComplexity int) int
+		Label                     func(childComplexity int) int
+		NumActions                func(childComplexity int) int
+		NumVisits                 func(childComplexity int) int
+		Orders                    func(childComplexity int) int
+		Quantity                  func(childComplexity int) int
+		Revenue                   func(childComplexity int) int
+		Segment                   func(childComplexity int) int
+		SumDailyNumUniqueVisitors func(childComplexity int) int
+	}
+
 	Goal struct {
 		AllowMultiple       func(childComplexity int) int
 		CaseSensitive       func(childComplexity int) int
@@ -134,12 +152,14 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetAllGoals        func(childComplexity int, idSite int, opts *model.GetGoalsOptions) int
-		GetGoal            func(childComplexity int, idSite int, idGoal int) int
-		GetGoals           func(childComplexity int, idSite int, goalIds []int, opts *model.GetGoalsOptions) int
-		GetVisitorProfile  func(childComplexity int, idSite int, visitorID string) int
-		GetVisitorProfiles func(childComplexity int, idSite int, visitorIds []string) int
-		HelloWorld         func(childComplexity int) int
+		GetAllGoals           func(childComplexity int, idSite int, opts *model.GetGoalsOptions) int
+		GetEcommerceGoalsName func(childComplexity int, idSite int, opts model.GetEcommerceGoalsOptions) int
+		GetEcommerceGoalsSku  func(childComplexity int, idSite int, opts model.GetEcommerceGoalsOptions) int
+		GetGoal               func(childComplexity int, idSite int, idGoal int) int
+		GetGoals              func(childComplexity int, idSite int, goalIds []int, opts *model.GetGoalsOptions) int
+		GetVisitorProfile     func(childComplexity int, idSite int, visitorID string) int
+		GetVisitorProfiles    func(childComplexity int, idSite int, visitorIds []string) int
+		HelloWorld            func(childComplexity int) int
 	}
 
 	ReferrerInfo struct {
@@ -294,11 +314,18 @@ type ComplexityRoot struct {
 	}
 }
 
+type EcommerceGoalResolver interface {
+	ConversionRate(ctx context.Context, obj *model.EcommerceGoal) (float64, error)
+
+	ConvertedVisits(ctx context.Context, obj *model.EcommerceGoal, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.Visit, error)
+}
 type GoalResolver interface {
 	ConvertedVisits(ctx context.Context, obj *model.Goal, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.Visit, error)
 }
 type QueryResolver interface {
 	HelloWorld(ctx context.Context) (string, error)
+	GetEcommerceGoalsName(ctx context.Context, idSite int, opts model.GetEcommerceGoalsOptions) ([]*model.EcommerceGoal, error)
+	GetEcommerceGoalsSku(ctx context.Context, idSite int, opts model.GetEcommerceGoalsOptions) ([]*model.EcommerceGoal, error)
 	GetGoal(ctx context.Context, idSite int, idGoal int) (*model.Goal, error)
 	GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
 	GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
@@ -591,6 +618,109 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DeviceInfo.TypeIcon(childComplexity), true
 
+	case "EcommerceGoal.averagePrice":
+		if e.complexity.EcommerceGoal.AveragePrice == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.AveragePrice(childComplexity), true
+
+	case "EcommerceGoal.averageQuantity":
+		if e.complexity.EcommerceGoal.AverageQuantity == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.AverageQuantity(childComplexity), true
+
+	case "EcommerceGoal.conversionRate":
+		if e.complexity.EcommerceGoal.ConversionRate == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.ConversionRate(childComplexity), true
+
+	case "EcommerceGoal.conversionRatePercent":
+		if e.complexity.EcommerceGoal.ConversionRatePercent == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.ConversionRatePercent(childComplexity), true
+
+	case "EcommerceGoal.convertedVisits":
+		if e.complexity.EcommerceGoal.ConvertedVisits == nil {
+			break
+		}
+
+		args, err := ec.field_EcommerceGoal_convertedVisits_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.EcommerceGoal.ConvertedVisits(childComplexity, args["opts"].(*model.ConvertedVisitsOptions), args["orderBy"].(*model.OrderByOptions)), true
+
+	case "EcommerceGoal.idSite":
+		if e.complexity.EcommerceGoal.IDSite == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.IDSite(childComplexity), true
+
+	case "EcommerceGoal.label":
+		if e.complexity.EcommerceGoal.Label == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.Label(childComplexity), true
+
+	case "EcommerceGoal.numActions":
+		if e.complexity.EcommerceGoal.NumActions == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.NumActions(childComplexity), true
+
+	case "EcommerceGoal.numVisits":
+		if e.complexity.EcommerceGoal.NumVisits == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.NumVisits(childComplexity), true
+
+	case "EcommerceGoal.orders":
+		if e.complexity.EcommerceGoal.Orders == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.Orders(childComplexity), true
+
+	case "EcommerceGoal.quantity":
+		if e.complexity.EcommerceGoal.Quantity == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.Quantity(childComplexity), true
+
+	case "EcommerceGoal.revenue":
+		if e.complexity.EcommerceGoal.Revenue == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.Revenue(childComplexity), true
+
+	case "EcommerceGoal.segment":
+		if e.complexity.EcommerceGoal.Segment == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.Segment(childComplexity), true
+
+	case "EcommerceGoal.sumDailyNumUniqueVisitors":
+		if e.complexity.EcommerceGoal.SumDailyNumUniqueVisitors == nil {
+			break
+		}
+
+		return e.complexity.EcommerceGoal.SumDailyNumUniqueVisitors(childComplexity), true
+
 	case "Goal.allowMultiple":
 		if e.complexity.Goal.AllowMultiple == nil {
 			break
@@ -775,6 +905,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetAllGoals(childComplexity, args["idSite"].(int), args["opts"].(*model.GetGoalsOptions)), true
+
+	case "Query.getEcommerceGoalsName":
+		if e.complexity.Query.GetEcommerceGoalsName == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getEcommerceGoalsName_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetEcommerceGoalsName(childComplexity, args["idSite"].(int), args["opts"].(model.GetEcommerceGoalsOptions)), true
+
+	case "Query.getEcommerceGoalsSku":
+		if e.complexity.Query.GetEcommerceGoalsSku == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getEcommerceGoalsSku_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetEcommerceGoalsSku(childComplexity, args["idSite"].(int), args["opts"].(model.GetEcommerceGoalsOptions)), true
 
 	case "Query.getGoal":
 		if e.complexity.Query.GetGoal == nil {
@@ -1772,6 +1926,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputConvertedVisitsOptions,
 		ec.unmarshalInputDateRangeOptions,
+		ec.unmarshalInputGetEcommerceGoalsOptions,
 		ec.unmarshalInputGetGoalsOptions,
 		ec.unmarshalInputOrderByOptions,
 	)
@@ -1855,7 +2010,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "schema/aggregate_types.graphql" "schema/composite_types.graphql" "schema/directives.graphql" "schema/enums.graphql" "schema/goals.graphql" "schema/options_params.graphql" "schema/schema.graphql" "schema/visitors.graphql" "schema/visits.graphql"
+//go:embed "schema/aggregate_types.graphql" "schema/composite_types.graphql" "schema/directives.graphql" "schema/ecommerce.graphql" "schema/enums.graphql" "schema/goals.graphql" "schema/options_params.graphql" "schema/schema.graphql" "schema/visitors.graphql" "schema/visits.graphql"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1870,6 +2025,7 @@ var sources = []*ast.Source{
 	{Name: "schema/aggregate_types.graphql", Input: sourceData("schema/aggregate_types.graphql"), BuiltIn: false},
 	{Name: "schema/composite_types.graphql", Input: sourceData("schema/composite_types.graphql"), BuiltIn: false},
 	{Name: "schema/directives.graphql", Input: sourceData("schema/directives.graphql"), BuiltIn: false},
+	{Name: "schema/ecommerce.graphql", Input: sourceData("schema/ecommerce.graphql"), BuiltIn: false},
 	{Name: "schema/enums.graphql", Input: sourceData("schema/enums.graphql"), BuiltIn: false},
 	{Name: "schema/goals.graphql", Input: sourceData("schema/goals.graphql"), BuiltIn: false},
 	{Name: "schema/options_params.graphql", Input: sourceData("schema/options_params.graphql"), BuiltIn: false},
@@ -1882,6 +2038,30 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_EcommerceGoal_convertedVisits_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.ConvertedVisitsOptions
+	if tmp, ok := rawArgs["opts"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+		arg0, err = ec.unmarshalOConvertedVisitsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐConvertedVisitsOptions(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["opts"] = arg0
+	var arg1 *model.OrderByOptions
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg1, err = ec.unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_Goal_convertedVisits_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -1938,6 +2118,54 @@ func (ec *executionContext) field_Query_getAllGoals_args(ctx context.Context, ra
 	if tmp, ok := rawArgs["opts"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
 		arg1, err = ec.unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["opts"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getEcommerceGoalsName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["idSite"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["idSite"] = arg0
+	var arg1 model.GetEcommerceGoalsOptions
+	if tmp, ok := rawArgs["opts"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+		arg1, err = ec.unmarshalNGetEcommerceGoalsOptions2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetEcommerceGoalsOptions(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["opts"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getEcommerceGoalsSku_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["idSite"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["idSite"] = arg0
+	var arg1 model.GetEcommerceGoalsOptions
+	if tmp, ok := rawArgs["opts"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+		arg1, err = ec.unmarshalNGetEcommerceGoalsOptions2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetEcommerceGoalsOptions(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3658,6 +3886,814 @@ func (ec *executionContext) fieldContext_DeviceInfo_resolution(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _EcommerceGoal_idSite(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_idSite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IDSite, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_idSite(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_label(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_label(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Label, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_revenue(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_revenue(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Revenue, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_revenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_quantity(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_quantity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_quantity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_orders(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_orders(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Orders, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_orders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_averagePrice(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_averagePrice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AveragePrice, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_averagePrice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_averageQuantity(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_averageQuantity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AverageQuantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_averageQuantity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_numVisits(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_numVisits(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumVisits, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_numVisits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_numActions(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_numActions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumActions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_numActions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_conversionRatePercent(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_conversionRatePercent(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ConversionRatePercent, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_conversionRatePercent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_conversionRate(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_conversionRate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.EcommerceGoal().ConversionRate(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_conversionRate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_segment(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_segment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Segment, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_segment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_sumDailyNumUniqueVisitors(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_sumDailyNumUniqueVisitors(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SumDailyNumUniqueVisitors, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_sumDailyNumUniqueVisitors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EcommerceGoal_convertedVisits(ctx context.Context, field graphql.CollectedField, obj *model.EcommerceGoal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EcommerceGoal_convertedVisits(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.EcommerceGoal().ConvertedVisits(rctx, obj, fc.Args["opts"].(*model.ConvertedVisitsOptions), fc.Args["orderBy"].(*model.OrderByOptions))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Visit)
+	fc.Result = res
+	return ec.marshalOVisit2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EcommerceGoal_convertedVisits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EcommerceGoal",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_Visit_idSite(ctx, field)
+			case "siteName":
+				return ec.fieldContext_Visit_siteName(ctx, field)
+			case "siteCurrency":
+				return ec.fieldContext_Visit_siteCurrency(ctx, field)
+			case "siteCurrencySymbol":
+				return ec.fieldContext_Visit_siteCurrencySymbol(ctx, field)
+			case "idVisit":
+				return ec.fieldContext_Visit_idVisit(ctx, field)
+			case "visitIp":
+				return ec.fieldContext_Visit_visitIp(ctx, field)
+			case "visitorId":
+				return ec.fieldContext_Visit_visitorId(ctx, field)
+			case "fingerprint":
+				return ec.fieldContext_Visit_fingerprint(ctx, field)
+			case "visitorProfile":
+				return ec.fieldContext_Visit_visitorProfile(ctx, field)
+			case "visitServerHour":
+				return ec.fieldContext_Visit_visitServerHour(ctx, field)
+			case "goalConversions":
+				return ec.fieldContext_Visit_goalConversions(ctx, field)
+			case "actionDetails":
+				return ec.fieldContext_Visit_actionDetails(ctx, field)
+			case "serverDate":
+				return ec.fieldContext_Visit_serverDate(ctx, field)
+			case "serverDatePretty":
+				return ec.fieldContext_Visit_serverDatePretty(ctx, field)
+			case "serverTimestamp":
+				return ec.fieldContext_Visit_serverTimestamp(ctx, field)
+			case "serverTimePretty":
+				return ec.fieldContext_Visit_serverTimePretty(ctx, field)
+			case "firstActionTimestamp":
+				return ec.fieldContext_Visit_firstActionTimestamp(ctx, field)
+			case "lastActionTimestamp":
+				return ec.fieldContext_Visit_lastActionTimestamp(ctx, field)
+			case "lastActionDateTime":
+				return ec.fieldContext_Visit_lastActionDateTime(ctx, field)
+			case "serverDatePrettyFirstAction":
+				return ec.fieldContext_Visit_serverDatePrettyFirstAction(ctx, field)
+			case "serverTimePrettyFirstAction":
+				return ec.fieldContext_Visit_serverTimePrettyFirstAction(ctx, field)
+			case "userId":
+				return ec.fieldContext_Visit_userId(ctx, field)
+			case "visitorType":
+				return ec.fieldContext_Visit_visitorType(ctx, field)
+			case "visitorTypeIcon":
+				return ec.fieldContext_Visit_visitorTypeIcon(ctx, field)
+			case "visitConverted":
+				return ec.fieldContext_Visit_visitConverted(ctx, field)
+			case "visitConvertedIcon":
+				return ec.fieldContext_Visit_visitConvertedIcon(ctx, field)
+			case "visitCount":
+				return ec.fieldContext_Visit_visitCount(ctx, field)
+			case "visitEcommerceStatus":
+				return ec.fieldContext_Visit_visitEcommerceStatus(ctx, field)
+			case "visitEcommerceStatusIcon":
+				return ec.fieldContext_Visit_visitEcommerceStatusIcon(ctx, field)
+			case "daysSinceFirstVisit":
+				return ec.fieldContext_Visit_daysSinceFirstVisit(ctx, field)
+			case "secondsSinceFirstVisit":
+				return ec.fieldContext_Visit_secondsSinceFirstVisit(ctx, field)
+			case "daysSinceLastEcommerceOrder":
+				return ec.fieldContext_Visit_daysSinceLastEcommerceOrder(ctx, field)
+			case "secondsSinceLastEcommerceOrder":
+				return ec.fieldContext_Visit_secondsSinceLastEcommerceOrder(ctx, field)
+			case "visitDuration":
+				return ec.fieldContext_Visit_visitDuration(ctx, field)
+			case "visitDurationPretty":
+				return ec.fieldContext_Visit_visitDurationPretty(ctx, field)
+			case "searches":
+				return ec.fieldContext_Visit_searches(ctx, field)
+			case "actions":
+				return ec.fieldContext_Visit_actions(ctx, field)
+			case "interactions":
+				return ec.fieldContext_Visit_interactions(ctx, field)
+			case "languageCode":
+				return ec.fieldContext_Visit_languageCode(ctx, field)
+			case "language":
+				return ec.fieldContext_Visit_language(ctx, field)
+			case "deviceInfo":
+				return ec.fieldContext_Visit_deviceInfo(ctx, field)
+			case "deviceType":
+				return ec.fieldContext_Visit_deviceType(ctx, field)
+			case "deviceTypeIcon":
+				return ec.fieldContext_Visit_deviceTypeIcon(ctx, field)
+			case "deviceBrand":
+				return ec.fieldContext_Visit_deviceBrand(ctx, field)
+			case "deviceModel":
+				return ec.fieldContext_Visit_deviceModel(ctx, field)
+			case "operatingSystem":
+				return ec.fieldContext_Visit_operatingSystem(ctx, field)
+			case "operatingSystemName":
+				return ec.fieldContext_Visit_operatingSystemName(ctx, field)
+			case "operatingSystemIcon":
+				return ec.fieldContext_Visit_operatingSystemIcon(ctx, field)
+			case "operatingSystemCode":
+				return ec.fieldContext_Visit_operatingSystemCode(ctx, field)
+			case "operatingSystemVersion":
+				return ec.fieldContext_Visit_operatingSystemVersion(ctx, field)
+			case "resolution":
+				return ec.fieldContext_Visit_resolution(ctx, field)
+			case "browserInfo":
+				return ec.fieldContext_Visit_browserInfo(ctx, field)
+			case "browserFamily":
+				return ec.fieldContext_Visit_browserFamily(ctx, field)
+			case "browserFamilyDescription":
+				return ec.fieldContext_Visit_browserFamilyDescription(ctx, field)
+			case "browser":
+				return ec.fieldContext_Visit_browser(ctx, field)
+			case "browserName":
+				return ec.fieldContext_Visit_browserName(ctx, field)
+			case "browserIcon":
+				return ec.fieldContext_Visit_browserIcon(ctx, field)
+			case "browserCode":
+				return ec.fieldContext_Visit_browserCode(ctx, field)
+			case "browserVersion":
+				return ec.fieldContext_Visit_browserVersion(ctx, field)
+			case "events":
+				return ec.fieldContext_Visit_events(ctx, field)
+			case "locationInfo":
+				return ec.fieldContext_Visit_locationInfo(ctx, field)
+			case "continent":
+				return ec.fieldContext_Visit_continent(ctx, field)
+			case "continentCode":
+				return ec.fieldContext_Visit_continentCode(ctx, field)
+			case "country":
+				return ec.fieldContext_Visit_country(ctx, field)
+			case "countryCode":
+				return ec.fieldContext_Visit_countryCode(ctx, field)
+			case "countryFlag":
+				return ec.fieldContext_Visit_countryFlag(ctx, field)
+			case "region":
+				return ec.fieldContext_Visit_region(ctx, field)
+			case "regionCode":
+				return ec.fieldContext_Visit_regionCode(ctx, field)
+			case "city":
+				return ec.fieldContext_Visit_city(ctx, field)
+			case "location":
+				return ec.fieldContext_Visit_location(ctx, field)
+			case "latitude":
+				return ec.fieldContext_Visit_latitude(ctx, field)
+			case "longitude":
+				return ec.fieldContext_Visit_longitude(ctx, field)
+			case "visitLocalTime":
+				return ec.fieldContext_Visit_visitLocalTime(ctx, field)
+			case "visitLocalHour":
+				return ec.fieldContext_Visit_visitLocalHour(ctx, field)
+			case "daysSinceLastVisit":
+				return ec.fieldContext_Visit_daysSinceLastVisit(ctx, field)
+			case "secondsSinceLastVisit":
+				return ec.fieldContext_Visit_secondsSinceLastVisit(ctx, field)
+			case "plugins":
+				return ec.fieldContext_Visit_plugins(ctx, field)
+			case "adClickId":
+				return ec.fieldContext_Visit_adClickId(ctx, field)
+			case "adProviderId":
+				return ec.fieldContext_Visit_adProviderId(ctx, field)
+			case "adProviderName":
+				return ec.fieldContext_Visit_adProviderName(ctx, field)
+			case "formConversions":
+				return ec.fieldContext_Visit_formConversions(ctx, field)
+			case "sessionReplayUrl":
+				return ec.fieldContext_Visit_sessionReplayUrl(ctx, field)
+			case "campaignInfo":
+				return ec.fieldContext_Visit_campaignInfo(ctx, field)
+			case "campaignId":
+				return ec.fieldContext_Visit_campaignId(ctx, field)
+			case "campaignContent":
+				return ec.fieldContext_Visit_campaignContent(ctx, field)
+			case "campaignKeyword":
+				return ec.fieldContext_Visit_campaignKeyword(ctx, field)
+			case "campaignMedium":
+				return ec.fieldContext_Visit_campaignMedium(ctx, field)
+			case "campaignName":
+				return ec.fieldContext_Visit_campaignName(ctx, field)
+			case "campaignSource":
+				return ec.fieldContext_Visit_campaignSource(ctx, field)
+			case "campaignGroup":
+				return ec.fieldContext_Visit_campaignGroup(ctx, field)
+			case "campaignPlacement":
+				return ec.fieldContext_Visit_campaignPlacement(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Visit", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_EcommerceGoal_convertedVisits_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Goal_idSite(ctx context.Context, field graphql.CollectedField, obj *model.Goal) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Goal_idSite(ctx, field)
 	if err != nil {
@@ -4934,6 +5970,170 @@ func (ec *executionContext) fieldContext_Query_helloWorld(_ context.Context, fie
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getEcommerceGoalsName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getEcommerceGoalsName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetEcommerceGoalsName(rctx, fc.Args["idSite"].(int), fc.Args["opts"].(model.GetEcommerceGoalsOptions))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.EcommerceGoal)
+	fc.Result = res
+	return ec.marshalOEcommerceGoal2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐEcommerceGoal(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getEcommerceGoalsName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_EcommerceGoal_idSite(ctx, field)
+			case "label":
+				return ec.fieldContext_EcommerceGoal_label(ctx, field)
+			case "revenue":
+				return ec.fieldContext_EcommerceGoal_revenue(ctx, field)
+			case "quantity":
+				return ec.fieldContext_EcommerceGoal_quantity(ctx, field)
+			case "orders":
+				return ec.fieldContext_EcommerceGoal_orders(ctx, field)
+			case "averagePrice":
+				return ec.fieldContext_EcommerceGoal_averagePrice(ctx, field)
+			case "averageQuantity":
+				return ec.fieldContext_EcommerceGoal_averageQuantity(ctx, field)
+			case "numVisits":
+				return ec.fieldContext_EcommerceGoal_numVisits(ctx, field)
+			case "numActions":
+				return ec.fieldContext_EcommerceGoal_numActions(ctx, field)
+			case "conversionRatePercent":
+				return ec.fieldContext_EcommerceGoal_conversionRatePercent(ctx, field)
+			case "conversionRate":
+				return ec.fieldContext_EcommerceGoal_conversionRate(ctx, field)
+			case "segment":
+				return ec.fieldContext_EcommerceGoal_segment(ctx, field)
+			case "sumDailyNumUniqueVisitors":
+				return ec.fieldContext_EcommerceGoal_sumDailyNumUniqueVisitors(ctx, field)
+			case "convertedVisits":
+				return ec.fieldContext_EcommerceGoal_convertedVisits(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EcommerceGoal", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getEcommerceGoalsName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getEcommerceGoalsSku(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getEcommerceGoalsSku(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetEcommerceGoalsSku(rctx, fc.Args["idSite"].(int), fc.Args["opts"].(model.GetEcommerceGoalsOptions))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.EcommerceGoal)
+	fc.Result = res
+	return ec.marshalOEcommerceGoal2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐEcommerceGoal(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getEcommerceGoalsSku(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_EcommerceGoal_idSite(ctx, field)
+			case "label":
+				return ec.fieldContext_EcommerceGoal_label(ctx, field)
+			case "revenue":
+				return ec.fieldContext_EcommerceGoal_revenue(ctx, field)
+			case "quantity":
+				return ec.fieldContext_EcommerceGoal_quantity(ctx, field)
+			case "orders":
+				return ec.fieldContext_EcommerceGoal_orders(ctx, field)
+			case "averagePrice":
+				return ec.fieldContext_EcommerceGoal_averagePrice(ctx, field)
+			case "averageQuantity":
+				return ec.fieldContext_EcommerceGoal_averageQuantity(ctx, field)
+			case "numVisits":
+				return ec.fieldContext_EcommerceGoal_numVisits(ctx, field)
+			case "numActions":
+				return ec.fieldContext_EcommerceGoal_numActions(ctx, field)
+			case "conversionRatePercent":
+				return ec.fieldContext_EcommerceGoal_conversionRatePercent(ctx, field)
+			case "conversionRate":
+				return ec.fieldContext_EcommerceGoal_conversionRate(ctx, field)
+			case "segment":
+				return ec.fieldContext_EcommerceGoal_segment(ctx, field)
+			case "sumDailyNumUniqueVisitors":
+				return ec.fieldContext_EcommerceGoal_sumDailyNumUniqueVisitors(ctx, field)
+			case "convertedVisits":
+				return ec.fieldContext_EcommerceGoal_convertedVisits(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EcommerceGoal", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getEcommerceGoalsSku_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -13416,6 +14616,33 @@ func (ec *executionContext) unmarshalInputDateRangeOptions(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputGetEcommerceGoalsOptions(ctx context.Context, obj interface{}) (model.GetEcommerceGoalsOptions, error) {
+	var it model.GetEcommerceGoalsOptions
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"date"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "date":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
+			data, err := ec.unmarshalNDateRangeOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDateRangeOptions(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Date = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputGetGoalsOptions(ctx context.Context, obj interface{}) (model.GetGoalsOptions, error) {
 	var it model.GetGoalsOptions
 	asMap := map[string]interface{}{}
@@ -13841,6 +15068,169 @@ func (ec *executionContext) _DeviceInfo(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var ecommerceGoalImplementors = []string{"EcommerceGoal"}
+
+func (ec *executionContext) _EcommerceGoal(ctx context.Context, sel ast.SelectionSet, obj *model.EcommerceGoal) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ecommerceGoalImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EcommerceGoal")
+		case "idSite":
+			out.Values[i] = ec._EcommerceGoal_idSite(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "label":
+			out.Values[i] = ec._EcommerceGoal_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "revenue":
+			out.Values[i] = ec._EcommerceGoal_revenue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "quantity":
+			out.Values[i] = ec._EcommerceGoal_quantity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "orders":
+			out.Values[i] = ec._EcommerceGoal_orders(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "averagePrice":
+			out.Values[i] = ec._EcommerceGoal_averagePrice(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "averageQuantity":
+			out.Values[i] = ec._EcommerceGoal_averageQuantity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "numVisits":
+			out.Values[i] = ec._EcommerceGoal_numVisits(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "numActions":
+			out.Values[i] = ec._EcommerceGoal_numActions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "conversionRatePercent":
+			out.Values[i] = ec._EcommerceGoal_conversionRatePercent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "conversionRate":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EcommerceGoal_conversionRate(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "segment":
+			out.Values[i] = ec._EcommerceGoal_segment(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sumDailyNumUniqueVisitors":
+			out.Values[i] = ec._EcommerceGoal_sumDailyNumUniqueVisitors(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "convertedVisits":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EcommerceGoal_convertedVisits(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var goalImplementors = []string{"Goal"}
 
 func (ec *executionContext) _Goal(ctx context.Context, sel ast.SelectionSet, obj *model.Goal) graphql.Marshaler {
@@ -14077,6 +15467,44 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getEcommerceGoalsName":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getEcommerceGoalsName(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getEcommerceGoalsSku":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getEcommerceGoalsSku(ctx, field)
 				return res
 			}
 
@@ -15494,6 +16922,31 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNDateRangeOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDateRangeOptions(ctx context.Context, v interface{}) (*model.DateRangeOptions, error) {
+	res, err := ec.unmarshalInputDateRangeOptions(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) unmarshalNGetEcommerceGoalsOptions2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetEcommerceGoalsOptions(ctx context.Context, v interface{}) (model.GetEcommerceGoalsOptions, error) {
+	res, err := ec.unmarshalInputGetEcommerceGoalsOptions(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -16002,6 +17455,54 @@ func (ec *executionContext) marshalODeviceInfo2ᚖgithubᚗcomᚋjalavosusᚋmat
 		return graphql.Null
 	}
 	return ec._DeviceInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOEcommerceGoal2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐEcommerceGoal(ctx context.Context, sel ast.SelectionSet, v []*model.EcommerceGoal) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOEcommerceGoal2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐEcommerceGoal(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOEcommerceGoal2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐEcommerceGoal(ctx context.Context, sel ast.SelectionSet, v *model.EcommerceGoal) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._EcommerceGoal(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx context.Context, v interface{}) (*model.GetGoalsOptions, error) {

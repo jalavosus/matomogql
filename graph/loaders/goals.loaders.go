@@ -30,7 +30,7 @@ func getGoalConvertedVisits(ctx context.Context, queries [][6]string) (rets [][]
 	return
 }
 
-func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal string, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.Visit, error) {
+func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal, segment string, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.Visit, error) {
 	var dateOpts *model.DateRangeOptions
 	if opts != nil && opts.Date.IsSet() {
 		dateOpts = opts.Date.Value()
@@ -48,6 +48,8 @@ func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal string, opts
 			query[4] = *endDate
 		}
 	}
+
+	query[5] = segment
 
 	loaders := For(ctx)
 	res, err := loaders.GoalConvertedVisitsLoader.Load(ctx, query)

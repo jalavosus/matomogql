@@ -1,0 +1,30 @@
+type EcommerceGoal {
+    idSite:          Int! @goTag(key: "json", value: "idsite")
+    label:           String!
+    revenue:         Int!
+    quantity:        Int!
+    orders:          Int!
+    averagePrice:    Float! @goTag(key: "json", value: "avg_price")
+    averageQuantity: Float! @goTag(key: "json", value: "avg_quantity")
+    numVisits:       Int! @goTag(key: "json", value: "nb_visits")
+    numActions:      Int! @goTag(key: "json", value: "nb_actions")
+    conversionRatePercent:  String! @goTag(key: "json", value: "conversion_rate")
+    """ Parsed from conversionRatePercent """
+    conversionRate:  Float! @goField(forceResolver: true) @goTag(key: "json", value: "-")
+    segment:         String!
+    sumDailyNumUniqueVisitors: Int! @goTag(key: "json", value: "sum_daily_nb_uniq_visitors")
+
+    convertedVisits(
+        opts:    ConvertedVisitsOptions,
+        orderBy: OrderByOptions
+    ): [Visit] @goField(forceResolver: true)
+}
+
+input GetEcommerceGoalsOptions {
+    date: DateRangeOptions!
+}
+
+extend type Query {
+    getEcommerceGoalsName(idSite: Int!, opts: GetEcommerceGoalsOptions!): [EcommerceGoal]
+    getEcommerceGoalsSku(idSite: Int!, opts: GetEcommerceGoalsOptions!): [EcommerceGoal]
+}

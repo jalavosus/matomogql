@@ -74,6 +74,28 @@ type DeviceInfo struct {
 	Resolution             *string `json:"resolution,omitempty"`
 }
 
+type EcommerceGoal struct {
+	IDSite                int     `json:"idsite"`
+	Label                 string  `json:"label"`
+	Revenue               int     `json:"revenue"`
+	Quantity              int     `json:"quantity"`
+	Orders                int     `json:"orders"`
+	AveragePrice          float64 `json:"avg_price"`
+	AverageQuantity       float64 `json:"avg_quantity"`
+	NumVisits             int     `json:"nb_visits"`
+	NumActions            int     `json:"nb_actions"`
+	ConversionRatePercent string  `json:"conversion_rate"`
+	//  Parsed from conversionRatePercent
+	ConversionRate            float64  `json:"-"`
+	Segment                   string   `json:"segment"`
+	SumDailyNumUniqueVisitors int      `json:"sum_daily_nb_uniq_visitors"`
+	ConvertedVisits           []*Visit `json:"convertedVisits,omitempty"`
+}
+
+type GetEcommerceGoalsOptions struct {
+	Date *DateRangeOptions `json:"date"`
+}
+
 type GetGoalsOptions struct {
 	OrderByName graphql.Omittable[*bool] `json:"orderByName,omitempty"`
 }
