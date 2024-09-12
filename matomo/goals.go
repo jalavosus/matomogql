@@ -214,8 +214,12 @@ func GetConvertedVisitsBulk(ctx context.Context, queries ...[6]string) ([][]*mod
 		queryVals.Set("expanded", "1")
 		queryVals.Set("filterLimit", "-1")
 		queryVals.Set("segment", fmt.Sprintf("visitConvertedGoalId==%d", parsedQuery.idGoal))
-		queryVals.Set("period", strings.ToLower(parsedQuery.period))
-		queryVals.Set("date", parsedQuery.date)
+		if parsedQuery.period != "" {
+			queryVals.Set("period", strings.ToLower(parsedQuery.period))
+		}
+		if parsedQuery.date != "" {
+			queryVals.Set("date", parsedQuery.date)
+		}
 
 		vals.Set(
 			fmt.Sprintf("urls[%d]", i), // urls[0], urls[1], etc.
