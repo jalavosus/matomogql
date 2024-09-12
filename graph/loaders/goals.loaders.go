@@ -4,13 +4,12 @@ import (
 	"context"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/jalavosus/matomogql/graph/model"
 	"github.com/jalavosus/matomogql/matomo"
 )
 
-func getGoalConvertedVisits(ctx context.Context, queries []string) (rets [][]*model.Visit, errs []error) {
+func getGoalConvertedVisits(ctx context.Context, queries [][6]string) (rets [][]*model.Visit, errs []error) {
 	rets = make([][]*model.Visit, len(queries))
 	errs = make([]error, len(queries))
 
@@ -31,18 +30,20 @@ func getGoalConvertedVisits(ctx context.Context, queries []string) (rets [][]*mo
 	return
 }
 
-func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal int, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.Visit, error) {
-	var b strings.Builder
-	b.WriteString(strconv.Itoa(idSite) + ":")
-	b.WriteString(strconv.Itoa(idGoal) + ":")
-	b.WriteString(strings.ToLower(opts.Period.String()) + ":")
-	b.WriteString(opts.StartDate + ":")
-	if endDate, ok := opts.EndDate.ValueOK(); ok && len(*endDate) > 0 {
-		b.WriteString(*endDate)
+func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal string, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.Visit, error) {
+	var query = [6]string{
+		strconv.Itoa(idSite),
+		idGoal,
+		opts.Period.String(),
+		opts.StartDate,
+	}
+
+	if endDate, ok := opts.EndDate.ValueOK(); ok && *endDate != "" {
+		query[4] = *endDate
 	}
 
 	loaders := For(ctx)
-	res, err := loaders.GoalConvertedVisitsLoader.Load(ctx, b.String())
+	res, err := loaders.GoalConvertedVisitsLoader.Load(ctx, query)
 	if err != nil {
 		return nil, err
 	}

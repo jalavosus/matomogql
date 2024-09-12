@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/jalavosus/matomogql/graph/model"
@@ -48,23 +47,24 @@ func GetVisitorProfile(ctx context.Context, idSite int, visitorId string) (*mode
 }
 
 func GetVisitorProfiles(ctx context.Context, idSite int, visitorIds []string) ([]*model.VisitorProfile, error) {
-	queries := make([]string, len(visitorIds))
+	idSiteStr := strconv.Itoa(idSite)
+	queries := make([][2]string, len(visitorIds))
 	for i, id := range visitorIds {
-		queries[i] = fmt.Sprintf("%d:%s", idSite, id)
+		queries[i] = [2]string{idSiteStr, id}
 	}
 
 	return GetVisitorProfilesBulk(ctx, queries...)
 }
 
-func GetVisitorProfilesBulk(ctx context.Context, queries ...string) ([]*model.VisitorProfile, error) {
+func GetVisitorProfilesBulk(ctx context.Context, queries ...[2]string) ([]*model.VisitorProfile, error) {
 	var (
 		vals, endpoint = buildRequestParams(-1, "API.getBulkRequest")
 	)
 
 	for i, query := range queries {
-		parsedQuery := parseGetVisitorProfilesQuery(query)
-		queryVals, _ := buildRequestParams(parsedQuery.idSite, "Live.getVisitorProfile")
-		queryVals.Set("visitorId", parsedQuery.visitorId)
+		idSite, _ := strconv.Atoi(query[0])
+		queryVals, _ := buildRequestParams(idSite, "Live.getVisitorProfile")
+		queryVals.Set("visitorId", query[1])
 
 		vals.Set(
 			fmt.Sprintf("urls[%d]", i), // urls[0], urls[1], etc.
@@ -100,19 +100,4 @@ func GetVisitorProfilesBulk(ctx context.Context, queries ...string) ([]*model.Vi
 	}
 
 	return result, nil
-}
-
-type parsedVisitorProfilesQuery struct {
-	visitorId string
-	idSite    int
-}
-
-func parseGetVisitorProfilesQuery(query string) (parsed parsedVisitorProfilesQuery) {
-	parsed = parsedVisitorProfilesQuery{}
-
-	split := strings.Split(query, ":")
-	parsed.idSite, _ = strconv.Atoi(split[0])
-	parsed.visitorId = split[1]
-
-	return
 }

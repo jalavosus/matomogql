@@ -3,13 +3,12 @@ package loaders
 import (
 	"context"
 	"strconv"
-	"strings"
 
 	"github.com/jalavosus/matomogql/graph/model"
 	"github.com/jalavosus/matomogql/matomo"
 )
 
-func getVisitorProfiles(ctx context.Context, queries []string) (rets []*model.VisitorProfile, errs []error) {
+func getVisitorProfiles(ctx context.Context, queries [][2]string) (rets []*model.VisitorProfile, errs []error) {
 	rets = make([]*model.VisitorProfile, len(queries))
 	errs = make([]error, len(queries))
 
@@ -31,12 +30,8 @@ func getVisitorProfiles(ctx context.Context, queries []string) (rets []*model.Vi
 }
 
 func GetVisitorProfile(ctx context.Context, idSite int, visitorId string) (*model.VisitorProfile, error) {
-	var b strings.Builder
-	b.WriteString(strconv.Itoa(idSite) + ":")
-	b.WriteString(visitorId)
-
 	loaders := For(ctx)
-	res, err := loaders.VisitorProfilesLoader.Load(ctx, b.String())
+	res, err := loaders.VisitorProfilesLoader.Load(ctx, [2]string{strconv.Itoa(idSite), visitorId})
 	if err != nil {
 		return nil, err
 	}

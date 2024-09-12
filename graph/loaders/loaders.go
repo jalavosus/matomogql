@@ -17,8 +17,8 @@ const (
 )
 
 type Loaders struct {
-	GoalConvertedVisitsLoader *dataloadgen.Loader[string, []*model.Visit]
-	VisitorProfilesLoader     *dataloadgen.Loader[string, *model.VisitorProfile]
+	GoalConvertedVisitsLoader *dataloadgen.Loader[[6]string, []*model.Visit]
+	VisitorProfilesLoader     *dataloadgen.Loader[[2]string, *model.VisitorProfile]
 }
 
 func NewLoaders() *Loaders {

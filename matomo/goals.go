@@ -198,7 +198,7 @@ func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.Con
 	return visitDetails, nil
 }
 
-func GetConvertedVisitsBulk(ctx context.Context, queries ...string) ([][]*model.Visit, error) {
+func GetConvertedVisitsBulk(ctx context.Context, queries ...[6]string) ([][]*model.Visit, error) {
 	var (
 		vals, endpoint = buildRequestParams(-1, "API.getBulkRequest")
 	)
@@ -257,16 +257,14 @@ type convertedVisitsQuery struct {
 	idGoal    int
 }
 
-// format: idSite:idGoal:period:startDate:endDate
-func parseConvertedVisitsQuery(query string) (parsedQuery convertedVisitsQuery) {
+func parseConvertedVisitsQuery(query [6]string) (parsedQuery convertedVisitsQuery) {
 	parsedQuery = convertedVisitsQuery{}
-	split := strings.Split(query, ":")
 
-	parsedQuery.idSite, _ = strconv.Atoi(split[0])
-	parsedQuery.idGoal, _ = strconv.Atoi(split[1])
-	parsedQuery.period = split[2]
-	parsedQuery.startDate = split[3]
-	parsedQuery.endDate = split[4]
+	parsedQuery.idSite, _ = strconv.Atoi(query[0])
+	parsedQuery.idGoal, _ = strconv.Atoi(query[1])
+	parsedQuery.period = query[2]
+	parsedQuery.startDate = query[3]
+	parsedQuery.endDate = query[4]
 
 	parsedQuery.date = parsedQuery.startDate
 	if parsedQuery.endDate != "" {
