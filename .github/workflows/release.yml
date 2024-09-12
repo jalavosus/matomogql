@@ -21,7 +21,7 @@ jobs:
         run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
 
       - id:  tarball_file
-        run: echo ::set-output name=filename::"${{  }}_${{ steps.git_tag.outputs.tag }}.tar.gz"
+        run: echo ::set-output name=filename::"matomogql_${{ steps.git_tag.outputs.tag }}.tar.gz"
 
       - id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v6
