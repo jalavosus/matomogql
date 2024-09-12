@@ -36,3 +36,6 @@ jobs:
 
       - name: Run tests
         run: go test ./...
+        env:
+          MATOMO_API_KEY: ${{ secrets.MATOMO_API_KEY }}
+          MATOMO_ENDPOINT: ${{ secrets.MATOMO_ENDPOINT }}
