@@ -265,11 +265,12 @@ func GetConvertedVisitsBulk(ctx context.Context, queries ...[6]string) ([][]*mod
 type convertedVisitsQuery struct {
 	period        string
 	date          string
+	searchSegment string
 	idGoal        int
 	idSite        int
-	searchSegment string
 }
 
+//nolint:gocritic // I know it's a large param, I'm not futzing with dataloader and pointer keys.
 func parseConvertedVisitsQuery(query [6]string) (parsedQuery convertedVisitsQuery) {
 	parsedQuery = convertedVisitsQuery{}
 
