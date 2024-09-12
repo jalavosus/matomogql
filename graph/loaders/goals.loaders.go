@@ -31,15 +31,22 @@ func getGoalConvertedVisits(ctx context.Context, queries [][6]string) (rets [][]
 }
 
 func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal string, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.Visit, error) {
+	var dateOpts *model.DateRangeOptions
+	if opts != nil && opts.Date.IsSet() {
+		dateOpts = opts.Date.Value()
+	}
+
 	var query = [6]string{
 		strconv.Itoa(idSite),
 		idGoal,
-		opts.Period.String(),
-		opts.StartDate,
 	}
 
-	if endDate, ok := opts.EndDate.ValueOK(); ok && *endDate != "" {
-		query[4] = *endDate
+	if dateOpts != nil {
+		query[2] = dateOpts.Period.String()
+		query[3] = dateOpts.StartDate
+		if endDate, ok := dateOpts.EndDate.ValueOK(); ok && *endDate != "" {
+			query[4] = *endDate
+		}
 	}
 
 	loaders := For(ctx)

@@ -1,3 +1,9 @@
 input OrderByOptions {
     timestamp: OrderBy
 }
+
+input DateRangeOptions {
+    period:    SegmentPeriod!
+    startDate: String!
+    endDate:   String
+}

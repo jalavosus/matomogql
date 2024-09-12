@@ -67,12 +67,14 @@ type Visit {
     browserCode:                String!
     browserVersion:             String!
 
-    totalEcommerceRevenue:      Int!
-    totalEcommerceConversions:  Int!
-    totalEcommerceItems:        Int!
-    totalAbandonedCartsRevenue: Int!
-    totalAbandonedCarts:        Int!
-    totalAbandonedCartsItems:   Int!
+    # @TODO: make these somehow work.
+    # Sometimes they're strings, sometimes they're ints. Who knew.
+#    totalEcommerceRevenue:      Int!
+#    totalEcommerceConversions:  Int!
+#    totalEcommerceItems:        Int!
+#    totalAbandonedCartsRevenue: Int!
+#    totalAbandonedCarts:        Int!
+#    totalAbandonedCartsItems:   Int!
 
     events:         Int!
 

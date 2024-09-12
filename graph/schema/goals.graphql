@@ -19,9 +19,7 @@ type Goal {
 }
 
 input ConvertedVisitsOptions {
-    period:    SegmentPeriod!
-    startDate: String!
-    endDate:   String
+    date: DateRangeOptions
 }
 
 input GetGoalsOptions {

@@ -52,6 +52,10 @@ type CampaignInfo struct {
 }
 
 type ConvertedVisitsOptions struct {
+	Date graphql.Omittable[*DateRangeOptions] `json:"date,omitempty"`
+}
+
+type DateRangeOptions struct {
 	Period    SegmentPeriod              `json:"period"`
 	StartDate string                     `json:"startDate"`
 	EndDate   graphql.Omittable[*string] `json:"endDate,omitempty"`
@@ -188,12 +192,6 @@ type Visit struct {
 	BrowserIcon                    *string               `json:"browserIcon,omitempty"`
 	BrowserCode                    string                `json:"browserCode"`
 	BrowserVersion                 string                `json:"browserVersion"`
-	TotalEcommerceRevenue          int                   `json:"totalEcommerceRevenue"`
-	TotalEcommerceConversions      int                   `json:"totalEcommerceConversions"`
-	TotalEcommerceItems            int                   `json:"totalEcommerceItems"`
-	TotalAbandonedCartsRevenue     int                   `json:"totalAbandonedCartsRevenue"`
-	TotalAbandonedCarts            int                   `json:"totalAbandonedCarts"`
-	TotalAbandonedCartsItems       int                   `json:"totalAbandonedCartsItems"`
 	Events                         int                   `json:"events"`
 	LocationInfo                   *Location             `json:"locationInfo,omitempty"`
 	Continent                      string                `json:"continent"`

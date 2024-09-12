@@ -235,12 +235,6 @@ type ComplexityRoot struct {
 		SiteCurrency                   func(childComplexity int) int
 		SiteCurrencySymbol             func(childComplexity int) int
 		SiteName                       func(childComplexity int) int
-		TotalAbandonedCarts            func(childComplexity int) int
-		TotalAbandonedCartsItems       func(childComplexity int) int
-		TotalAbandonedCartsRevenue     func(childComplexity int) int
-		TotalEcommerceConversions      func(childComplexity int) int
-		TotalEcommerceItems            func(childComplexity int) int
-		TotalEcommerceRevenue          func(childComplexity int) int
 		UserID                         func(childComplexity int) int
 		VisitConverted                 func(childComplexity int) int
 		VisitConvertedIcon             func(childComplexity int) int
@@ -1439,48 +1433,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Visit.SiteName(childComplexity), true
 
-	case "Visit.totalAbandonedCarts":
-		if e.complexity.Visit.TotalAbandonedCarts == nil {
-			break
-		}
-
-		return e.complexity.Visit.TotalAbandonedCarts(childComplexity), true
-
-	case "Visit.totalAbandonedCartsItems":
-		if e.complexity.Visit.TotalAbandonedCartsItems == nil {
-			break
-		}
-
-		return e.complexity.Visit.TotalAbandonedCartsItems(childComplexity), true
-
-	case "Visit.totalAbandonedCartsRevenue":
-		if e.complexity.Visit.TotalAbandonedCartsRevenue == nil {
-			break
-		}
-
-		return e.complexity.Visit.TotalAbandonedCartsRevenue(childComplexity), true
-
-	case "Visit.totalEcommerceConversions":
-		if e.complexity.Visit.TotalEcommerceConversions == nil {
-			break
-		}
-
-		return e.complexity.Visit.TotalEcommerceConversions(childComplexity), true
-
-	case "Visit.totalEcommerceItems":
-		if e.complexity.Visit.TotalEcommerceItems == nil {
-			break
-		}
-
-		return e.complexity.Visit.TotalEcommerceItems(childComplexity), true
-
-	case "Visit.totalEcommerceRevenue":
-		if e.complexity.Visit.TotalEcommerceRevenue == nil {
-			break
-		}
-
-		return e.complexity.Visit.TotalEcommerceRevenue(childComplexity), true
-
 	case "Visit.userId":
 		if e.complexity.Visit.UserID == nil {
 			break
@@ -1819,6 +1771,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputConvertedVisitsOptions,
+		ec.unmarshalInputDateRangeOptions,
 		ec.unmarshalInputGetGoalsOptions,
 		ec.unmarshalInputOrderByOptions,
 	)
@@ -4378,18 +4331,6 @@ func (ec *executionContext) fieldContext_Goal_convertedVisits(ctx context.Contex
 				return ec.fieldContext_Visit_browserCode(ctx, field)
 			case "browserVersion":
 				return ec.fieldContext_Visit_browserVersion(ctx, field)
-			case "totalEcommerceRevenue":
-				return ec.fieldContext_Visit_totalEcommerceRevenue(ctx, field)
-			case "totalEcommerceConversions":
-				return ec.fieldContext_Visit_totalEcommerceConversions(ctx, field)
-			case "totalEcommerceItems":
-				return ec.fieldContext_Visit_totalEcommerceItems(ctx, field)
-			case "totalAbandonedCartsRevenue":
-				return ec.fieldContext_Visit_totalAbandonedCartsRevenue(ctx, field)
-			case "totalAbandonedCarts":
-				return ec.fieldContext_Visit_totalAbandonedCarts(ctx, field)
-			case "totalAbandonedCartsItems":
-				return ec.fieldContext_Visit_totalAbandonedCartsItems(ctx, field)
 			case "events":
 				return ec.fieldContext_Visit_events(ctx, field)
 			case "locationInfo":
@@ -8602,270 +8543,6 @@ func (ec *executionContext) fieldContext_Visit_browserVersion(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Visit_totalEcommerceRevenue(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Visit_totalEcommerceRevenue(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalEcommerceRevenue, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Visit_totalEcommerceRevenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Visit",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Visit_totalEcommerceConversions(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Visit_totalEcommerceConversions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalEcommerceConversions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Visit_totalEcommerceConversions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Visit",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Visit_totalEcommerceItems(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Visit_totalEcommerceItems(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalEcommerceItems, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Visit_totalEcommerceItems(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Visit",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Visit_totalAbandonedCartsRevenue(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Visit_totalAbandonedCartsRevenue(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalAbandonedCartsRevenue, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Visit_totalAbandonedCartsRevenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Visit",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Visit_totalAbandonedCarts(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Visit_totalAbandonedCarts(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalAbandonedCarts, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Visit_totalAbandonedCarts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Visit",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Visit_totalAbandonedCartsItems(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Visit_totalAbandonedCartsItems(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalAbandonedCartsItems, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Visit_totalAbandonedCartsItems(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Visit",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Visit_events(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Visit_events(ctx, field)
 	if err != nil {
@@ -11676,18 +11353,6 @@ func (ec *executionContext) fieldContext_VisitorProfile_lastVisits(_ context.Con
 				return ec.fieldContext_Visit_browserCode(ctx, field)
 			case "browserVersion":
 				return ec.fieldContext_Visit_browserVersion(ctx, field)
-			case "totalEcommerceRevenue":
-				return ec.fieldContext_Visit_totalEcommerceRevenue(ctx, field)
-			case "totalEcommerceConversions":
-				return ec.fieldContext_Visit_totalEcommerceConversions(ctx, field)
-			case "totalEcommerceItems":
-				return ec.fieldContext_Visit_totalEcommerceItems(ctx, field)
-			case "totalAbandonedCartsRevenue":
-				return ec.fieldContext_Visit_totalAbandonedCartsRevenue(ctx, field)
-			case "totalAbandonedCarts":
-				return ec.fieldContext_Visit_totalAbandonedCarts(ctx, field)
-			case "totalAbandonedCartsItems":
-				return ec.fieldContext_Visit_totalAbandonedCartsItems(ctx, field)
 			case "events":
 				return ec.fieldContext_Visit_events(ctx, field)
 			case "locationInfo":
@@ -13690,6 +13355,33 @@ func (ec *executionContext) unmarshalInputConvertedVisitsOptions(ctx context.Con
 		asMap[k] = v
 	}
 
+	fieldsInOrder := [...]string{"date"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "date":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
+			data, err := ec.unmarshalODateRangeOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDateRangeOptions(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Date = graphql.OmittableOf(data)
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDateRangeOptions(ctx context.Context, obj interface{}) (model.DateRangeOptions, error) {
+	var it model.DateRangeOptions
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
 	fieldsInOrder := [...]string{"period", "startDate", "endDate"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
@@ -14967,36 +14659,6 @@ func (ec *executionContext) _Visit(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "browserVersion":
 			out.Values[i] = ec._Visit_browserVersion(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalEcommerceRevenue":
-			out.Values[i] = ec._Visit_totalEcommerceRevenue(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalEcommerceConversions":
-			out.Values[i] = ec._Visit_totalEcommerceConversions(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalEcommerceItems":
-			out.Values[i] = ec._Visit_totalEcommerceItems(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalAbandonedCartsRevenue":
-			out.Values[i] = ec._Visit_totalAbandonedCartsRevenue(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalAbandonedCarts":
-			out.Values[i] = ec._Visit_totalAbandonedCarts(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "totalAbandonedCartsItems":
-			out.Values[i] = ec._Visit_totalAbandonedCartsItems(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -16324,6 +15986,14 @@ func (ec *executionContext) unmarshalOConvertedVisitsOptions2ᚖgithubᚗcomᚋj
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputConvertedVisitsOptions(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalODateRangeOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDateRangeOptions(ctx context.Context, v interface{}) (*model.DateRangeOptions, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDateRangeOptions(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

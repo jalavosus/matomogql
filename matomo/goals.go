@@ -160,13 +160,18 @@ func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.Con
 	params.Set("segment", fmt.Sprintf("visitConvertedGoalId==%d", idGoal))
 	params.Set("expanded", "1")
 	params.Set("filterLimit", "-1")
-	params.Set("period", strings.ToLower(opts.Period.String()))
 
-	var date = opts.StartDate
-	if endDate, ok := opts.EndDate.ValueOK(); ok && *endDate != "" {
-		date += "," + *endDate
+	if opts != nil && opts.Date.IsSet() {
+		dateOpts := opts.Date.Value()
+		params.Set("period", strings.ToLower(dateOpts.Period.String()))
+
+		var date = dateOpts.StartDate
+		if endDate, ok := dateOpts.EndDate.ValueOK(); ok && *endDate != "" {
+			date += "," + *endDate
+		}
+
+		params.Set("date", date)
 	}
-	params.Set("date", date)
 
 	endpoint = endpoint + "?" + params.Encode()
 
@@ -242,6 +247,7 @@ func GetConvertedVisitsBulk(ctx context.Context, queries ...[6]string) ([][]*mod
 
 	var visitDetails [][]*model.Visit
 	if err := json.Unmarshal(bodyRaw, &visitDetails); err != nil {
+		fmt.Println(string(bodyRaw))
 		return nil, err
 	}
 
