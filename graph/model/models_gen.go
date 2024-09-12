@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 type AggregateContinentInfo struct {
@@ -50,9 +52,9 @@ type CampaignInfo struct {
 }
 
 type ConvertedVisitsOptions struct {
-	Period    SegmentPeriod `json:"period"`
-	StartDate string        `json:"startDate"`
-	EndDate   *string       `json:"endDate,omitempty"`
+	Period    SegmentPeriod              `json:"period"`
+	StartDate string                     `json:"startDate"`
+	EndDate   graphql.Omittable[*string] `json:"endDate,omitempty"`
 }
 
 type DeviceInfo struct {
@@ -69,7 +71,7 @@ type DeviceInfo struct {
 }
 
 type GetGoalsOptions struct {
-	OrderByName *bool `json:"orderByName,omitempty"`
+	OrderByName graphql.Omittable[*bool] `json:"orderByName,omitempty"`
 }
 
 type Goal struct {
@@ -103,7 +105,7 @@ type Location struct {
 }
 
 type OrderByOptions struct {
-	Timestamp *OrderBy `json:"timestamp,omitempty"`
+	Timestamp graphql.Omittable[*OrderBy] `json:"timestamp,omitempty"`
 }
 
 type Query struct {

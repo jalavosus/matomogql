@@ -37,8 +37,8 @@ func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal int, opts *m
 	b.WriteString(strconv.Itoa(idGoal) + ":")
 	b.WriteString(strings.ToLower(opts.Period.String()) + ":")
 	b.WriteString(opts.StartDate + ":")
-	if opts.EndDate != nil && len(*opts.EndDate) > 0 {
-		b.WriteString(*opts.EndDate)
+	if endDate, ok := opts.EndDate.ValueOK(); ok && len(*endDate) > 0 {
+		b.WriteString(*endDate)
 	}
 
 	loaders := For(ctx)
@@ -47,17 +47,19 @@ func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal int, opts *m
 		return nil, err
 	}
 
-	if orderBy == nil || orderBy.Timestamp == nil {
-		return res, nil
+	if orderBy == nil {
+		orderBy = new(model.OrderByOptions)
 	}
 
-	sort.Slice(res, func(i, j int) bool {
-		if orderBy.Timestamp.String() == "ASC" {
-			return res[i].ServerTimestamp < res[j].ServerTimestamp
-		}
+	if ob, ok := orderBy.Timestamp.ValueOK(); ok {
+		sort.Slice(res, func(i, j int) bool {
+			if ob.String() == "ASC" {
+				return res[i].ServerTimestamp < res[j].ServerTimestamp
+			}
 
-		return res[i].ServerTimestamp > res[j].ServerTimestamp
-	})
+			return res[i].ServerTimestamp > res[j].ServerTimestamp
+		})
+	}
 
 	return res, nil
 }

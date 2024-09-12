@@ -23,8 +23,13 @@ func (r *queryResolver) GetGoal(ctx context.Context, idSite int, idGoal int) (*m
 }
 
 // GetGoals is the resolver for the getGoals field.
-func (r *queryResolver) GetGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error) {
-	return matomo.GetGoals(ctx, idSite, opts)
+func (r *queryResolver) GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoalsOptions) ([]*model.Goal, error) {
+	return matomo.GetGoals(ctx, idSite, goalIds, opts)
+}
+
+// GetAllGoals is the resolver for the getAllGoals field.
+func (r *queryResolver) GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error) {
+	return matomo.GetAllGoals(ctx, idSite, opts)
 }
 
 // Goal returns GoalResolver implementation.

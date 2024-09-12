@@ -115,10 +115,10 @@ func TestGetGoals(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := matomo.GetGoals(tt.args.ctx, tt.args.idSite, nil)
+			got, err := matomo.GetAllGoals(tt.args.ctx, tt.args.idSite, nil)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetGoals() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetAllGoals() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
@@ -128,15 +128,15 @@ func TestGetGoals(t *testing.T) {
 
 			for _, want := range tt.want {
 				if want.index > len(got) {
-					t.Errorf("GetGoals() len(got) = %v, want >= %v", len(got), want.index)
+					t.Errorf("GetAllGoals() len(got) = %v, want >= %v", len(got), want.index)
 				}
 
 				item := got[want.index]
 				if item.Name != want.name {
-					t.Errorf("GetGoals() got[%d].Name = %v, want %v", want.index, item.Name, want.name)
+					t.Errorf("GetAllGoals() got[%d].Name = %v, want %v", want.index, item.Name, want.name)
 				}
 				if item.IDGoal != want.idGoal {
-					t.Errorf("GetGoals() got[%d].IDGoal = %v, want %v", want.index, item.IDGoal, want.idGoal)
+					t.Errorf("GetAllGoals() got[%d].IDGoal = %v, want %v", want.index, item.IDGoal, want.idGoal)
 				}
 			}
 		})

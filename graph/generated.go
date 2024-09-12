@@ -134,9 +134,10 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetGoal    func(childComplexity int, idSite int, idGoal int) int
-		GetGoals   func(childComplexity int, idSite int, opts *model.GetGoalsOptions) int
-		HelloWorld func(childComplexity int) int
+		GetAllGoals func(childComplexity int, idSite int, opts *model.GetGoalsOptions) int
+		GetGoal     func(childComplexity int, idSite int, idGoal int) int
+		GetGoals    func(childComplexity int, idSite int, goalIds []int, opts *model.GetGoalsOptions) int
+		HelloWorld  func(childComplexity int) int
 	}
 
 	ReferrerInfo struct {
@@ -303,7 +304,8 @@ type GoalResolver interface {
 type QueryResolver interface {
 	HelloWorld(ctx context.Context) (string, error)
 	GetGoal(ctx context.Context, idSite int, idGoal int) (*model.Goal, error)
-	GetGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
+	GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
+	GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
 }
 type VisitResolver interface {
 	VisitorProfile(ctx context.Context, obj *model.Visit) (*model.VisitorProfile, error)
@@ -764,6 +766,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Location.RegionCode(childComplexity), true
 
+	case "Query.getAllGoals":
+		if e.complexity.Query.GetAllGoals == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getAllGoals_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetAllGoals(childComplexity, args["idSite"].(int), args["opts"].(*model.GetGoalsOptions)), true
+
 	case "Query.getGoal":
 		if e.complexity.Query.GetGoal == nil {
 			break
@@ -786,7 +800,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetGoals(childComplexity, args["idSite"].(int), args["opts"].(*model.GetGoalsOptions)), true
+		return e.complexity.Query.GetGoals(childComplexity, args["idSite"].(int), args["goalIds"].([]int), args["opts"].(*model.GetGoalsOptions)), true
 
 	case "Query.helloWorld":
 		if e.complexity.Query.HelloWorld == nil {
@@ -1927,6 +1941,30 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_getAllGoals_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["idSite"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["idSite"] = arg0
+	var arg1 *model.GetGoalsOptions
+	if tmp, ok := rawArgs["opts"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+		arg1, err = ec.unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["opts"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_getGoal_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1963,15 +2001,24 @@ func (ec *executionContext) field_Query_getGoals_args(ctx context.Context, rawAr
 		}
 	}
 	args["idSite"] = arg0
-	var arg1 *model.GetGoalsOptions
-	if tmp, ok := rawArgs["opts"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
-		arg1, err = ec.unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx, tmp)
+	var arg1 []int
+	if tmp, ok := rawArgs["goalIds"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("goalIds"))
+		arg1, err = ec.unmarshalOInt2ᚕintᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["opts"] = arg1
+	args["goalIds"] = arg1
+	var arg2 *model.GetGoalsOptions
+	if tmp, ok := rawArgs["opts"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+		arg2, err = ec.unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["opts"] = arg2
 	return args, nil
 }
 
@@ -4968,7 +5015,7 @@ func (ec *executionContext) _Query_getGoals(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetGoals(rctx, fc.Args["idSite"].(int), fc.Args["opts"].(*model.GetGoalsOptions))
+		return ec.resolvers.Query().GetGoals(rctx, fc.Args["idSite"].(int), fc.Args["goalIds"].([]int), fc.Args["opts"].(*model.GetGoalsOptions))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5028,6 +5075,86 @@ func (ec *executionContext) fieldContext_Query_getGoals(ctx context.Context, fie
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getGoals_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getAllGoals(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getAllGoals(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetAllGoals(rctx, fc.Args["idSite"].(int), fc.Args["opts"].(*model.GetGoalsOptions))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Goal)
+	fc.Result = res
+	return ec.marshalOGoal2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGoal(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getAllGoals(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_Goal_idSite(ctx, field)
+			case "idGoal":
+				return ec.fieldContext_Goal_idGoal(ctx, field)
+			case "name":
+				return ec.fieldContext_Goal_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Goal_description(ctx, field)
+			case "matchAttribute":
+				return ec.fieldContext_Goal_matchAttribute(ctx, field)
+			case "pattern":
+				return ec.fieldContext_Goal_pattern(ctx, field)
+			case "patternType":
+				return ec.fieldContext_Goal_patternType(ctx, field)
+			case "caseSensitive":
+				return ec.fieldContext_Goal_caseSensitive(ctx, field)
+			case "allowMultiple":
+				return ec.fieldContext_Goal_allowMultiple(ctx, field)
+			case "revenue":
+				return ec.fieldContext_Goal_revenue(ctx, field)
+			case "deleted":
+				return ec.fieldContext_Goal_deleted(ctx, field)
+			case "eventValueAsRevenue":
+				return ec.fieldContext_Goal_eventValueAsRevenue(ctx, field)
+			case "convertedVisits":
+				return ec.fieldContext_Goal_convertedVisits(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Goal", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getAllGoals_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -13378,7 +13505,7 @@ func (ec *executionContext) unmarshalInputConvertedVisitsOptions(ctx context.Con
 			if err != nil {
 				return it, err
 			}
-			it.EndDate = data
+			it.EndDate = graphql.OmittableOf(data)
 		}
 	}
 
@@ -13405,7 +13532,7 @@ func (ec *executionContext) unmarshalInputGetGoalsOptions(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-			it.OrderByName = data
+			it.OrderByName = graphql.OmittableOf(data)
 		}
 	}
 
@@ -13432,7 +13559,7 @@ func (ec *executionContext) unmarshalInputOrderByOptions(ctx context.Context, ob
 			if err != nil {
 				return it, err
 			}
-			it.Timestamp = data
+			it.Timestamp = graphql.OmittableOf(data)
 		}
 	}
 
@@ -14084,6 +14211,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getGoals(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getAllGoals":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getAllGoals(ctx, field)
 				return res
 			}
 
@@ -15992,6 +16138,44 @@ func (ec *executionContext) marshalOGoal2ᚖgithubᚗcomᚋjalavosusᚋmatomogql
 		return graphql.Null
 	}
 	return ec._Goal(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚕintᚄ(ctx context.Context, v interface{}) ([]int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]int, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNInt2int(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOInt2ᚕintᚄ(ctx context.Context, sel ast.SelectionSet, v []int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNInt2int(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {

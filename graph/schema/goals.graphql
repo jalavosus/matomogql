@@ -30,5 +30,6 @@ input GetGoalsOptions {
 
 extend type Query {
     getGoal(idSite: Int!, idGoal: Int!): Goal
-    getGoals(idSite: Int!, opts: GetGoalsOptions): [Goal]
+    getGoals(idSite: Int!, goalIds: [Int!], opts: GetGoalsOptions): [Goal]
+    getAllGoals(idSite: Int!, opts: GetGoalsOptions): [Goal]
 }
