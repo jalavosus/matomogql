@@ -134,10 +134,12 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetAllGoals func(childComplexity int, idSite int, opts *model.GetGoalsOptions) int
-		GetGoal     func(childComplexity int, idSite int, idGoal int) int
-		GetGoals    func(childComplexity int, idSite int, goalIds []int, opts *model.GetGoalsOptions) int
-		HelloWorld  func(childComplexity int) int
+		GetAllGoals        func(childComplexity int, idSite int, opts *model.GetGoalsOptions) int
+		GetGoal            func(childComplexity int, idSite int, idGoal int) int
+		GetGoals           func(childComplexity int, idSite int, goalIds []int, opts *model.GetGoalsOptions) int
+		GetVisitorProfile  func(childComplexity int, idSite int, visitorID string) int
+		GetVisitorProfiles func(childComplexity int, idSite int, visitorIds []string) int
+		HelloWorld         func(childComplexity int) int
 	}
 
 	ReferrerInfo struct {
@@ -306,6 +308,8 @@ type QueryResolver interface {
 	GetGoal(ctx context.Context, idSite int, idGoal int) (*model.Goal, error)
 	GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
 	GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
+	GetVisitorProfile(ctx context.Context, idSite int, visitorID string) (*model.VisitorProfile, error)
+	GetVisitorProfiles(ctx context.Context, idSite int, visitorIds []string) ([]*model.VisitorProfile, error)
 }
 type VisitResolver interface {
 	VisitorProfile(ctx context.Context, obj *model.Visit) (*model.VisitorProfile, error)
@@ -801,6 +805,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetGoals(childComplexity, args["idSite"].(int), args["goalIds"].([]int), args["opts"].(*model.GetGoalsOptions)), true
+
+	case "Query.getVisitorProfile":
+		if e.complexity.Query.GetVisitorProfile == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getVisitorProfile_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetVisitorProfile(childComplexity, args["idSite"].(int), args["visitorId"].(string)), true
+
+	case "Query.getVisitorProfiles":
+		if e.complexity.Query.GetVisitorProfiles == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getVisitorProfiles_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetVisitorProfiles(childComplexity, args["idSite"].(int), args["visitorIds"].([]string)), true
 
 	case "Query.helloWorld":
 		if e.complexity.Query.HelloWorld == nil {
@@ -2019,6 +2047,54 @@ func (ec *executionContext) field_Query_getGoals_args(ctx context.Context, rawAr
 		}
 	}
 	args["opts"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getVisitorProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["idSite"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["idSite"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["visitorId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("visitorId"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["visitorId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getVisitorProfiles_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["idSite"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["idSite"] = arg0
+	var arg1 []string
+	if tmp, ok := rawArgs["visitorIds"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("visitorIds"))
+		arg1, err = ec.unmarshalOString2ᚕstringᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["visitorIds"] = arg1
 	return args, nil
 }
 
@@ -5155,6 +5231,142 @@ func (ec *executionContext) fieldContext_Query_getAllGoals(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getAllGoals_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getVisitorProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getVisitorProfile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetVisitorProfile(rctx, fc.Args["idSite"].(int), fc.Args["visitorId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.VisitorProfile)
+	fc.Result = res
+	return ec.marshalOVisitorProfile2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorProfile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getVisitorProfile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "visitorId":
+				return ec.fieldContext_VisitorProfile_visitorId(ctx, field)
+			case "firstVisit":
+				return ec.fieldContext_VisitorProfile_firstVisit(ctx, field)
+			case "lastVisit":
+				return ec.fieldContext_VisitorProfile_lastVisit(ctx, field)
+			case "lastVisits":
+				return ec.fieldContext_VisitorProfile_lastVisits(ctx, field)
+			case "devices":
+				return ec.fieldContext_VisitorProfile_devices(ctx, field)
+			case "countries":
+				return ec.fieldContext_VisitorProfile_countries(ctx, field)
+			case "continents":
+				return ec.fieldContext_VisitorProfile_continents(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VisitorProfile", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getVisitorProfile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getVisitorProfiles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getVisitorProfiles(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetVisitorProfiles(rctx, fc.Args["idSite"].(int), fc.Args["visitorIds"].([]string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.VisitorProfile)
+	fc.Result = res
+	return ec.marshalOVisitorProfile2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorProfile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getVisitorProfiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "visitorId":
+				return ec.fieldContext_VisitorProfile_visitorId(ctx, field)
+			case "firstVisit":
+				return ec.fieldContext_VisitorProfile_firstVisit(ctx, field)
+			case "lastVisit":
+				return ec.fieldContext_VisitorProfile_lastVisit(ctx, field)
+			case "lastVisits":
+				return ec.fieldContext_VisitorProfile_lastVisits(ctx, field)
+			case "devices":
+				return ec.fieldContext_VisitorProfile_devices(ctx, field)
+			case "countries":
+				return ec.fieldContext_VisitorProfile_countries(ctx, field)
+			case "continents":
+				return ec.fieldContext_VisitorProfile_continents(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VisitorProfile", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getVisitorProfiles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -14239,6 +14451,44 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getVisitorProfile":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getVisitorProfile(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getVisitorProfiles":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getVisitorProfiles(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -16428,6 +16678,47 @@ func (ec *executionContext) marshalOVisitActionDetails2ᚖgithubᚗcomᚋjalavos
 		return graphql.Null
 	}
 	return ec._VisitActionDetails(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOVisitorProfile2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorProfile(ctx context.Context, sel ast.SelectionSet, v []*model.VisitorProfile) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOVisitorProfile2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorProfile(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) marshalOVisitorProfile2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorProfile(ctx context.Context, sel ast.SelectionSet, v *model.VisitorProfile) graphql.Marshaler {

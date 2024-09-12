@@ -20,3 +20,8 @@ type VisitorFirstLastVisit {
     referrerUrl:     String!
     refferalSummary: String!
 }
+
+extend type Query {
+    getVisitorProfile(idSite: Int!, visitorId: String!): VisitorProfile
+    getVisitorProfiles(idSite: Int!, visitorIds: [String!]): [VisitorProfile]
+}
