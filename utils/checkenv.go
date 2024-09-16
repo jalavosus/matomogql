@@ -17,3 +17,14 @@ func MakeEnvFunc(envKey string) func() string {
 		return s
 	}
 }
+
+func MakeEnvFuncWithDefault(envKey, defaultVal string) func() string {
+	return func() string {
+		var s = defaultVal
+		if val, ok := os.LookupEnv(envKey); ok {
+			s = val
+		}
+
+		return s
+	}
+}
