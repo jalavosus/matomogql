@@ -19,33 +19,14 @@ func (b BoolInt) MarshalJSON() ([]byte, error) {
 }
 
 func (b *BoolInt) UnmarshalGQL(v any) error {
-	var (
-		rawInt   int
-		rawBool  bool
-		val      bool
-		ok       bool
-		gotValue bool
-	)
-
-	rawInt, ok = v.(int)
-	if ok {
-		gotValue = true
-		val = rawInt == 1
-		goto Ret
+	switch x := v.(type) {
+	case bool:
+		*b = BoolInt(x)
+	case int:
+		*b = x == 1
+	default:
+		return fmt.Errorf("unable to parse %[1]v as BoolInt, has type %[1]T", v)
 	}
-
-	rawBool, ok = v.(bool)
-	if ok {
-		gotValue = true
-		val = rawBool
-	}
-
-Ret:
-	if !gotValue {
-		return fmt.Errorf("error parsing BoolInt %[1]v, has type %[1]T", v)
-	}
-
-	*b = BoolInt(val)
 
 	return nil
 }
