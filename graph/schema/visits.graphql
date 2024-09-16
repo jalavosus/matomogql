@@ -116,7 +116,7 @@ type Visit {
 }
 
 type VisitActionDetails {
-    type:               LogAction!
+    type:               String!
     url:                String!
     title:              String!
     subtitle:           String!

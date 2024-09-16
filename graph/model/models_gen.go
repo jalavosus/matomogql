@@ -282,7 +282,7 @@ type Visit struct {
 }
 
 type VisitActionDetails struct {
-	Type             LogAction        `json:"type"`
+	Type             string           `json:"type"`
 	URL              string           `json:"url"`
 	Title            string           `json:"title"`
 	Subtitle         string           `json:"subtitle"`

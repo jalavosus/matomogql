@@ -13216,9 +13216,9 @@ func (ec *executionContext) _VisitActionDetails_type(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.LogAction)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VisitActionDetails_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13228,7 +13228,7 @@ func (ec *executionContext) fieldContext_VisitActionDetails_type(_ context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type LogAction does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -19567,37 +19567,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	}
 	return res
 }
-
-func (ec *executionContext) unmarshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction(ctx context.Context, v interface{}) (model.LogAction, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction(ctx context.Context, sel ast.SelectionSet, v model.LogAction) graphql.Marshaler {
-	res := graphql.MarshalString(marshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction = map[string]model.LogAction{
-		"Action":         model.LogActionAction,
-		"Event":          model.LogActionEvent,
-		"Goal":           model.LogActionGoal,
-		"EcommerceOrder": model.LogActionEcommerceOrder,
-	}
-	marshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction = map[model.LogAction]string{
-		model.LogActionAction:         "Action",
-		model.LogActionEvent:          "Event",
-		model.LogActionGoal:           "Goal",
-		model.LogActionEcommerceOrder: "EcommerceOrder",
-	}
-)
 
 func (ec *executionContext) unmarshalNSegmentPeriod2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐSegmentPeriod(ctx context.Context, v interface{}) (model.SegmentPeriod, error) {
 	var res model.SegmentPeriod
