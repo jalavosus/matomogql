@@ -9,3 +9,10 @@ enum OrderBy {
     ASC
     DESC
 }
+
+enum LogAction @goModel(model: "github.com/jalavosus/matomogql/graph/model.LogAction") {
+    Action @goEnum(value: "github.com/jalavosus/matomogql/graph/model.LogActionAction")
+    Event  @goEnum(value: "github.com/jalavosus/matomogql/graph/model.LogActionEvent")
+    Goal   @goEnum(value: "github.com/jalavosus/matomogql/graph/model.LogActionGoal")
+    EcommerceOrder @goEnum(value: "github.com/jalavosus/matomogql/graph/model.LogActionEcommerceOrder")
+}

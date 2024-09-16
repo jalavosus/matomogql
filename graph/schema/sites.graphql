@@ -14,8 +14,8 @@ type Site {
     currency:     String!
     currencyName: String! @goTag(key: "json", value: "currency_name")
 
-    keepURLFragment:    BoolInt! @goTag(key: "json", value: "keep_url_fragment")
-    excludeUnknownUrls: BoolInt!
+    keepURLFragment:    Int! @goTag(key: "json", value: "keep_url_fragment")
+    excludeUnknownUrls: Int!
     excludedIPs:        StringList! @goTag(key: "json", value: "excluded_ips")
     excludedParameters: StringList! @goTag(key: "json", value: "excluded_parameters")
     excludedUserAgents: StringList! @goTag(key: "json", value: "excluded_user_agents")

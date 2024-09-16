@@ -5401,9 +5401,9 @@ func (ec *executionContext) _Goal_caseSensitive(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*scalars.BoolInt)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalOBoolInt2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Goal_caseSensitive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5413,7 +5413,7 @@ func (ec *executionContext) fieldContext_Goal_caseSensitive(_ context.Context, f
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BoolInt does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5445,9 +5445,9 @@ func (ec *executionContext) _Goal_allowMultiple(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(scalars.BoolInt)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Goal_allowMultiple(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5457,7 +5457,7 @@ func (ec *executionContext) fieldContext_Goal_allowMultiple(_ context.Context, f
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BoolInt does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5489,9 +5489,9 @@ func (ec *executionContext) _Goal_revenue(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(scalars.BoolInt)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Goal_revenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5501,7 +5501,7 @@ func (ec *executionContext) fieldContext_Goal_revenue(_ context.Context, field g
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BoolInt does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5533,9 +5533,9 @@ func (ec *executionContext) _Goal_deleted(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(scalars.BoolInt)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Goal_deleted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5545,7 +5545,7 @@ func (ec *executionContext) fieldContext_Goal_deleted(_ context.Context, field g
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BoolInt does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8458,9 +8458,9 @@ func (ec *executionContext) _Site_keepURLFragment(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(scalars.BoolInt)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Site_keepURLFragment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8470,7 +8470,7 @@ func (ec *executionContext) fieldContext_Site_keepURLFragment(_ context.Context,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BoolInt does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8502,9 +8502,9 @@ func (ec *executionContext) _Site_excludeUnknownUrls(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(scalars.BoolInt)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Site_excludeUnknownUrls(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8514,7 +8514,7 @@ func (ec *executionContext) fieldContext_Site_excludeUnknownUrls(_ context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BoolInt does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13216,9 +13216,9 @@ func (ec *executionContext) _VisitActionDetails_type(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(model.LogAction)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VisitActionDetails_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13228,7 +13228,7 @@ func (ec *executionContext) fieldContext_VisitActionDetails_type(_ context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type LogAction does not have child fields")
 		},
 	}
 	return fc, nil
@@ -19513,16 +19513,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx context.Context, v interface{}) (scalars.BoolInt, error) {
-	var res scalars.BoolInt
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx context.Context, sel ast.SelectionSet, v scalars.BoolInt) graphql.Marshaler {
-	return v
-}
-
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -19577,6 +19567,37 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	}
 	return res
 }
+
+func (ec *executionContext) unmarshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction(ctx context.Context, v interface{}) (model.LogAction, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction(ctx context.Context, sel ast.SelectionSet, v model.LogAction) graphql.Marshaler {
+	res := graphql.MarshalString(marshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction = map[string]model.LogAction{
+		"Action":         model.LogActionAction,
+		"Event":          model.LogActionEvent,
+		"Goal":           model.LogActionGoal,
+		"EcommerceOrder": model.LogActionEcommerceOrder,
+	}
+	marshalNLogAction2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLogAction = map[model.LogAction]string{
+		model.LogActionAction:         "Action",
+		model.LogActionEvent:          "Event",
+		model.LogActionGoal:           "Goal",
+		model.LogActionEcommerceOrder: "EcommerceOrder",
+	}
+)
 
 func (ec *executionContext) unmarshalNSegmentPeriod2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐSegmentPeriod(ctx context.Context, v interface{}) (model.SegmentPeriod, error) {
 	var res model.SegmentPeriod
@@ -20024,22 +20045,6 @@ func (ec *executionContext) marshalOAggregateDeviceInfo2ᚖgithubᚗcomᚋjalavo
 		return graphql.Null
 	}
 	return ec._AggregateDeviceInfo(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOBoolInt2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx context.Context, v interface{}) (*scalars.BoolInt, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(scalars.BoolInt)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOBoolInt2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx context.Context, sel ast.SelectionSet, v *scalars.BoolInt) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

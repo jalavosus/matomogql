@@ -1,7 +1,3 @@
-
-""" This is an incredibly asinine wrapper around int/bool, stemming from Matomo returning what should be boolean values as 0 or 1. """
-scalar BoolInt
-
 """ This is an incredibly asinine wrapper around []string, as Matomo returns what should be lists/arrays as comma-joined strings. """
 scalar StringList
 

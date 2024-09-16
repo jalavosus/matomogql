@@ -103,19 +103,19 @@ type GetGoalsOptions struct {
 }
 
 type Goal struct {
-	IDSite              int              `json:"idsite"`
-	IDGoal              int              `json:"idgoal"`
-	Name                string           `json:"name"`
-	Description         string           `json:"description"`
-	MatchAttribute      string           `json:"match_attribute"`
-	Pattern             *string          `json:"pattern,omitempty"`
-	PatternType         *string          `json:"pattern_type,omitempty"`
-	CaseSensitive       *scalars.BoolInt `json:"case_sensitive"`
-	AllowMultiple       scalars.BoolInt  `json:"allow_multiple,omitempty"`
-	Revenue             scalars.BoolInt  `json:"revenue"`
-	Deleted             scalars.BoolInt  `json:"deleted"`
-	EventValueAsRevenue int              `json:"event_value_as_revenue,omitempty"`
-	ConvertedVisits     []*Visit         `json:"convertedVisits,omitempty"`
+	IDSite              int      `json:"idsite"`
+	IDGoal              int      `json:"idgoal"`
+	Name                string   `json:"name"`
+	Description         string   `json:"description"`
+	MatchAttribute      string   `json:"match_attribute"`
+	Pattern             *string  `json:"pattern,omitempty"`
+	PatternType         *string  `json:"pattern_type,omitempty"`
+	CaseSensitive       *int     `json:"case_sensitive"`
+	AllowMultiple       int      `json:"allow_multiple,omitempty"`
+	Revenue             int      `json:"revenue"`
+	Deleted             int      `json:"deleted"`
+	EventValueAsRevenue int      `json:"event_value_as_revenue,omitempty"`
+	ConvertedVisits     []*Visit `json:"convertedVisits,omitempty"`
 }
 
 type LastVisitsOpts struct {
@@ -175,8 +175,8 @@ type Site struct {
 	TimezoneName                 string             `json:"timezone_name"`
 	Currency                     string             `json:"currency"`
 	CurrencyName                 string             `json:"currency_name"`
-	KeepURLFragment              scalars.BoolInt    `json:"keep_url_fragment"`
-	ExcludeUnknownUrls           scalars.BoolInt    `json:"excludeUnknownUrls"`
+	KeepURLFragment              int                `json:"keep_url_fragment"`
+	ExcludeUnknownUrls           int                `json:"excludeUnknownUrls"`
 	ExcludedIPs                  scalars.StringList `json:"excluded_ips"`
 	ExcludedParameters           scalars.StringList `json:"excluded_parameters"`
 	ExcludedUserAgents           scalars.StringList `json:"excluded_user_agents"`
@@ -282,7 +282,7 @@ type Visit struct {
 }
 
 type VisitActionDetails struct {
-	Type             string           `json:"type"`
+	Type             LogAction        `json:"type"`
 	URL              string           `json:"url"`
 	Title            string           `json:"title"`
 	Subtitle         string           `json:"subtitle"`
