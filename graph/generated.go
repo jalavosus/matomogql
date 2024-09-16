@@ -43,6 +43,7 @@ type ResolverRoot interface {
 	EcommerceGoal() EcommerceGoalResolver
 	Goal() GoalResolver
 	Query() QueryResolver
+	Site() SiteResolver
 	Visit() VisitResolver
 	VisitActionDetails() VisitActionDetailsResolver
 }
@@ -193,9 +194,11 @@ type ComplexityRoot struct {
 		ExcludedParameters           func(childComplexity int) int
 		ExcludedReferrers            func(childComplexity int) int
 		ExcludedUserAgents           func(childComplexity int) int
+		Goals                        func(childComplexity int, opts *model.GetGoalsOptions) int
 		Group                        func(childComplexity int) int
 		IDSite                       func(childComplexity int) int
 		KeepURLFragment              func(childComplexity int) int
+		LastVisits                   func(childComplexity int, opts *model.LastVisitsOpts) int
 		MainURL                      func(childComplexity int) int
 		Name                         func(childComplexity int) int
 		Sitesearch                   func(childComplexity int) int
@@ -363,6 +366,10 @@ type QueryResolver interface {
 	GetSitesWithAtLeastViewAccess(ctx context.Context) ([]*model.Site, error)
 	GetVisitorProfile(ctx context.Context, idSite int, visitorID string) (*model.VisitorProfile, error)
 	GetVisitorProfiles(ctx context.Context, idSite int, visitorIds []string) ([]*model.VisitorProfile, error)
+}
+type SiteResolver interface {
+	Goals(ctx context.Context, obj *model.Site, opts *model.GetGoalsOptions) ([]*model.Goal, error)
+	LastVisits(ctx context.Context, obj *model.Site, opts *model.LastVisitsOpts) ([]*model.Visit, error)
 }
 type VisitResolver interface {
 	VisitorProfile(ctx context.Context, obj *model.Visit) (*model.VisitorProfile, error)
@@ -1188,6 +1195,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Site.ExcludedUserAgents(childComplexity), true
 
+	case "Site.goals":
+		if e.complexity.Site.Goals == nil {
+			break
+		}
+
+		args, err := ec.field_Site_goals_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Site.Goals(childComplexity, args["opts"].(*model.GetGoalsOptions)), true
+
 	case "Site.group":
 		if e.complexity.Site.Group == nil {
 			break
@@ -1208,6 +1227,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Site.KeepURLFragment(childComplexity), true
+
+	case "Site.lastVisits":
+		if e.complexity.Site.LastVisits == nil {
+			break
+		}
+
+		args, err := ec.field_Site_lastVisits_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Site.LastVisits(childComplexity, args["opts"].(*model.LastVisitsOpts)), true
 
 	case "Site.mainUrl":
 		if e.complexity.Site.MainURL == nil {
@@ -2138,6 +2169,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDateRangeOptions,
 		ec.unmarshalInputGetEcommerceGoalsOptions,
 		ec.unmarshalInputGetGoalsOptions,
+		ec.unmarshalInputLastVisitsOpts,
 		ec.unmarshalInputOrderByOptions,
 	)
 	first := true
@@ -2518,6 +2550,36 @@ func (ec *executionContext) field_Query_getVisitorProfiles_args(ctx context.Cont
 		}
 	}
 	args["visitorIds"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Site_goals_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.GetGoalsOptions
+	if tmp, ok := rawArgs["opts"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+		arg0, err = ec.unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["opts"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Site_lastVisits_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.LastVisitsOpts
+	if tmp, ok := rawArgs["opts"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+		arg0, err = ec.unmarshalOLastVisitsOpts2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLastVisitsOpts(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["opts"] = arg0
 	return args, nil
 }
 
@@ -6696,6 +6758,10 @@ func (ec *executionContext) fieldContext_Query_getSiteFromID(ctx context.Context
 				return ec.fieldContext_Site_group(ctx, field)
 			case "type":
 				return ec.fieldContext_Site_type(ctx, field)
+			case "goals":
+				return ec.fieldContext_Site_goals(ctx, field)
+			case "lastVisits":
+				return ec.fieldContext_Site_lastVisits(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Site", field.Name)
 		},
@@ -6842,6 +6908,10 @@ func (ec *executionContext) fieldContext_Query_getSitesWithViewAccess(_ context.
 				return ec.fieldContext_Site_group(ctx, field)
 			case "type":
 				return ec.fieldContext_Site_type(ctx, field)
+			case "goals":
+				return ec.fieldContext_Site_goals(ctx, field)
+			case "lastVisits":
+				return ec.fieldContext_Site_lastVisits(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Site", field.Name)
 		},
@@ -6925,6 +6995,10 @@ func (ec *executionContext) fieldContext_Query_getSitesWithAtLeastViewAccess(_ c
 				return ec.fieldContext_Site_group(ctx, field)
 			case "type":
 				return ec.fieldContext_Site_type(ctx, field)
+			case "goals":
+				return ec.fieldContext_Site_goals(ctx, field)
+			case "lastVisits":
+				return ec.fieldContext_Site_lastVisits(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Site", field.Name)
 		},
@@ -8530,6 +8604,322 @@ func (ec *executionContext) fieldContext_Site_type(_ context.Context, field grap
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_goals(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_goals(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Site().Goals(rctx, obj, fc.Args["opts"].(*model.GetGoalsOptions))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Goal)
+	fc.Result = res
+	return ec.marshalOGoal2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGoal(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_goals(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_Goal_idSite(ctx, field)
+			case "idGoal":
+				return ec.fieldContext_Goal_idGoal(ctx, field)
+			case "name":
+				return ec.fieldContext_Goal_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Goal_description(ctx, field)
+			case "matchAttribute":
+				return ec.fieldContext_Goal_matchAttribute(ctx, field)
+			case "pattern":
+				return ec.fieldContext_Goal_pattern(ctx, field)
+			case "patternType":
+				return ec.fieldContext_Goal_patternType(ctx, field)
+			case "caseSensitive":
+				return ec.fieldContext_Goal_caseSensitive(ctx, field)
+			case "allowMultiple":
+				return ec.fieldContext_Goal_allowMultiple(ctx, field)
+			case "revenue":
+				return ec.fieldContext_Goal_revenue(ctx, field)
+			case "deleted":
+				return ec.fieldContext_Goal_deleted(ctx, field)
+			case "eventValueAsRevenue":
+				return ec.fieldContext_Goal_eventValueAsRevenue(ctx, field)
+			case "convertedVisits":
+				return ec.fieldContext_Goal_convertedVisits(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Goal", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Site_goals_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_lastVisits(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_lastVisits(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Site().LastVisits(rctx, obj, fc.Args["opts"].(*model.LastVisitsOpts))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Visit)
+	fc.Result = res
+	return ec.marshalOVisit2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_lastVisits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_Visit_idSite(ctx, field)
+			case "siteName":
+				return ec.fieldContext_Visit_siteName(ctx, field)
+			case "siteCurrency":
+				return ec.fieldContext_Visit_siteCurrency(ctx, field)
+			case "siteCurrencySymbol":
+				return ec.fieldContext_Visit_siteCurrencySymbol(ctx, field)
+			case "idVisit":
+				return ec.fieldContext_Visit_idVisit(ctx, field)
+			case "visitIp":
+				return ec.fieldContext_Visit_visitIp(ctx, field)
+			case "visitorId":
+				return ec.fieldContext_Visit_visitorId(ctx, field)
+			case "fingerprint":
+				return ec.fieldContext_Visit_fingerprint(ctx, field)
+			case "visitorProfile":
+				return ec.fieldContext_Visit_visitorProfile(ctx, field)
+			case "visitServerHour":
+				return ec.fieldContext_Visit_visitServerHour(ctx, field)
+			case "goalConversions":
+				return ec.fieldContext_Visit_goalConversions(ctx, field)
+			case "actionDetails":
+				return ec.fieldContext_Visit_actionDetails(ctx, field)
+			case "serverDate":
+				return ec.fieldContext_Visit_serverDate(ctx, field)
+			case "serverDatePretty":
+				return ec.fieldContext_Visit_serverDatePretty(ctx, field)
+			case "serverTimestamp":
+				return ec.fieldContext_Visit_serverTimestamp(ctx, field)
+			case "serverTimePretty":
+				return ec.fieldContext_Visit_serverTimePretty(ctx, field)
+			case "firstActionTimestamp":
+				return ec.fieldContext_Visit_firstActionTimestamp(ctx, field)
+			case "lastActionTimestamp":
+				return ec.fieldContext_Visit_lastActionTimestamp(ctx, field)
+			case "lastActionDateTime":
+				return ec.fieldContext_Visit_lastActionDateTime(ctx, field)
+			case "serverDatePrettyFirstAction":
+				return ec.fieldContext_Visit_serverDatePrettyFirstAction(ctx, field)
+			case "serverTimePrettyFirstAction":
+				return ec.fieldContext_Visit_serverTimePrettyFirstAction(ctx, field)
+			case "userId":
+				return ec.fieldContext_Visit_userId(ctx, field)
+			case "visitorType":
+				return ec.fieldContext_Visit_visitorType(ctx, field)
+			case "visitorTypeIcon":
+				return ec.fieldContext_Visit_visitorTypeIcon(ctx, field)
+			case "visitConverted":
+				return ec.fieldContext_Visit_visitConverted(ctx, field)
+			case "visitConvertedIcon":
+				return ec.fieldContext_Visit_visitConvertedIcon(ctx, field)
+			case "visitCount":
+				return ec.fieldContext_Visit_visitCount(ctx, field)
+			case "visitEcommerceStatus":
+				return ec.fieldContext_Visit_visitEcommerceStatus(ctx, field)
+			case "visitEcommerceStatusIcon":
+				return ec.fieldContext_Visit_visitEcommerceStatusIcon(ctx, field)
+			case "daysSinceFirstVisit":
+				return ec.fieldContext_Visit_daysSinceFirstVisit(ctx, field)
+			case "secondsSinceFirstVisit":
+				return ec.fieldContext_Visit_secondsSinceFirstVisit(ctx, field)
+			case "daysSinceLastEcommerceOrder":
+				return ec.fieldContext_Visit_daysSinceLastEcommerceOrder(ctx, field)
+			case "secondsSinceLastEcommerceOrder":
+				return ec.fieldContext_Visit_secondsSinceLastEcommerceOrder(ctx, field)
+			case "visitDuration":
+				return ec.fieldContext_Visit_visitDuration(ctx, field)
+			case "visitDurationPretty":
+				return ec.fieldContext_Visit_visitDurationPretty(ctx, field)
+			case "searches":
+				return ec.fieldContext_Visit_searches(ctx, field)
+			case "actions":
+				return ec.fieldContext_Visit_actions(ctx, field)
+			case "interactions":
+				return ec.fieldContext_Visit_interactions(ctx, field)
+			case "languageCode":
+				return ec.fieldContext_Visit_languageCode(ctx, field)
+			case "language":
+				return ec.fieldContext_Visit_language(ctx, field)
+			case "deviceInfo":
+				return ec.fieldContext_Visit_deviceInfo(ctx, field)
+			case "deviceType":
+				return ec.fieldContext_Visit_deviceType(ctx, field)
+			case "deviceTypeIcon":
+				return ec.fieldContext_Visit_deviceTypeIcon(ctx, field)
+			case "deviceBrand":
+				return ec.fieldContext_Visit_deviceBrand(ctx, field)
+			case "deviceModel":
+				return ec.fieldContext_Visit_deviceModel(ctx, field)
+			case "operatingSystem":
+				return ec.fieldContext_Visit_operatingSystem(ctx, field)
+			case "operatingSystemName":
+				return ec.fieldContext_Visit_operatingSystemName(ctx, field)
+			case "operatingSystemIcon":
+				return ec.fieldContext_Visit_operatingSystemIcon(ctx, field)
+			case "operatingSystemCode":
+				return ec.fieldContext_Visit_operatingSystemCode(ctx, field)
+			case "operatingSystemVersion":
+				return ec.fieldContext_Visit_operatingSystemVersion(ctx, field)
+			case "resolution":
+				return ec.fieldContext_Visit_resolution(ctx, field)
+			case "browserInfo":
+				return ec.fieldContext_Visit_browserInfo(ctx, field)
+			case "browserFamily":
+				return ec.fieldContext_Visit_browserFamily(ctx, field)
+			case "browserFamilyDescription":
+				return ec.fieldContext_Visit_browserFamilyDescription(ctx, field)
+			case "browser":
+				return ec.fieldContext_Visit_browser(ctx, field)
+			case "browserName":
+				return ec.fieldContext_Visit_browserName(ctx, field)
+			case "browserIcon":
+				return ec.fieldContext_Visit_browserIcon(ctx, field)
+			case "browserCode":
+				return ec.fieldContext_Visit_browserCode(ctx, field)
+			case "browserVersion":
+				return ec.fieldContext_Visit_browserVersion(ctx, field)
+			case "events":
+				return ec.fieldContext_Visit_events(ctx, field)
+			case "locationInfo":
+				return ec.fieldContext_Visit_locationInfo(ctx, field)
+			case "continent":
+				return ec.fieldContext_Visit_continent(ctx, field)
+			case "continentCode":
+				return ec.fieldContext_Visit_continentCode(ctx, field)
+			case "country":
+				return ec.fieldContext_Visit_country(ctx, field)
+			case "countryCode":
+				return ec.fieldContext_Visit_countryCode(ctx, field)
+			case "countryFlag":
+				return ec.fieldContext_Visit_countryFlag(ctx, field)
+			case "region":
+				return ec.fieldContext_Visit_region(ctx, field)
+			case "regionCode":
+				return ec.fieldContext_Visit_regionCode(ctx, field)
+			case "city":
+				return ec.fieldContext_Visit_city(ctx, field)
+			case "location":
+				return ec.fieldContext_Visit_location(ctx, field)
+			case "latitude":
+				return ec.fieldContext_Visit_latitude(ctx, field)
+			case "longitude":
+				return ec.fieldContext_Visit_longitude(ctx, field)
+			case "visitLocalTime":
+				return ec.fieldContext_Visit_visitLocalTime(ctx, field)
+			case "visitLocalHour":
+				return ec.fieldContext_Visit_visitLocalHour(ctx, field)
+			case "daysSinceLastVisit":
+				return ec.fieldContext_Visit_daysSinceLastVisit(ctx, field)
+			case "secondsSinceLastVisit":
+				return ec.fieldContext_Visit_secondsSinceLastVisit(ctx, field)
+			case "plugins":
+				return ec.fieldContext_Visit_plugins(ctx, field)
+			case "adClickId":
+				return ec.fieldContext_Visit_adClickId(ctx, field)
+			case "adProviderId":
+				return ec.fieldContext_Visit_adProviderId(ctx, field)
+			case "adProviderName":
+				return ec.fieldContext_Visit_adProviderName(ctx, field)
+			case "formConversions":
+				return ec.fieldContext_Visit_formConversions(ctx, field)
+			case "sessionReplayUrl":
+				return ec.fieldContext_Visit_sessionReplayUrl(ctx, field)
+			case "campaignInfo":
+				return ec.fieldContext_Visit_campaignInfo(ctx, field)
+			case "campaignId":
+				return ec.fieldContext_Visit_campaignId(ctx, field)
+			case "campaignContent":
+				return ec.fieldContext_Visit_campaignContent(ctx, field)
+			case "campaignKeyword":
+				return ec.fieldContext_Visit_campaignKeyword(ctx, field)
+			case "campaignMedium":
+				return ec.fieldContext_Visit_campaignMedium(ctx, field)
+			case "campaignName":
+				return ec.fieldContext_Visit_campaignName(ctx, field)
+			case "campaignSource":
+				return ec.fieldContext_Visit_campaignSource(ctx, field)
+			case "campaignGroup":
+				return ec.fieldContext_Visit_campaignGroup(ctx, field)
+			case "campaignPlacement":
+				return ec.fieldContext_Visit_campaignPlacement(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Visit", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Site_lastVisits_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -16104,6 +16494,47 @@ func (ec *executionContext) unmarshalInputGetGoalsOptions(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputLastVisitsOpts(ctx context.Context, obj interface{}) (model.LastVisitsOpts, error) {
+	var it model.LastVisitsOpts
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"date", "segments", "limit"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "date":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
+			data, err := ec.unmarshalODateRangeOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDateRangeOptions(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Date = graphql.OmittableOf(data)
+		case "segments":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("segments"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Segments = graphql.OmittableOf(data)
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = graphql.OmittableOf(data)
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputOrderByOptions(ctx context.Context, obj interface{}) (model.OrderByOptions, error) {
 	var it model.OrderByOptions
 	asMap := map[string]interface{}{}
@@ -17260,103 +17691,169 @@ func (ec *executionContext) _Site(ctx context.Context, sel ast.SelectionSet, obj
 		case "idSite":
 			out.Values[i] = ec._Site_idSite(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._Site_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "mainUrl":
 			out.Values[i] = ec._Site_mainUrl(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "tsCreated":
 			out.Values[i] = ec._Site_tsCreated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "ecommerce":
 			out.Values[i] = ec._Site_ecommerce(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "sitesearch":
 			out.Values[i] = ec._Site_sitesearch(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "sitesearchKeywordParameters":
 			out.Values[i] = ec._Site_sitesearchKeywordParameters(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "sitesearchCategoryParameters":
 			out.Values[i] = ec._Site_sitesearchCategoryParameters(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "timezone":
 			out.Values[i] = ec._Site_timezone(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "timezoneName":
 			out.Values[i] = ec._Site_timezoneName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "currency":
 			out.Values[i] = ec._Site_currency(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "currencyName":
 			out.Values[i] = ec._Site_currencyName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "keepURLFragment":
 			out.Values[i] = ec._Site_keepURLFragment(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "excludeUnknownUrls":
 			out.Values[i] = ec._Site_excludeUnknownUrls(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "excludedIPs":
 			out.Values[i] = ec._Site_excludedIPs(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "excludedParameters":
 			out.Values[i] = ec._Site_excludedParameters(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "excludedUserAgents":
 			out.Values[i] = ec._Site_excludedUserAgents(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "excludedReferrers":
 			out.Values[i] = ec._Site_excludedReferrers(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "group":
 			out.Values[i] = ec._Site_group(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "type":
 			out.Values[i] = ec._Site_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "goals":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Site_goals(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "lastVisits":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Site_lastVisits(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19299,6 +19796,14 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOLastVisitsOpts2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLastVisitsOpts(ctx context.Context, v interface{}) (*model.LastVisitsOpts, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputLastVisitsOpts(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOLocation2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLocation(ctx context.Context, sel ast.SelectionSet, v *model.Location) graphql.Marshaler {

@@ -23,6 +23,20 @@ type Site {
 
     group: String!
     type:  String!
+
+    goals(
+        opts: GetGoalsOptions
+    ): [Goal] @goField(forceResolver: true)
+
+    lastVisits(
+        opts: LastVisitsOpts
+    ): [Visit] @goField(forceResolver: true)
+}
+
+input LastVisitsOpts {
+    date:      DateRangeOptions,
+    segments: [String!],
+    limit:     Int
 }
 
 extend type Query {

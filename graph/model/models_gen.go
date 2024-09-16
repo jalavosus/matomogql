@@ -117,6 +117,12 @@ type Goal struct {
 	ConvertedVisits     []*Visit         `json:"convertedVisits,omitempty"`
 }
 
+type LastVisitsOpts struct {
+	Date     graphql.Omittable[*DateRangeOptions] `json:"date,omitempty"`
+	Segments graphql.Omittable[[]string]          `json:"segments,omitempty"`
+	Limit    graphql.Omittable[*int]              `json:"limit,omitempty"`
+}
+
 type Location struct {
 	Continent     string  `json:"continent"`
 	ContinentCode string  `json:"continentCode"`
@@ -176,6 +182,8 @@ type Site struct {
 	ExcludedReferrers            scalars.StringList `json:"excluded_referrers"`
 	Group                        string             `json:"group"`
 	Type                         string             `json:"type"`
+	Goals                        []*Goal            `json:"goals,omitempty"`
+	LastVisits                   []*Visit           `json:"lastVisits,omitempty"`
 }
 
 type Visit struct {

@@ -30,3 +30,18 @@ func (r *queryResolver) GetSitesWithViewAccess(ctx context.Context) ([]*model.Si
 func (r *queryResolver) GetSitesWithAtLeastViewAccess(ctx context.Context) ([]*model.Site, error) {
 	return matomo.GetSitesWithAtLeastViewAccess(ctx)
 }
+
+// Goals is the resolver for the goals field.
+func (r *siteResolver) Goals(ctx context.Context, obj *model.Site, opts *model.GetGoalsOptions) ([]*model.Goal, error) {
+	return matomo.GetAllGoals(ctx, obj.IDSite, opts)
+}
+
+// LastVisits is the resolver for the lastVisits field.
+func (r *siteResolver) LastVisits(ctx context.Context, obj *model.Site, opts *model.LastVisitsOpts) ([]*model.Visit, error) {
+	return matomo.GetLastVisits(ctx, obj.IDSite, opts)
+}
+
+// Site returns SiteResolver implementation.
+func (r *Resolver) Site() SiteResolver { return &siteResolver{r} }
+
+type siteResolver struct{ *Resolver }

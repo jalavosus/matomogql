@@ -2,13 +2,12 @@ package matomo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/99designs/gqlgen/graphql"
 
 	"github.com/jalavosus/matomogql/graph/model"
 )
@@ -16,39 +15,18 @@ import (
 func GetGoal(ctx context.Context, idSite, idGoal int) (*model.Goal, error) {
 	params, endpoint := buildRequestParams(idSite, "Goals.getGoal")
 	params.Set("idGoal", strconv.Itoa(idGoal))
-	endpoint = endpoint + "?" + params.Encode()
 
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
-	if err != nil {
+	var result *model.Goal
+	if err := httpGet(ctx, endpoint, params, &result); err != nil {
 		return nil, err
 	}
 
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer res.Body.Close()
-
-	bodyRaw, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var goal *model.Goal
-	if err := json.Unmarshal(bodyRaw, &goal); err != nil {
-		return nil, err
-	}
-
-	return goal, nil
+	return result, nil
 }
 
 func GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoalsOptions) ([]*model.Goal, error) {
 	var (
-		vals, endpoint = buildRequestParams(-1, "API.getBulkRequest")
+		params, endpoint = buildRequestParams(-1, "API.getBulkRequest")
 	)
 
 	if opts == nil {
@@ -56,53 +34,30 @@ func GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoa
 	}
 
 	for i, id := range goalIds {
-		params, _ := buildRequestParams(idSite, "Goals.getGoal")
-		params.Set("idGoal", strconv.Itoa(id))
-		vals.Set(
+		moreParams, _ := buildRequestParams(idSite, "Goals.getGoal")
+		moreParams.Set("idGoal", strconv.Itoa(id))
+		params.Set(
 			fmt.Sprintf("urls[%d]", i), // urls[0], urls[1], etc.
-			params.Encode(),
+			moreParams.Encode(),
 		)
 	}
 
-	endpoint = endpoint + "?" + vals.Encode()
-
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer res.Body.Close()
-
-	bodyRaw, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var goals []*model.Goal
-
-	if err := json.Unmarshal(bodyRaw, &goals); err != nil {
+	var result []*model.Goal
+	if err := httpGet(ctx, endpoint, params, &result); err != nil {
 		return nil, err
 	}
 
 	if val, ok := opts.OrderByName.ValueOK(); ok && *val {
-		sort.Slice(goals, func(i, j int) bool {
-			return goals[i].Name < goals[j].Name
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].Name < result[j].Name
 		})
 	} else {
-		sort.Slice(goals, func(i, j int) bool {
-			return goals[i].IDGoal < goals[j].IDGoal
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].IDGoal < result[j].IDGoal
 		})
 	}
 
-	return goals, nil
+	return result, nil
 }
 
 func GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error) {
@@ -115,151 +70,67 @@ func GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) (
 		params.Set("orderByName", "true")
 	}
 
-	endpoint = endpoint + "?" + params.Encode()
-
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer res.Body.Close()
-
-	bodyRaw, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var goals []*model.Goal
-	if err := json.Unmarshal(bodyRaw, &goals); err != nil {
+	var result []*model.Goal
+	if err := httpGet(ctx, endpoint, params, &result); err != nil {
 		return nil, err
 	}
 
 	if val, ok := opts.OrderByName.ValueOK(); ok && *val {
-		sort.Slice(goals, func(i, j int) bool {
-			return goals[i].Name < goals[j].Name
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].Name < result[j].Name
 		})
 	} else {
-		sort.Slice(goals, func(i, j int) bool {
-			return goals[i].IDGoal < goals[j].IDGoal
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].IDGoal < result[j].IDGoal
 		})
 	}
 
-	return goals, nil
+	return result, nil
 }
 
 func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.ConvertedVisitsOptions) ([]*model.Visit, error) {
-	params, endpoint := buildRequestParams(idSite, "Live.getLastVisitsDetails")
-	params.Set("segment", fmt.Sprintf("visitConvertedGoalId==%d", idGoal))
-	params.Set("expanded", "1")
-	params.Set("filterLimit", "-1")
-
-	if opts != nil && opts.Date.IsSet() {
-		dateOpts := opts.Date.Value()
-		params.Set("period", strings.ToLower(dateOpts.Period.String()))
-
-		var date = dateOpts.StartDate
-		if endDate, ok := dateOpts.EndDate.ValueOK(); ok && *endDate != "" {
-			date += "," + *endDate
-		}
-
-		params.Set("date", date)
+	visitsOpts := &model.LastVisitsOpts{
+		Date:     opts.Date,
+		Segments: graphql.OmittableOf([]string{fmt.Sprintf("visitConvertedGoalId==%d", idGoal)}),
 	}
 
-	endpoint = endpoint + "?" + params.Encode()
-
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer res.Body.Close()
-
-	bodyRaw, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var visitDetails []*model.Visit
-	if err := json.Unmarshal(bodyRaw, &visitDetails); err != nil {
-		return nil, err
-	}
-
-	return visitDetails, nil
+	return GetLastVisits(ctx, idSite, visitsOpts)
 }
 
 func GetConvertedVisitsBulk(ctx context.Context, queries ...[6]string) ([][]*model.Visit, error) {
 	var (
-		vals, endpoint = buildRequestParams(-1, "API.getBulkRequest")
+		params, endpoint = buildRequestParams(noIdSite, "API.getBulkRequest")
 	)
 
 	for i, query := range queries {
 		parsedQuery := parseConvertedVisitsQuery(query)
-		queryVals, _ := buildRequestParams(parsedQuery.idSite, "Live.getLastVisitsDetails")
-		queryVals.Set("expanded", "1")
-		queryVals.Set("filterLimit", "-1")
+		moreParams, _ := buildRequestParams(parsedQuery.idSite, "Live.getLastVisitsDetails")
+		moreParams.Set("expanded", "1")
+		moreParams.Set("filterLimit", "-1")
 		if parsedQuery.searchSegment != "" {
-			queryVals.Set("segment", parsedQuery.searchSegment)
+			moreParams.Set("segment", parsedQuery.searchSegment)
 		} else {
-			queryVals.Set("segment", fmt.Sprintf("visitConvertedGoalId==%d", parsedQuery.idGoal))
+			moreParams.Set("segment", fmt.Sprintf("visitConvertedGoalId==%d", parsedQuery.idGoal))
 		}
 		if parsedQuery.period != "" {
-			queryVals.Set("period", strings.ToLower(parsedQuery.period))
+			moreParams.Set("period", strings.ToLower(parsedQuery.period))
 		}
 		if parsedQuery.date != "" {
-			queryVals.Set("date", parsedQuery.date)
+			moreParams.Set("date", parsedQuery.date)
 		}
 
-		vals.Set(
+		params.Set(
 			fmt.Sprintf("urls[%d]", i), // urls[0], urls[1], etc.
-			queryVals.Encode(),
+			moreParams.Encode(),
 		)
 	}
 
-	endpoint = endpoint + "?" + vals.Encode()
-
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
-	if err != nil {
+	var result [][]*model.Visit
+	if err := httpGet(ctx, endpoint, params, &result); err != nil {
 		return nil, err
 	}
 
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer res.Body.Close()
-
-	bodyRaw, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var visitDetails [][]*model.Visit
-	if err := json.Unmarshal(bodyRaw, &visitDetails); err != nil {
-		fmt.Println(string(bodyRaw))
-		return nil, err
-	}
-
-	return visitDetails, nil
+	return result, nil
 }
 
 type convertedVisitsQuery struct {

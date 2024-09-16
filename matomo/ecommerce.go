@@ -2,9 +2,6 @@ package matomo
 
 import (
 	"context"
-	"encoding/json"
-	"io"
-	"net/http"
 	"strings"
 
 	"github.com/jalavosus/matomogql/graph/model"
@@ -28,30 +25,9 @@ func getEcommerceItems(ctx context.Context, idSite int, opts *model.GetEcommerce
 	}
 
 	params.Set("date", date)
-	endpoint += "?" + params.Encode()
-
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer res.Body.Close()
-
-	bodyRaw, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
 
 	var result []*model.EcommerceGoal
-	if err := json.Unmarshal(bodyRaw, &result); err != nil {
+	if err := httpGet(ctx, endpoint, params, &result); err != nil {
 		return nil, err
 	}
 
