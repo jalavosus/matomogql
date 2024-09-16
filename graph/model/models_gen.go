@@ -155,6 +155,29 @@ type ShortDeviceInfo struct {
 	Count int    `json:"count"`
 }
 
+type Site struct {
+	IDSite                       int                `json:"idsite"`
+	Name                         string             `json:"name"`
+	MainURL                      string             `json:"main_url"`
+	TsCreated                    string             `json:"ts_created"`
+	Ecommerce                    int                `json:"ecommerce"`
+	Sitesearch                   int                `json:"sitesearch"`
+	SitesearchKeywordParameters  string             `json:"sitesearch_keyword_parameters"`
+	SitesearchCategoryParameters string             `json:"sitesearch_category_parameters"`
+	Timezone                     string             `json:"timezone"`
+	TimezoneName                 string             `json:"timezone_name"`
+	Currency                     string             `json:"currency"`
+	CurrencyName                 string             `json:"currency_name"`
+	KeepURLFragment              scalars.BoolInt    `json:"keep_url_fragment"`
+	ExcludeUnknownUrls           scalars.BoolInt    `json:"excludeUnknownUrls"`
+	ExcludedIPs                  scalars.StringList `json:"excluded_ips"`
+	ExcludedParameters           scalars.StringList `json:"excluded_parameters"`
+	ExcludedUserAgents           scalars.StringList `json:"excluded_user_agents"`
+	ExcludedReferrers            scalars.StringList `json:"excluded_referrers"`
+	Group                        string             `json:"group"`
+	Type                         string             `json:"type"`
+}
+
 type Visit struct {
 	IDSite                         int                   `json:"idSite"`
 	SiteName                       string                `json:"siteName"`

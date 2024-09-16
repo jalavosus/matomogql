@@ -153,14 +153,18 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetAllGoals           func(childComplexity int, idSite int, opts *model.GetGoalsOptions) int
-		GetEcommerceGoalsName func(childComplexity int, idSite int, opts model.GetEcommerceGoalsOptions) int
-		GetEcommerceGoalsSku  func(childComplexity int, idSite int, opts model.GetEcommerceGoalsOptions) int
-		GetGoal               func(childComplexity int, idSite int, idGoal int) int
-		GetGoals              func(childComplexity int, idSite int, goalIds []int, opts *model.GetGoalsOptions) int
-		GetVisitorProfile     func(childComplexity int, idSite int, visitorID string) int
-		GetVisitorProfiles    func(childComplexity int, idSite int, visitorIds []string) int
-		HelloWorld            func(childComplexity int) int
+		GetAllGoals                   func(childComplexity int, idSite int, opts *model.GetGoalsOptions) int
+		GetEcommerceGoalsName         func(childComplexity int, idSite int, opts model.GetEcommerceGoalsOptions) int
+		GetEcommerceGoalsSku          func(childComplexity int, idSite int, opts model.GetEcommerceGoalsOptions) int
+		GetGoal                       func(childComplexity int, idSite int, idGoal int) int
+		GetGoals                      func(childComplexity int, idSite int, goalIds []int, opts *model.GetGoalsOptions) int
+		GetSiteFromID                 func(childComplexity int, idSite int) int
+		GetSiteURLsFromID             func(childComplexity int, idSite int) int
+		GetSitesWithAtLeastViewAccess func(childComplexity int) int
+		GetSitesWithViewAccess        func(childComplexity int) int
+		GetVisitorProfile             func(childComplexity int, idSite int, visitorID string) int
+		GetVisitorProfiles            func(childComplexity int, idSite int, visitorIds []string) int
+		HelloWorld                    func(childComplexity int) int
 	}
 
 	ReferrerInfo struct {
@@ -178,6 +182,29 @@ type ComplexityRoot struct {
 	ShortDeviceInfo struct {
 		Count func(childComplexity int) int
 		Name  func(childComplexity int) int
+	}
+
+	Site struct {
+		Currency                     func(childComplexity int) int
+		CurrencyName                 func(childComplexity int) int
+		Ecommerce                    func(childComplexity int) int
+		ExcludeUnknownUrls           func(childComplexity int) int
+		ExcludedIPs                  func(childComplexity int) int
+		ExcludedParameters           func(childComplexity int) int
+		ExcludedReferrers            func(childComplexity int) int
+		ExcludedUserAgents           func(childComplexity int) int
+		Group                        func(childComplexity int) int
+		IDSite                       func(childComplexity int) int
+		KeepURLFragment              func(childComplexity int) int
+		MainURL                      func(childComplexity int) int
+		Name                         func(childComplexity int) int
+		Sitesearch                   func(childComplexity int) int
+		SitesearchCategoryParameters func(childComplexity int) int
+		SitesearchKeywordParameters  func(childComplexity int) int
+		Timezone                     func(childComplexity int) int
+		TimezoneName                 func(childComplexity int) int
+		TsCreated                    func(childComplexity int) int
+		Type                         func(childComplexity int) int
 	}
 
 	Visit struct {
@@ -330,6 +357,10 @@ type QueryResolver interface {
 	GetGoal(ctx context.Context, idSite int, idGoal int) (*model.Goal, error)
 	GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
 	GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
+	GetSiteFromID(ctx context.Context, idSite int) (*model.Site, error)
+	GetSiteURLsFromID(ctx context.Context, idSite int) ([]string, error)
+	GetSitesWithViewAccess(ctx context.Context) ([]*model.Site, error)
+	GetSitesWithAtLeastViewAccess(ctx context.Context) ([]*model.Site, error)
 	GetVisitorProfile(ctx context.Context, idSite int, visitorID string) (*model.VisitorProfile, error)
 	GetVisitorProfiles(ctx context.Context, idSite int, visitorIds []string) ([]*model.VisitorProfile, error)
 }
@@ -955,6 +986,44 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetGoals(childComplexity, args["idSite"].(int), args["goalIds"].([]int), args["opts"].(*model.GetGoalsOptions)), true
 
+	case "Query.getSiteFromID":
+		if e.complexity.Query.GetSiteFromID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getSiteFromID_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetSiteFromID(childComplexity, args["idSite"].(int)), true
+
+	case "Query.getSiteURLsFromID":
+		if e.complexity.Query.GetSiteURLsFromID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getSiteURLsFromID_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetSiteURLsFromID(childComplexity, args["idSite"].(int)), true
+
+	case "Query.getSitesWithAtLeastViewAccess":
+		if e.complexity.Query.GetSitesWithAtLeastViewAccess == nil {
+			break
+		}
+
+		return e.complexity.Query.GetSitesWithAtLeastViewAccess(childComplexity), true
+
+	case "Query.getSitesWithViewAccess":
+		if e.complexity.Query.GetSitesWithViewAccess == nil {
+			break
+		}
+
+		return e.complexity.Query.GetSitesWithViewAccess(childComplexity), true
+
 	case "Query.getVisitorProfile":
 		if e.complexity.Query.GetVisitorProfile == nil {
 			break
@@ -1062,6 +1131,146 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ShortDeviceInfo.Name(childComplexity), true
+
+	case "Site.currency":
+		if e.complexity.Site.Currency == nil {
+			break
+		}
+
+		return e.complexity.Site.Currency(childComplexity), true
+
+	case "Site.currencyName":
+		if e.complexity.Site.CurrencyName == nil {
+			break
+		}
+
+		return e.complexity.Site.CurrencyName(childComplexity), true
+
+	case "Site.ecommerce":
+		if e.complexity.Site.Ecommerce == nil {
+			break
+		}
+
+		return e.complexity.Site.Ecommerce(childComplexity), true
+
+	case "Site.excludeUnknownUrls":
+		if e.complexity.Site.ExcludeUnknownUrls == nil {
+			break
+		}
+
+		return e.complexity.Site.ExcludeUnknownUrls(childComplexity), true
+
+	case "Site.excludedIPs":
+		if e.complexity.Site.ExcludedIPs == nil {
+			break
+		}
+
+		return e.complexity.Site.ExcludedIPs(childComplexity), true
+
+	case "Site.excludedParameters":
+		if e.complexity.Site.ExcludedParameters == nil {
+			break
+		}
+
+		return e.complexity.Site.ExcludedParameters(childComplexity), true
+
+	case "Site.excludedReferrers":
+		if e.complexity.Site.ExcludedReferrers == nil {
+			break
+		}
+
+		return e.complexity.Site.ExcludedReferrers(childComplexity), true
+
+	case "Site.excludedUserAgents":
+		if e.complexity.Site.ExcludedUserAgents == nil {
+			break
+		}
+
+		return e.complexity.Site.ExcludedUserAgents(childComplexity), true
+
+	case "Site.group":
+		if e.complexity.Site.Group == nil {
+			break
+		}
+
+		return e.complexity.Site.Group(childComplexity), true
+
+	case "Site.idSite":
+		if e.complexity.Site.IDSite == nil {
+			break
+		}
+
+		return e.complexity.Site.IDSite(childComplexity), true
+
+	case "Site.keepURLFragment":
+		if e.complexity.Site.KeepURLFragment == nil {
+			break
+		}
+
+		return e.complexity.Site.KeepURLFragment(childComplexity), true
+
+	case "Site.mainUrl":
+		if e.complexity.Site.MainURL == nil {
+			break
+		}
+
+		return e.complexity.Site.MainURL(childComplexity), true
+
+	case "Site.name":
+		if e.complexity.Site.Name == nil {
+			break
+		}
+
+		return e.complexity.Site.Name(childComplexity), true
+
+	case "Site.sitesearch":
+		if e.complexity.Site.Sitesearch == nil {
+			break
+		}
+
+		return e.complexity.Site.Sitesearch(childComplexity), true
+
+	case "Site.sitesearchCategoryParameters":
+		if e.complexity.Site.SitesearchCategoryParameters == nil {
+			break
+		}
+
+		return e.complexity.Site.SitesearchCategoryParameters(childComplexity), true
+
+	case "Site.sitesearchKeywordParameters":
+		if e.complexity.Site.SitesearchKeywordParameters == nil {
+			break
+		}
+
+		return e.complexity.Site.SitesearchKeywordParameters(childComplexity), true
+
+	case "Site.timezone":
+		if e.complexity.Site.Timezone == nil {
+			break
+		}
+
+		return e.complexity.Site.Timezone(childComplexity), true
+
+	case "Site.timezoneName":
+		if e.complexity.Site.TimezoneName == nil {
+			break
+		}
+
+		return e.complexity.Site.TimezoneName(childComplexity), true
+
+	case "Site.tsCreated":
+		if e.complexity.Site.TsCreated == nil {
+			break
+		}
+
+		return e.complexity.Site.TsCreated(childComplexity), true
+
+	case "Site.type":
+		if e.complexity.Site.Type == nil {
+			break
+		}
+
+		return e.complexity.Site.Type(childComplexity), true
 
 	case "Visit.actionDetails":
 		if e.complexity.Visit.ActionDetails == nil {
@@ -2011,7 +2220,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "schema/aggregate_types.graphql" "schema/composite_types.graphql" "schema/directives.graphql" "schema/ecommerce.graphql" "schema/enums.graphql" "schema/goals.graphql" "schema/options_params.graphql" "schema/scalars.graphql" "schema/schema.graphql" "schema/visitors.graphql" "schema/visits.graphql"
+//go:embed "schema/aggregate_types.graphql" "schema/composite_types.graphql" "schema/directives.graphql" "schema/ecommerce.graphql" "schema/enums.graphql" "schema/goals.graphql" "schema/options_params.graphql" "schema/scalars.graphql" "schema/schema.graphql" "schema/sites.graphql" "schema/visitors.graphql" "schema/visits.graphql"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -2032,6 +2241,7 @@ var sources = []*ast.Source{
 	{Name: "schema/options_params.graphql", Input: sourceData("schema/options_params.graphql"), BuiltIn: false},
 	{Name: "schema/scalars.graphql", Input: sourceData("schema/scalars.graphql"), BuiltIn: false},
 	{Name: "schema/schema.graphql", Input: sourceData("schema/schema.graphql"), BuiltIn: false},
+	{Name: "schema/sites.graphql", Input: sourceData("schema/sites.graphql"), BuiltIn: false},
 	{Name: "schema/visitors.graphql", Input: sourceData("schema/visitors.graphql"), BuiltIn: false},
 	{Name: "schema/visits.graphql", Input: sourceData("schema/visits.graphql"), BuiltIn: false},
 }
@@ -2230,6 +2440,36 @@ func (ec *executionContext) field_Query_getGoals_args(ctx context.Context, rawAr
 		}
 	}
 	args["opts"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getSiteFromID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["idSite"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["idSite"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getSiteURLsFromID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["idSite"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["idSite"] = arg0
 	return args, nil
 }
 
@@ -6380,6 +6620,318 @@ func (ec *executionContext) fieldContext_Query_getAllGoals(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_getSiteFromID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getSiteFromID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetSiteFromID(rctx, fc.Args["idSite"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Site)
+	fc.Result = res
+	return ec.marshalOSite2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getSiteFromID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_Site_idSite(ctx, field)
+			case "name":
+				return ec.fieldContext_Site_name(ctx, field)
+			case "mainUrl":
+				return ec.fieldContext_Site_mainUrl(ctx, field)
+			case "tsCreated":
+				return ec.fieldContext_Site_tsCreated(ctx, field)
+			case "ecommerce":
+				return ec.fieldContext_Site_ecommerce(ctx, field)
+			case "sitesearch":
+				return ec.fieldContext_Site_sitesearch(ctx, field)
+			case "sitesearchKeywordParameters":
+				return ec.fieldContext_Site_sitesearchKeywordParameters(ctx, field)
+			case "sitesearchCategoryParameters":
+				return ec.fieldContext_Site_sitesearchCategoryParameters(ctx, field)
+			case "timezone":
+				return ec.fieldContext_Site_timezone(ctx, field)
+			case "timezoneName":
+				return ec.fieldContext_Site_timezoneName(ctx, field)
+			case "currency":
+				return ec.fieldContext_Site_currency(ctx, field)
+			case "currencyName":
+				return ec.fieldContext_Site_currencyName(ctx, field)
+			case "keepURLFragment":
+				return ec.fieldContext_Site_keepURLFragment(ctx, field)
+			case "excludeUnknownUrls":
+				return ec.fieldContext_Site_excludeUnknownUrls(ctx, field)
+			case "excludedIPs":
+				return ec.fieldContext_Site_excludedIPs(ctx, field)
+			case "excludedParameters":
+				return ec.fieldContext_Site_excludedParameters(ctx, field)
+			case "excludedUserAgents":
+				return ec.fieldContext_Site_excludedUserAgents(ctx, field)
+			case "excludedReferrers":
+				return ec.fieldContext_Site_excludedReferrers(ctx, field)
+			case "group":
+				return ec.fieldContext_Site_group(ctx, field)
+			case "type":
+				return ec.fieldContext_Site_type(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Site", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getSiteFromID_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getSiteURLsFromID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getSiteURLsFromID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetSiteURLsFromID(rctx, fc.Args["idSite"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getSiteURLsFromID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getSiteURLsFromID_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getSitesWithViewAccess(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getSitesWithViewAccess(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetSitesWithViewAccess(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Site)
+	fc.Result = res
+	return ec.marshalOSite2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getSitesWithViewAccess(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_Site_idSite(ctx, field)
+			case "name":
+				return ec.fieldContext_Site_name(ctx, field)
+			case "mainUrl":
+				return ec.fieldContext_Site_mainUrl(ctx, field)
+			case "tsCreated":
+				return ec.fieldContext_Site_tsCreated(ctx, field)
+			case "ecommerce":
+				return ec.fieldContext_Site_ecommerce(ctx, field)
+			case "sitesearch":
+				return ec.fieldContext_Site_sitesearch(ctx, field)
+			case "sitesearchKeywordParameters":
+				return ec.fieldContext_Site_sitesearchKeywordParameters(ctx, field)
+			case "sitesearchCategoryParameters":
+				return ec.fieldContext_Site_sitesearchCategoryParameters(ctx, field)
+			case "timezone":
+				return ec.fieldContext_Site_timezone(ctx, field)
+			case "timezoneName":
+				return ec.fieldContext_Site_timezoneName(ctx, field)
+			case "currency":
+				return ec.fieldContext_Site_currency(ctx, field)
+			case "currencyName":
+				return ec.fieldContext_Site_currencyName(ctx, field)
+			case "keepURLFragment":
+				return ec.fieldContext_Site_keepURLFragment(ctx, field)
+			case "excludeUnknownUrls":
+				return ec.fieldContext_Site_excludeUnknownUrls(ctx, field)
+			case "excludedIPs":
+				return ec.fieldContext_Site_excludedIPs(ctx, field)
+			case "excludedParameters":
+				return ec.fieldContext_Site_excludedParameters(ctx, field)
+			case "excludedUserAgents":
+				return ec.fieldContext_Site_excludedUserAgents(ctx, field)
+			case "excludedReferrers":
+				return ec.fieldContext_Site_excludedReferrers(ctx, field)
+			case "group":
+				return ec.fieldContext_Site_group(ctx, field)
+			case "type":
+				return ec.fieldContext_Site_type(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Site", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getSitesWithAtLeastViewAccess(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getSitesWithAtLeastViewAccess(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetSitesWithAtLeastViewAccess(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Site)
+	fc.Result = res
+	return ec.marshalOSite2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getSitesWithAtLeastViewAccess(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_Site_idSite(ctx, field)
+			case "name":
+				return ec.fieldContext_Site_name(ctx, field)
+			case "mainUrl":
+				return ec.fieldContext_Site_mainUrl(ctx, field)
+			case "tsCreated":
+				return ec.fieldContext_Site_tsCreated(ctx, field)
+			case "ecommerce":
+				return ec.fieldContext_Site_ecommerce(ctx, field)
+			case "sitesearch":
+				return ec.fieldContext_Site_sitesearch(ctx, field)
+			case "sitesearchKeywordParameters":
+				return ec.fieldContext_Site_sitesearchKeywordParameters(ctx, field)
+			case "sitesearchCategoryParameters":
+				return ec.fieldContext_Site_sitesearchCategoryParameters(ctx, field)
+			case "timezone":
+				return ec.fieldContext_Site_timezone(ctx, field)
+			case "timezoneName":
+				return ec.fieldContext_Site_timezoneName(ctx, field)
+			case "currency":
+				return ec.fieldContext_Site_currency(ctx, field)
+			case "currencyName":
+				return ec.fieldContext_Site_currencyName(ctx, field)
+			case "keepURLFragment":
+				return ec.fieldContext_Site_keepURLFragment(ctx, field)
+			case "excludeUnknownUrls":
+				return ec.fieldContext_Site_excludeUnknownUrls(ctx, field)
+			case "excludedIPs":
+				return ec.fieldContext_Site_excludedIPs(ctx, field)
+			case "excludedParameters":
+				return ec.fieldContext_Site_excludedParameters(ctx, field)
+			case "excludedUserAgents":
+				return ec.fieldContext_Site_excludedUserAgents(ctx, field)
+			case "excludedReferrers":
+				return ec.fieldContext_Site_excludedReferrers(ctx, field)
+			case "group":
+				return ec.fieldContext_Site_group(ctx, field)
+			case "type":
+				return ec.fieldContext_Site_type(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Site", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_getVisitorProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_getVisitorProfile(ctx, field)
 	if err != nil {
@@ -7097,6 +7649,886 @@ func (ec *executionContext) fieldContext_ShortDeviceInfo_count(_ context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_idSite(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_idSite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IDSite, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_idSite(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_name(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_mainUrl(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_mainUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MainURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_mainUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_tsCreated(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_tsCreated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TsCreated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_tsCreated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_ecommerce(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_ecommerce(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Ecommerce, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_ecommerce(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_sitesearch(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_sitesearch(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Sitesearch, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_sitesearch(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_sitesearchKeywordParameters(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_sitesearchKeywordParameters(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SitesearchKeywordParameters, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_sitesearchKeywordParameters(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_sitesearchCategoryParameters(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_sitesearchCategoryParameters(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SitesearchCategoryParameters, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_sitesearchCategoryParameters(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_timezone(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_timezone(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Timezone, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_timezone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_timezoneName(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_timezoneName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TimezoneName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_timezoneName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_currency(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_currency(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Currency, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_currency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_currencyName(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_currencyName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CurrencyName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_currencyName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_keepURLFragment(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_keepURLFragment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KeepURLFragment, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(scalars.BoolInt)
+	fc.Result = res
+	return ec.marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_keepURLFragment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BoolInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_excludeUnknownUrls(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_excludeUnknownUrls(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExcludeUnknownUrls, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(scalars.BoolInt)
+	fc.Result = res
+	return ec.marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_excludeUnknownUrls(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BoolInt does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_excludedIPs(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_excludedIPs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExcludedIPs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(scalars.StringList)
+	fc.Result = res
+	return ec.marshalNStringList2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐStringList(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_excludedIPs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type StringList does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_excludedParameters(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_excludedParameters(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExcludedParameters, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(scalars.StringList)
+	fc.Result = res
+	return ec.marshalNStringList2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐStringList(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_excludedParameters(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type StringList does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_excludedUserAgents(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_excludedUserAgents(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExcludedUserAgents, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(scalars.StringList)
+	fc.Result = res
+	return ec.marshalNStringList2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐStringList(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_excludedUserAgents(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type StringList does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_excludedReferrers(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_excludedReferrers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExcludedReferrers, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(scalars.StringList)
+	fc.Result = res
+	return ec.marshalNStringList2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐStringList(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_excludedReferrers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type StringList does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_group(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_group(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Group, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_group(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Site_type(ctx context.Context, field graphql.CollectedField, obj *model.Site) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Site_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Site_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Site",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -15573,6 +17005,82 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getSiteFromID":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getSiteFromID(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getSiteURLsFromID":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getSiteURLsFromID(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getSitesWithViewAccess":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getSitesWithViewAccess(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getSitesWithAtLeastViewAccess":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getSitesWithAtLeastViewAccess(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "getVisitorProfile":
 			field := field
 
@@ -15712,6 +17220,140 @@ func (ec *executionContext) _ShortDeviceInfo(ctx context.Context, sel ast.Select
 			}
 		case "count":
 			out.Values[i] = ec._ShortDeviceInfo_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var siteImplementors = []string{"Site"}
+
+func (ec *executionContext) _Site(ctx context.Context, sel ast.SelectionSet, obj *model.Site) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, siteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Site")
+		case "idSite":
+			out.Values[i] = ec._Site_idSite(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Site_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mainUrl":
+			out.Values[i] = ec._Site_mainUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tsCreated":
+			out.Values[i] = ec._Site_tsCreated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ecommerce":
+			out.Values[i] = ec._Site_ecommerce(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sitesearch":
+			out.Values[i] = ec._Site_sitesearch(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sitesearchKeywordParameters":
+			out.Values[i] = ec._Site_sitesearchKeywordParameters(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sitesearchCategoryParameters":
+			out.Values[i] = ec._Site_sitesearchCategoryParameters(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "timezone":
+			out.Values[i] = ec._Site_timezone(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "timezoneName":
+			out.Values[i] = ec._Site_timezoneName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currency":
+			out.Values[i] = ec._Site_currency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currencyName":
+			out.Values[i] = ec._Site_currencyName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "keepURLFragment":
+			out.Values[i] = ec._Site_keepURLFragment(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "excludeUnknownUrls":
+			out.Values[i] = ec._Site_excludeUnknownUrls(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "excludedIPs":
+			out.Values[i] = ec._Site_excludedIPs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "excludedParameters":
+			out.Values[i] = ec._Site_excludedParameters(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "excludedUserAgents":
+			out.Values[i] = ec._Site_excludedUserAgents(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "excludedReferrers":
+			out.Values[i] = ec._Site_excludedReferrers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "group":
+			out.Values[i] = ec._Site_group(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._Site_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -16999,6 +18641,22 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) unmarshalNStringList2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐStringList(ctx context.Context, v interface{}) (scalars.StringList, error) {
+	var res scalars.StringList
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNStringList2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐStringList(ctx context.Context, sel ast.SelectionSet, v scalars.StringList) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) marshalNVisitorFirstLastVisit2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorFirstLastVisit(ctx context.Context, sel ast.SelectionSet, v *model.VisitorFirstLastVisit) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -17727,6 +19385,54 @@ func (ec *executionContext) marshalOShortDeviceInfo2ᚖgithubᚗcomᚋjalavosus�
 		return graphql.Null
 	}
 	return ec._ShortDeviceInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSite2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐSite(ctx context.Context, sel ast.SelectionSet, v []*model.Site) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOSite2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐSite(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOSite2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐSite(ctx context.Context, sel ast.SelectionSet, v *model.Site) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Site(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {

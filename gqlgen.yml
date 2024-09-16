@@ -88,3 +88,6 @@ models:
   BoolInt:
     model:
       - github.com/jalavosus/matomogql/graph/scalars.BoolInt
+  StringList:
+    model:
+      - github.com/jalavosus/matomogql/graph/scalars.StringList

@@ -13,6 +13,7 @@ const (
 )
 
 const (
+	noIdSite       = -9999
 	defaultTimeout = 10 * time.Second
 )
 
@@ -27,7 +28,9 @@ func buildRequestParams(idSite int, method string) (values url.Values, endpoint 
 	apiKey, endpoint = getEnv()
 
 	values.Set("method", method)
-	values.Set("idSite", strconv.Itoa(idSite))
+	if idSite != noIdSite {
+		values.Set("idSite", strconv.Itoa(idSite))
+	}
 	values.Set("format", apiFormat)
 	values.Set("module", apiModule)
 	values.Set("token_auth", apiKey)

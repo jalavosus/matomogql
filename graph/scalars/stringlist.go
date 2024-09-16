@@ -2,7 +2,9 @@ package scalars
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
+	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
 )
@@ -20,6 +22,31 @@ func (s StringList) MarshalJSON() ([]byte, error) {
 func (s *StringList) UnmarshalGQL(v any) error {
 	switch x := v.(type) {
 	case string:
-		*s = StringList()
+		if x != "" {
+			*s = strings.Split(x, ",")
+		} else {
+			*s = []string{}
+		}
+	case []string:
+		*s = x
+	default:
+		return fmt.Errorf("unable to parse %[1]v as StringList, has type %[1]T", v)
 	}
+
+	return nil
+}
+
+func (s *StringList) UnmarshalJSON(v []byte) error {
+	var raw string
+	if err := json.Unmarshal(v, &raw); err != nil {
+		return err
+	}
+
+	if raw != "" {
+		*s = strings.Split(raw, ",")
+	} else {
+		*s = []string{}
+	}
+
+	return nil
 }

@@ -1,0 +1,34 @@
+type Site {
+    idSite:     Int! @goTag(key: "json", value: "idsite")
+    name:       String!
+    mainUrl:    String! @goTag(key: "json", value: "main_url")
+    tsCreated:  String! @goTag(key: "json", value: "ts_created")
+    ecommerce:  Int!
+
+    sitesearch: Int!
+    sitesearchKeywordParameters:  String! @goTag(key: "json", value: "sitesearch_keyword_parameters")
+    sitesearchCategoryParameters: String! @goTag(key: "json", value: "sitesearch_category_parameters")
+
+    timezone:     String!
+    timezoneName: String! @goTag(key: "json", value: "timezone_name")
+    currency:     String!
+    currencyName: String! @goTag(key: "json", value: "currency_name")
+
+    keepURLFragment:    BoolInt! @goTag(key: "json", value: "keep_url_fragment")
+    excludeUnknownUrls: BoolInt!
+    excludedIPs:        StringList! @goTag(key: "json", value: "excluded_ips")
+    excludedParameters: StringList! @goTag(key: "json", value: "excluded_parameters")
+    excludedUserAgents: StringList! @goTag(key: "json", value: "excluded_user_agents")
+    excludedReferrers:  StringList! @goTag(key: "json", value: "excluded_referrers")
+
+    group: String!
+    type:  String!
+}
+
+extend type Query {
+    getSiteFromID(idSite: Int!): Site
+    getSiteURLsFromID(idSite: Int!): [String!]
+#    getAllSites: [Site]
+    getSitesWithViewAccess:        [Site]
+    getSitesWithAtLeastViewAccess: [Site]
+}
