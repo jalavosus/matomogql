@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/jalavosus/matomogql/graph/scalars"
 )
 
 type AggregateContinentInfo struct {
@@ -101,19 +102,19 @@ type GetGoalsOptions struct {
 }
 
 type Goal struct {
-	IDSite              int      `json:"idsite"`
-	IDGoal              int      `json:"idgoal"`
-	Name                string   `json:"name"`
-	Description         string   `json:"description"`
-	MatchAttribute      string   `json:"match_attribute"`
-	Pattern             *string  `json:"pattern,omitempty"`
-	PatternType         *string  `json:"pattern_type,omitempty"`
-	CaseSensitive       *int     `json:"case_sensitive"`
-	AllowMultiple       int      `json:"allow_multiple,omitempty"`
-	Revenue             int      `json:"revenue"`
-	Deleted             int      `json:"deleted"`
-	EventValueAsRevenue int      `json:"event_value_as_revenue,omitempty"`
-	ConvertedVisits     []*Visit `json:"convertedVisits,omitempty"`
+	IDSite              int              `json:"idsite"`
+	IDGoal              int              `json:"idgoal"`
+	Name                string           `json:"name"`
+	Description         string           `json:"description"`
+	MatchAttribute      string           `json:"match_attribute"`
+	Pattern             *string          `json:"pattern,omitempty"`
+	PatternType         *string          `json:"pattern_type,omitempty"`
+	CaseSensitive       *scalars.BoolInt `json:"case_sensitive"`
+	AllowMultiple       scalars.BoolInt  `json:"allow_multiple,omitempty"`
+	Revenue             scalars.BoolInt  `json:"revenue"`
+	Deleted             scalars.BoolInt  `json:"deleted"`
+	EventValueAsRevenue int              `json:"event_value_as_revenue,omitempty"`
+	ConvertedVisits     []*Visit         `json:"convertedVisits,omitempty"`
 }
 
 type Location struct {

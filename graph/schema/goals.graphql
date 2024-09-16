@@ -6,10 +6,10 @@ type Goal {
     matchAttribute:      String! @goTag(key: "json", value: "match_attribute")
     pattern:             String
     patternType:         String @goTag(key: "json", value: "pattern_type,omitempty")
-    caseSensitive:       Int @goTag(key: "json", value: "case_sensitive")
-    allowMultiple:       Int! @goTag(key: "json", value: "allow_multiple,omitempty")
-    revenue:             Int!
-    deleted:             Int!
+    caseSensitive:       BoolInt @goTag(key: "json", value: "case_sensitive")
+    allowMultiple:       BoolInt! @goTag(key: "json", value: "allow_multiple,omitempty")
+    revenue:             BoolInt!
+    deleted:             BoolInt!
     eventValueAsRevenue: Int! @goTag(key: "json", value: "event_value_as_revenue,omitempty")
 
     convertedVisits(

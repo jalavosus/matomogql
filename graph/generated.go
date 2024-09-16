@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/jalavosus/matomogql/graph/model"
+	"github.com/jalavosus/matomogql/graph/scalars"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -2010,7 +2011,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "schema/aggregate_types.graphql" "schema/composite_types.graphql" "schema/directives.graphql" "schema/ecommerce.graphql" "schema/enums.graphql" "schema/goals.graphql" "schema/options_params.graphql" "schema/schema.graphql" "schema/visitors.graphql" "schema/visits.graphql"
+//go:embed "schema/aggregate_types.graphql" "schema/composite_types.graphql" "schema/directives.graphql" "schema/ecommerce.graphql" "schema/enums.graphql" "schema/goals.graphql" "schema/options_params.graphql" "schema/scalars.graphql" "schema/schema.graphql" "schema/visitors.graphql" "schema/visits.graphql"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -2029,6 +2030,7 @@ var sources = []*ast.Source{
 	{Name: "schema/enums.graphql", Input: sourceData("schema/enums.graphql"), BuiltIn: false},
 	{Name: "schema/goals.graphql", Input: sourceData("schema/goals.graphql"), BuiltIn: false},
 	{Name: "schema/options_params.graphql", Input: sourceData("schema/options_params.graphql"), BuiltIn: false},
+	{Name: "schema/scalars.graphql", Input: sourceData("schema/scalars.graphql"), BuiltIn: false},
 	{Name: "schema/schema.graphql", Input: sourceData("schema/schema.graphql"), BuiltIn: false},
 	{Name: "schema/visitors.graphql", Input: sourceData("schema/visitors.graphql"), BuiltIn: false},
 	{Name: "schema/visits.graphql", Input: sourceData("schema/visits.graphql"), BuiltIn: false},
@@ -5019,9 +5021,9 @@ func (ec *executionContext) _Goal_caseSensitive(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(*scalars.BoolInt)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalOBoolInt2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Goal_caseSensitive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5031,7 +5033,7 @@ func (ec *executionContext) fieldContext_Goal_caseSensitive(_ context.Context, f
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type BoolInt does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5063,9 +5065,9 @@ func (ec *executionContext) _Goal_allowMultiple(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(scalars.BoolInt)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Goal_allowMultiple(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5075,7 +5077,7 @@ func (ec *executionContext) fieldContext_Goal_allowMultiple(_ context.Context, f
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type BoolInt does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5107,9 +5109,9 @@ func (ec *executionContext) _Goal_revenue(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(scalars.BoolInt)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Goal_revenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5119,7 +5121,7 @@ func (ec *executionContext) fieldContext_Goal_revenue(_ context.Context, field g
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type BoolInt does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5151,9 +5153,9 @@ func (ec *executionContext) _Goal_deleted(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(scalars.BoolInt)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Goal_deleted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5163,7 +5165,7 @@ func (ec *executionContext) fieldContext_Goal_deleted(_ context.Context, field g
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type BoolInt does not have child fields")
 		},
 	}
 	return fc, nil
@@ -16907,6 +16909,16 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) unmarshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx context.Context, v interface{}) (scalars.BoolInt, error) {
+	var res scalars.BoolInt
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBoolInt2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx context.Context, sel ast.SelectionSet, v scalars.BoolInt) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -17392,6 +17404,22 @@ func (ec *executionContext) marshalOAggregateDeviceInfo2ᚖgithubᚗcomᚋjalavo
 		return graphql.Null
 	}
 	return ec._AggregateDeviceInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOBoolInt2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx context.Context, v interface{}) (*scalars.BoolInt, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(scalars.BoolInt)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOBoolInt2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐBoolInt(ctx context.Context, sel ast.SelectionSet, v *scalars.BoolInt) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
