@@ -41,6 +41,7 @@ input LastVisitsOpts {
 
 extend type Query {
     getSiteFromID(idSite: Int!): Site
+    getSitesFromID(siteIDs: [Int!]): [Site]
     getSiteURLsFromID(idSite: Int!): [String!]
 #    getAllSites: [Site]
     getSitesWithViewAccess:        [Site]

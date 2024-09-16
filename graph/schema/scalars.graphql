@@ -4,3 +4,6 @@ scalar BoolInt
 
 """ This is an incredibly asinine wrapper around []string, as Matomo returns what should be lists/arrays as comma-joined strings. """
 scalar StringList
+
+""" Implemented by github.com/shopspring/decimal """
+scalar Decimal

@@ -16,6 +16,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/jalavosus/matomogql/graph/model"
 	"github.com/jalavosus/matomogql/graph/scalars"
+	"github.com/shopspring/decimal"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -161,6 +162,7 @@ type ComplexityRoot struct {
 		GetGoals                      func(childComplexity int, idSite int, goalIds []int, opts *model.GetGoalsOptions) int
 		GetSiteFromID                 func(childComplexity int, idSite int) int
 		GetSiteURLsFromID             func(childComplexity int, idSite int) int
+		GetSitesFromID                func(childComplexity int, siteIDs []int) int
 		GetSitesWithAtLeastViewAccess func(childComplexity int) int
 		GetSitesWithViewAccess        func(childComplexity int) int
 		GetVisitorProfile             func(childComplexity int, idSite int, visitorID string) int
@@ -305,6 +307,10 @@ type ComplexityRoot struct {
 	}
 
 	VisitActionDetails struct {
+		EventAction      func(childComplexity int) int
+		EventCategory    func(childComplexity int) int
+		EventName        func(childComplexity int) int
+		GoalName         func(childComplexity int) int
 		GoalPageID       func(childComplexity int) int
 		IDPageView       func(childComplexity int) int
 		PageID           func(childComplexity int) int
@@ -315,6 +321,8 @@ type ComplexityRoot struct {
 		ReferrerKeyword  func(childComplexity int) int
 		ReferrerName     func(childComplexity int) int
 		ReferrerType     func(childComplexity int) int
+		Revenue          func(childComplexity int) int
+		RevenueSubTotal  func(childComplexity int) int
 		ServerTimePretty func(childComplexity int) int
 		Subtitle         func(childComplexity int) int
 		TimeSpent        func(childComplexity int) int
@@ -361,6 +369,7 @@ type QueryResolver interface {
 	GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
 	GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error)
 	GetSiteFromID(ctx context.Context, idSite int) (*model.Site, error)
+	GetSitesFromID(ctx context.Context, siteIDs []int) ([]*model.Site, error)
 	GetSiteURLsFromID(ctx context.Context, idSite int) ([]string, error)
 	GetSitesWithViewAccess(ctx context.Context) ([]*model.Site, error)
 	GetSitesWithAtLeastViewAccess(ctx context.Context) ([]*model.Site, error)
@@ -1016,6 +1025,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetSiteURLsFromID(childComplexity, args["idSite"].(int)), true
+
+	case "Query.getSitesFromID":
+		if e.complexity.Query.GetSitesFromID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getSitesFromID_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetSitesFromID(childComplexity, args["siteIDs"].([]int)), true
 
 	case "Query.getSitesWithAtLeastViewAccess":
 		if e.complexity.Query.GetSitesWithAtLeastViewAccess == nil {
@@ -1940,6 +1961,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Visit.VisitorTypeIcon(childComplexity), true
 
+	case "VisitActionDetails.eventAction":
+		if e.complexity.VisitActionDetails.EventAction == nil {
+			break
+		}
+
+		return e.complexity.VisitActionDetails.EventAction(childComplexity), true
+
+	case "VisitActionDetails.eventCategory":
+		if e.complexity.VisitActionDetails.EventCategory == nil {
+			break
+		}
+
+		return e.complexity.VisitActionDetails.EventCategory(childComplexity), true
+
+	case "VisitActionDetails.eventName":
+		if e.complexity.VisitActionDetails.EventName == nil {
+			break
+		}
+
+		return e.complexity.VisitActionDetails.EventName(childComplexity), true
+
+	case "VisitActionDetails.goalName":
+		if e.complexity.VisitActionDetails.GoalName == nil {
+			break
+		}
+
+		return e.complexity.VisitActionDetails.GoalName(childComplexity), true
+
 	case "VisitActionDetails.goalPageId":
 		if e.complexity.VisitActionDetails.GoalPageID == nil {
 			break
@@ -2009,6 +2058,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.VisitActionDetails.ReferrerType(childComplexity), true
+
+	case "VisitActionDetails.revenue":
+		if e.complexity.VisitActionDetails.Revenue == nil {
+			break
+		}
+
+		return e.complexity.VisitActionDetails.Revenue(childComplexity), true
+
+	case "VisitActionDetails.revenueSubTotal":
+		if e.complexity.VisitActionDetails.RevenueSubTotal == nil {
+			break
+		}
+
+		return e.complexity.VisitActionDetails.RevenueSubTotal(childComplexity), true
 
 	case "VisitActionDetails.serverTimePretty":
 		if e.complexity.VisitActionDetails.ServerTimePretty == nil {
@@ -2502,6 +2565,21 @@ func (ec *executionContext) field_Query_getSiteURLsFromID_args(ctx context.Conte
 		}
 	}
 	args["idSite"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getSitesFromID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []int
+	if tmp, ok := rawArgs["siteIDs"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("siteIDs"))
+		arg0, err = ec.unmarshalOInt2ᚕintᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["siteIDs"] = arg0
 	return args, nil
 }
 
@@ -6780,6 +6858,104 @@ func (ec *executionContext) fieldContext_Query_getSiteFromID(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_getSitesFromID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getSitesFromID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetSitesFromID(rctx, fc.Args["siteIDs"].([]int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Site)
+	fc.Result = res
+	return ec.marshalOSite2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐSite(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getSitesFromID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_Site_idSite(ctx, field)
+			case "name":
+				return ec.fieldContext_Site_name(ctx, field)
+			case "mainUrl":
+				return ec.fieldContext_Site_mainUrl(ctx, field)
+			case "tsCreated":
+				return ec.fieldContext_Site_tsCreated(ctx, field)
+			case "ecommerce":
+				return ec.fieldContext_Site_ecommerce(ctx, field)
+			case "sitesearch":
+				return ec.fieldContext_Site_sitesearch(ctx, field)
+			case "sitesearchKeywordParameters":
+				return ec.fieldContext_Site_sitesearchKeywordParameters(ctx, field)
+			case "sitesearchCategoryParameters":
+				return ec.fieldContext_Site_sitesearchCategoryParameters(ctx, field)
+			case "timezone":
+				return ec.fieldContext_Site_timezone(ctx, field)
+			case "timezoneName":
+				return ec.fieldContext_Site_timezoneName(ctx, field)
+			case "currency":
+				return ec.fieldContext_Site_currency(ctx, field)
+			case "currencyName":
+				return ec.fieldContext_Site_currencyName(ctx, field)
+			case "keepURLFragment":
+				return ec.fieldContext_Site_keepURLFragment(ctx, field)
+			case "excludeUnknownUrls":
+				return ec.fieldContext_Site_excludeUnknownUrls(ctx, field)
+			case "excludedIPs":
+				return ec.fieldContext_Site_excludedIPs(ctx, field)
+			case "excludedParameters":
+				return ec.fieldContext_Site_excludedParameters(ctx, field)
+			case "excludedUserAgents":
+				return ec.fieldContext_Site_excludedUserAgents(ctx, field)
+			case "excludedReferrers":
+				return ec.fieldContext_Site_excludedReferrers(ctx, field)
+			case "group":
+				return ec.fieldContext_Site_group(ctx, field)
+			case "type":
+				return ec.fieldContext_Site_type(ctx, field)
+			case "goals":
+				return ec.fieldContext_Site_goals(ctx, field)
+			case "lastVisits":
+				return ec.fieldContext_Site_lastVisits(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Site", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getSitesFromID_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_getSiteURLsFromID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_getSiteURLsFromID(ctx, field)
 	if err != nil {
@@ -9485,6 +9661,18 @@ func (ec *executionContext) fieldContext_Visit_actionDetails(_ context.Context, 
 				return ec.fieldContext_VisitActionDetails_timestamp(ctx, field)
 			case "goalPageId":
 				return ec.fieldContext_VisitActionDetails_goalPageId(ctx, field)
+			case "revenue":
+				return ec.fieldContext_VisitActionDetails_revenue(ctx, field)
+			case "revenueSubTotal":
+				return ec.fieldContext_VisitActionDetails_revenueSubTotal(ctx, field)
+			case "eventCategory":
+				return ec.fieldContext_VisitActionDetails_eventCategory(ctx, field)
+			case "eventAction":
+				return ec.fieldContext_VisitActionDetails_eventAction(ctx, field)
+			case "eventName":
+				return ec.fieldContext_VisitActionDetails_eventName(ctx, field)
+			case "goalName":
+				return ec.fieldContext_VisitActionDetails_goalName(ctx, field)
 			case "referrer":
 				return ec.fieldContext_VisitActionDetails_referrer(ctx, field)
 			case "referrerType":
@@ -13615,6 +13803,252 @@ func (ec *executionContext) fieldContext_VisitActionDetails_goalPageId(_ context
 	return fc, nil
 }
 
+func (ec *executionContext) _VisitActionDetails_revenue(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitActionDetails_revenue(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Revenue, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*decimal.Decimal)
+	fc.Result = res
+	return ec.marshalODecimal2ᚖgithubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitActionDetails_revenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitActionDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Decimal does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VisitActionDetails_revenueSubTotal(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitActionDetails_revenueSubTotal(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RevenueSubTotal, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*decimal.Decimal)
+	fc.Result = res
+	return ec.marshalODecimal2ᚖgithubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitActionDetails_revenueSubTotal(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitActionDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Decimal does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VisitActionDetails_eventCategory(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitActionDetails_eventCategory(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EventCategory, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitActionDetails_eventCategory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitActionDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VisitActionDetails_eventAction(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitActionDetails_eventAction(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EventAction, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitActionDetails_eventAction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitActionDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VisitActionDetails_eventName(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitActionDetails_eventName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EventName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitActionDetails_eventName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitActionDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VisitActionDetails_goalName(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitActionDetails_goalName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GoalName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitActionDetails_goalName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitActionDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VisitActionDetails_referrer(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VisitActionDetails_referrer(ctx, field)
 	if err != nil {
@@ -17455,6 +17889,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getSitesFromID":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getSitesFromID(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "getSiteURLsFromID":
 			field := field
 
@@ -18539,6 +18992,18 @@ func (ec *executionContext) _VisitActionDetails(ctx context.Context, sel ast.Sel
 			}
 		case "goalPageId":
 			out.Values[i] = ec._VisitActionDetails_goalPageId(ctx, field, obj)
+		case "revenue":
+			out.Values[i] = ec._VisitActionDetails_revenue(ctx, field, obj)
+		case "revenueSubTotal":
+			out.Values[i] = ec._VisitActionDetails_revenueSubTotal(ctx, field, obj)
+		case "eventCategory":
+			out.Values[i] = ec._VisitActionDetails_eventCategory(ctx, field, obj)
+		case "eventAction":
+			out.Values[i] = ec._VisitActionDetails_eventAction(ctx, field, obj)
+		case "eventName":
+			out.Values[i] = ec._VisitActionDetails_eventName(ctx, field, obj)
+		case "goalName":
+			out.Values[i] = ec._VisitActionDetails_goalName(ctx, field, obj)
 		case "referrer":
 			field := field
 
@@ -19631,6 +20096,22 @@ func (ec *executionContext) unmarshalODateRangeOptions2ᚖgithubᚗcomᚋjalavos
 	}
 	res, err := ec.unmarshalInputDateRangeOptions(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalODecimal2ᚖgithubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx context.Context, v interface{}) (*decimal.Decimal, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := scalars.UnmarshalDecimal(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODecimal2ᚖgithubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx context.Context, sel ast.SelectionSet, v *decimal.Decimal) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := scalars.MarshalDecimal(*v)
+	return res
 }
 
 func (ec *executionContext) marshalODeviceInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDeviceInfo(ctx context.Context, sel ast.SelectionSet, v *model.DeviceInfo) graphql.Marshaler {

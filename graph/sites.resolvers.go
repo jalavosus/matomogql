@@ -16,6 +16,11 @@ func (r *queryResolver) GetSiteFromID(ctx context.Context, idSite int) (*model.S
 	return matomo.GetSiteFromID(ctx, idSite)
 }
 
+// GetSitesFromID is the resolver for the getSitesFromID field.
+func (r *queryResolver) GetSitesFromID(ctx context.Context, siteIDs []int) ([]*model.Site, error) {
+	return matomo.GetSitesFromIDs(ctx, siteIDs...)
+}
+
 // GetSiteURLsFromID is the resolver for the getSiteURLsFromID field.
 func (r *queryResolver) GetSiteURLsFromID(ctx context.Context, idSite int) ([]string, error) {
 	return matomo.GetSiteURLsFromID(ctx, idSite)

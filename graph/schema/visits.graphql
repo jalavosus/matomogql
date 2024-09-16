@@ -132,6 +132,14 @@ type VisitActionDetails {
 
     goalPageId:         Int
 
+    revenue:            Decimal
+    revenueSubTotal:    Decimal
+
+    eventCategory:      String
+    eventAction:        String
+    eventName:          String
+    goalName:           String
+
     referrer:                   ReferrerInfo @goField(forceResolver: true)
     referrerType:               String
     referrerName:               String
