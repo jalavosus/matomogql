@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"crypto/subtle"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -11,12 +12,15 @@ import (
 var (
 	httpAuthUsername = sync.OnceValue(utils.MakeEnvFunc("HTTP_AUTH_USERNAME"))
 	httpAuthPassword = sync.OnceValue(utils.MakeEnvFunc("HTTP_AUTH_PASSWORD"))
+	httpAuthRealm    = sync.OnceValue(utils.MakeEnvFuncWithDefault("HTTP_AUTH_REALM", "Restricted"))
 )
 
 func HandleAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authenticateHeader := fmt.Sprintf(`Basic realm="%[1]s", charset="UTF-8"`, httpAuthRealm())
+
 		if err := checkRequestAuth(r); err != nil {
-			w.Header().Set("WWW-Authenticate", `Basic realm="FerretParty", charset="UTF-8"`)
+			w.Header().Set("WWW-Authenticate", authenticateHeader)
 			sendError(w, http.StatusUnauthorized, err)
 			return
 		}
