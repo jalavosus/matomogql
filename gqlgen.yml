@@ -86,8 +86,8 @@ models:
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
   BoolInt:
-    model:
-      - github.com/jalavosus/matomogql/graph/scalars.BoolInt
+    model: github.com/jalavosus/matomogql/graph/scalars.BoolInt
   StringList:
-    model:
-      - github.com/jalavosus/matomogql/graph/scalars.StringList
+    model: github.com/jalavosus/matomogql/graph/scalars.StringList
+  Decimal:
+    model: github.com/jalavosus/matomogql/graph/scalars.Decimal
