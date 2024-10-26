@@ -24,11 +24,8 @@ var (
 	httpClient = new(http.Client)
 )
 
-func buildRequestParams(idSite int, method string) (values url.Values, endpoint string) {
-	var apiKey string
-
+func (c clientImpl) buildRequestParams(idSite int, method string) (values url.Values) {
 	values = url.Values{}
-	apiKey, endpoint = getEnv()
 
 	values.Set("method", method)
 	if idSite != noIdSite {
@@ -36,13 +33,13 @@ func buildRequestParams(idSite int, method string) (values url.Values, endpoint 
 	}
 	values.Set("format", apiFormat)
 	values.Set("module", apiModule)
-	values.Set("token_auth", apiKey)
+	values.Set("token_auth", c.apiKey)
 
 	return
 }
 
-func httpGet(ctx context.Context, endpoint string, params url.Values, out any) error {
-	endpoint = endpoint + "?" + params.Encode()
+func (c clientImpl) httpGet(ctx context.Context, params url.Values, out any) error {
+	endpoint := c.apiEndpoint + "?" + params.Encode()
 
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()

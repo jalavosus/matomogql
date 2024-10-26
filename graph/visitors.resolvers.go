@@ -8,15 +8,14 @@ import (
 	"context"
 
 	"github.com/jalavosus/matomogql/graph/model"
-	"github.com/jalavosus/matomogql/matomo"
 )
 
 // GetVisitorProfile is the resolver for the getVisitorProfile field.
 func (r *queryResolver) GetVisitorProfile(ctx context.Context, idSite int, visitorID string) (*model.VisitorProfile, error) {
-	return matomo.GetVisitorProfile(ctx, idSite, visitorID)
+	return r.matomoClient.GetVisitorProfile(ctx, idSite, visitorID)
 }
 
 // GetVisitorProfiles is the resolver for the getVisitorProfiles field.
 func (r *queryResolver) GetVisitorProfiles(ctx context.Context, idSite int, visitorIds []string) ([]*model.VisitorProfile, error) {
-	return matomo.GetVisitorProfiles(ctx, idSite, visitorIds)
+	return r.matomoClient.GetVisitorProfiles(ctx, idSite, visitorIds)
 }

@@ -8,25 +8,27 @@ import (
 	"github.com/jalavosus/matomogql/matomo"
 )
 
-func getVisitorProfiles(ctx context.Context, queries [][2]string) (rets []*model.VisitorProfile, errs []error) {
-	rets = make([]*model.VisitorProfile, len(queries))
-	errs = make([]error, len(queries))
+func getVisitorProfiles(matomoClient matomo.Client) func(ctx context.Context, queries [][2]string) (rets []*model.VisitorProfile, errs []error) {
+	return func(ctx context.Context, queries [][2]string) (rets []*model.VisitorProfile, errs []error) {
+		rets = make([]*model.VisitorProfile, len(queries))
+		errs = make([]error, len(queries))
 
-	res, err := matomo.GetVisitorProfilesBulk(ctx, queries...)
-	if err != nil {
+		res, err := matomoClient.GetVisitorProfilesBulk(ctx, queries...)
+		if err != nil {
+			for i := range len(queries) {
+				rets[i] = nil
+				errs[i] = err
+			}
+
+			return
+		}
+
 		for i := range len(queries) {
-			rets[i] = nil
-			errs[i] = err
+			rets[i] = res[i]
 		}
 
 		return
 	}
-
-	for i := range len(queries) {
-		rets[i] = res[i]
-	}
-
-	return
 }
 
 func GetVisitorProfile(ctx context.Context, idSite int, visitorId string) (*model.VisitorProfile, error) {

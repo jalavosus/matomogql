@@ -12,29 +12,27 @@ import (
 	"github.com/jalavosus/matomogql/graph/model"
 )
 
-func GetGoal(ctx context.Context, idSite, idGoal int) (*model.Goal, error) {
-	params, endpoint := buildRequestParams(idSite, "Goals.getGoal")
+func (c clientImpl) GetGoal(ctx context.Context, idSite, idGoal int) (*model.Goal, error) {
+	params := c.buildRequestParams(idSite, "Goals.getGoal")
 	params.Set("idGoal", strconv.Itoa(idGoal))
 
 	var result *model.Goal
-	if err := httpGet(ctx, endpoint, params, &result); err != nil {
+	if err := c.httpGet(ctx, params, &result); err != nil {
 		return nil, err
 	}
 
 	return result, nil
 }
 
-func GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoalsOptions) ([]*model.Goal, error) {
-	var (
-		params, endpoint = buildRequestParams(-1, "API.getBulkRequest")
-	)
+func (c clientImpl) GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoalsOptions) ([]*model.Goal, error) {
+	params := c.buildRequestParams(-1, "API.getBulkRequest")
 
 	if opts == nil {
 		opts = new(model.GetGoalsOptions)
 	}
 
 	for i, id := range goalIds {
-		moreParams, _ := buildRequestParams(idSite, "Goals.getGoal")
+		moreParams := c.buildRequestParams(idSite, "Goals.getGoal")
 		moreParams.Set("idGoal", strconv.Itoa(id))
 		params.Set(
 			fmt.Sprintf("urls[%d]", i), // urls[0], urls[1], etc.
@@ -43,7 +41,7 @@ func GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoa
 	}
 
 	var result []*model.Goal
-	if err := httpGet(ctx, endpoint, params, &result); err != nil {
+	if err := c.httpGet(ctx, params, &result); err != nil {
 		return nil, err
 	}
 
@@ -60,18 +58,18 @@ func GetGoals(ctx context.Context, idSite int, goalIds []int, opts *model.GetGoa
 	return result, nil
 }
 
-func GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error) {
+func (c clientImpl) GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) ([]*model.Goal, error) {
 	if opts == nil {
 		opts = new(model.GetGoalsOptions)
 	}
 
-	params, endpoint := buildRequestParams(idSite, "Goals.getGoals")
+	params := c.buildRequestParams(idSite, "Goals.getGoals")
 	if val, ok := opts.OrderByName.ValueOK(); ok && *val {
 		params.Set("orderByName", "true")
 	}
 
 	var result []*model.Goal
-	if err := httpGet(ctx, endpoint, params, &result); err != nil {
+	if err := c.httpGet(ctx, params, &result); err != nil {
 		return nil, err
 	}
 
@@ -88,23 +86,21 @@ func GetAllGoals(ctx context.Context, idSite int, opts *model.GetGoalsOptions) (
 	return result, nil
 }
 
-func GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.ConvertedVisitsOptions) ([]*model.Visit, error) {
+func (c clientImpl) GetConvertedVisits(ctx context.Context, idSite, idGoal int, opts *model.ConvertedVisitsOptions) ([]*model.Visit, error) {
 	visitsOpts := &model.LastVisitsOpts{
 		Date:     opts.Date,
 		Segments: graphql.OmittableOf([]string{fmt.Sprintf("visitConvertedGoalId==%d", idGoal)}),
 	}
 
-	return GetLastVisits(ctx, idSite, visitsOpts)
+	return c.GetLastVisits(ctx, idSite, visitsOpts)
 }
 
-func GetConvertedVisitsBulk(ctx context.Context, queries ...[6]string) ([][]*model.Visit, error) {
-	var (
-		params, endpoint = buildRequestParams(noIdSite, "API.getBulkRequest")
-	)
+func (c clientImpl) GetConvertedVisitsBulk(ctx context.Context, queries ...[6]string) ([][]*model.Visit, error) {
+	params := c.buildRequestParams(noIdSite, "API.getBulkRequest")
 
 	for i, query := range queries {
 		parsedQuery := parseConvertedVisitsQuery(query)
-		moreParams, _ := buildRequestParams(parsedQuery.idSite, "Live.getLastVisitsDetails")
+		moreParams := c.buildRequestParams(parsedQuery.idSite, "Live.getLastVisitsDetails")
 		moreParams.Set("expanded", "1")
 		moreParams.Set("filterLimit", "-1")
 		if parsedQuery.searchSegment != "" {
@@ -126,7 +122,7 @@ func GetConvertedVisitsBulk(ctx context.Context, queries ...[6]string) ([][]*mod
 	}
 
 	var result [][]*model.Visit
-	if err := httpGet(ctx, endpoint, params, &result); err != nil {
+	if err := c.httpGet(ctx, params, &result); err != nil {
 		return nil, err
 	}
 

@@ -11,7 +11,6 @@ import (
 
 	"github.com/jalavosus/matomogql/graph/loaders"
 	"github.com/jalavosus/matomogql/graph/model"
-	"github.com/jalavosus/matomogql/matomo"
 )
 
 // ConversionRate is the resolver for the conversionRate field.
@@ -28,12 +27,12 @@ func (r *ecommerceGoalResolver) ConvertedVisits(ctx context.Context, obj *model.
 
 // GetEcommerceGoalsName is the resolver for the getEcommerceGoalsName field.
 func (r *queryResolver) GetEcommerceGoalsName(ctx context.Context, idSite int, opts model.GetEcommerceGoalsOptions) ([]*model.EcommerceGoal, error) {
-	return matomo.GetEcommerceItemsName(ctx, idSite, &opts)
+	return r.matomoClient.GetEcommerceItemsName(ctx, idSite, &opts)
 }
 
 // GetEcommerceGoalsSku is the resolver for the getEcommerceGoalsSku field.
 func (r *queryResolver) GetEcommerceGoalsSku(ctx context.Context, idSite int, opts model.GetEcommerceGoalsOptions) ([]*model.EcommerceGoal, error) {
-	return matomo.GetEcommerceItemsSku(ctx, idSite, &opts)
+	return r.matomoClient.GetEcommerceItemsSku(ctx, idSite, &opts)
 }
 
 // EcommerceGoal returns EcommerceGoalResolver implementation.

@@ -8,42 +8,41 @@ import (
 	"context"
 
 	"github.com/jalavosus/matomogql/graph/model"
-	"github.com/jalavosus/matomogql/matomo"
 )
 
 // GetSiteFromID is the resolver for the getSiteFromID field.
 func (r *queryResolver) GetSiteFromID(ctx context.Context, idSite int) (*model.Site, error) {
-	return matomo.GetSiteFromID(ctx, idSite)
+	return r.matomoClient.GetSiteFromID(ctx, idSite)
 }
 
 // GetSitesFromID is the resolver for the getSitesFromID field.
 func (r *queryResolver) GetSitesFromID(ctx context.Context, siteIDs []int) ([]*model.Site, error) {
-	return matomo.GetSitesFromIDs(ctx, siteIDs...)
+	return r.matomoClient.GetSitesFromIDs(ctx, siteIDs...)
 }
 
 // GetSiteURLsFromID is the resolver for the getSiteURLsFromID field.
 func (r *queryResolver) GetSiteURLsFromID(ctx context.Context, idSite int) ([]string, error) {
-	return matomo.GetSiteURLsFromID(ctx, idSite)
+	return r.matomoClient.GetSiteURLsFromID(ctx, idSite)
 }
 
 // GetSitesWithViewAccess is the resolver for the getSitesWithViewAccess field.
 func (r *queryResolver) GetSitesWithViewAccess(ctx context.Context) ([]*model.Site, error) {
-	return matomo.GetSitesWithViewAccess(ctx)
+	return r.matomoClient.GetSitesWithViewAccess(ctx)
 }
 
 // GetSitesWithAtLeastViewAccess is the resolver for the getSitesWithAtLeastViewAccess field.
 func (r *queryResolver) GetSitesWithAtLeastViewAccess(ctx context.Context) ([]*model.Site, error) {
-	return matomo.GetSitesWithAtLeastViewAccess(ctx)
+	return r.matomoClient.GetSitesWithAtLeastViewAccess(ctx)
 }
 
 // Goals is the resolver for the goals field.
 func (r *siteResolver) Goals(ctx context.Context, obj *model.Site, opts *model.GetGoalsOptions) ([]*model.Goal, error) {
-	return matomo.GetAllGoals(ctx, obj.IDSite, opts)
+	return r.matomoClient.GetAllGoals(ctx, obj.IDSite, opts)
 }
 
 // LastVisits is the resolver for the lastVisits field.
 func (r *siteResolver) LastVisits(ctx context.Context, obj *model.Site, opts *model.LastVisitsOpts) ([]*model.Visit, error) {
-	return matomo.GetLastVisits(ctx, obj.IDSite, opts)
+	return r.matomoClient.GetLastVisits(ctx, obj.IDSite, opts)
 }
 
 // Site returns SiteResolver implementation.

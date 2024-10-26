@@ -9,36 +9,34 @@ import (
 	"github.com/jalavosus/matomogql/graph/model"
 )
 
-func GetVisitorProfile(ctx context.Context, idSite int, visitorId string) (*model.VisitorProfile, error) {
-	params, endpoint := buildRequestParams(idSite, "Live.getVisitorProfile")
+func (c clientImpl) GetVisitorProfile(ctx context.Context, idSite int, visitorId string) (*model.VisitorProfile, error) {
+	params := c.buildRequestParams(idSite, "Live.getVisitorProfile")
 	params.Set("visitorId", visitorId)
 
 	var result *model.VisitorProfile
-	if err := httpGet(ctx, endpoint, params, &result); err != nil {
+	if err := c.httpGet(ctx, params, &result); err != nil {
 		return nil, err
 	}
 
 	return result, nil
 }
 
-func GetVisitorProfiles(ctx context.Context, idSite int, visitorIds []string) ([]*model.VisitorProfile, error) {
+func (c clientImpl) GetVisitorProfiles(ctx context.Context, idSite int, visitorIds []string) ([]*model.VisitorProfile, error) {
 	idSiteStr := strconv.Itoa(idSite)
 	queries := make([][2]string, len(visitorIds))
 	for i, id := range visitorIds {
 		queries[i] = [2]string{idSiteStr, id}
 	}
 
-	return GetVisitorProfilesBulk(ctx, queries...)
+	return c.GetVisitorProfilesBulk(ctx, queries...)
 }
 
-func GetVisitorProfilesBulk(ctx context.Context, queries ...[2]string) ([]*model.VisitorProfile, error) {
-	var (
-		params, endpoint = buildRequestParams(-1, "API.getBulkRequest")
-	)
+func (c clientImpl) GetVisitorProfilesBulk(ctx context.Context, queries ...[2]string) ([]*model.VisitorProfile, error) {
+	params := c.buildRequestParams(-1, "API.getBulkRequest")
 
 	for i, query := range queries {
 		idSite, _ := strconv.Atoi(query[0])
-		moreParams, _ := buildRequestParams(idSite, "Live.getVisitorProfile")
+		moreParams := c.buildRequestParams(idSite, "Live.getVisitorProfile")
 		moreParams.Set("visitorId", query[1])
 
 		params.Set(
@@ -48,15 +46,15 @@ func GetVisitorProfilesBulk(ctx context.Context, queries ...[2]string) ([]*model
 	}
 
 	var result []*model.VisitorProfile
-	if err := httpGet(ctx, endpoint, params, &result); err != nil {
+	if err := c.httpGet(ctx, params, &result); err != nil {
 		return nil, err
 	}
 
 	return result, nil
 }
 
-func GetLastVisits(ctx context.Context, idSite int, opts *model.LastVisitsOpts) ([]*model.Visit, error) {
-	params, endpoint := buildRequestParams(idSite, "Live.getLastVisitsDetails")
+func (c clientImpl) GetLastVisits(ctx context.Context, idSite int, opts *model.LastVisitsOpts) ([]*model.Visit, error) {
+	params := c.buildRequestParams(idSite, "Live.getLastVisitsDetails")
 	params.Set("expanded", "1")
 	params.Set("filterLimit", "-1")
 
@@ -80,7 +78,7 @@ func GetLastVisits(ctx context.Context, idSite int, opts *model.LastVisitsOpts) 
 	}
 
 	var result []*model.Visit
-	if err := httpGet(ctx, endpoint, params, &result); err != nil {
+	if err := c.httpGet(ctx, params, &result); err != nil {
 		return nil, err
 	}
 

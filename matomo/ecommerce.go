@@ -7,16 +7,16 @@ import (
 	"github.com/jalavosus/matomogql/graph/model"
 )
 
-func GetEcommerceItemsName(ctx context.Context, idSite int, opts *model.GetEcommerceGoalsOptions) ([]*model.EcommerceGoal, error) {
-	return getEcommerceItems(ctx, idSite, opts, "Name")
+func (c clientImpl) GetEcommerceItemsName(ctx context.Context, idSite int, opts *model.GetEcommerceGoalsOptions) ([]*model.EcommerceGoal, error) {
+	return c.getEcommerceItems(ctx, idSite, opts, "Name")
 }
 
-func GetEcommerceItemsSku(ctx context.Context, idSite int, opts *model.GetEcommerceGoalsOptions) ([]*model.EcommerceGoal, error) {
-	return getEcommerceItems(ctx, idSite, opts, "Sku")
+func (c clientImpl) GetEcommerceItemsSku(ctx context.Context, idSite int, opts *model.GetEcommerceGoalsOptions) ([]*model.EcommerceGoal, error) {
+	return c.getEcommerceItems(ctx, idSite, opts, "Sku")
 }
 
-func getEcommerceItems(ctx context.Context, idSite int, opts *model.GetEcommerceGoalsOptions, searchType string) ([]*model.EcommerceGoal, error) {
-	params, endpoint := buildRequestParams(idSite, "Goals.getItems"+searchType)
+func (c clientImpl) getEcommerceItems(ctx context.Context, idSite int, opts *model.GetEcommerceGoalsOptions, searchType string) ([]*model.EcommerceGoal, error) {
+	params := c.buildRequestParams(idSite, "Goals.getItems"+searchType)
 	params.Set("period", strings.ToLower(opts.Date.Period.String()))
 
 	var date = opts.Date.StartDate
@@ -27,7 +27,7 @@ func getEcommerceItems(ctx context.Context, idSite int, opts *model.GetEcommerce
 	params.Set("date", date)
 
 	var result []*model.EcommerceGoal
-	if err := httpGet(ctx, endpoint, params, &result); err != nil {
+	if err := c.httpGet(ctx, params, &result); err != nil {
 		return nil, err
 	}
 

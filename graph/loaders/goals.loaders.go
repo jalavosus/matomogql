@@ -9,25 +9,27 @@ import (
 	"github.com/jalavosus/matomogql/matomo"
 )
 
-func getGoalConvertedVisits(ctx context.Context, queries [][6]string) (rets [][]*model.Visit, errs []error) {
-	rets = make([][]*model.Visit, len(queries))
-	errs = make([]error, len(queries))
+func getGoalConvertedVisits(matomoClient matomo.Client) func(ctx context.Context, queries [][6]string) (rets [][]*model.Visit, errs []error) {
+	return func(ctx context.Context, queries [][6]string) (rets [][]*model.Visit, errs []error) {
+		rets = make([][]*model.Visit, len(queries))
+		errs = make([]error, len(queries))
 
-	res, err := matomo.GetConvertedVisitsBulk(ctx, queries...)
-	if err != nil {
+		res, err := matomoClient.GetConvertedVisitsBulk(ctx, queries...)
+		if err != nil {
+			for i := range len(queries) {
+				rets[i] = nil
+				errs[i] = err
+			}
+
+			return
+		}
+
 		for i := range len(queries) {
-			rets[i] = nil
-			errs[i] = err
+			rets[i] = res[i]
 		}
 
 		return
 	}
-
-	for i := range len(queries) {
-		rets[i] = res[i]
-	}
-
-	return
 }
 
 func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal, segment string, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.Visit, error) {

@@ -8,6 +8,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 
 	"github.com/jalavosus/matomogql/graph/model"
+	"github.com/jalavosus/matomogql/matomo"
 )
 
 type ctxKey string
@@ -21,15 +22,15 @@ type Loaders struct {
 	VisitorProfilesLoader     *dataloadgen.Loader[[2]string, *model.VisitorProfile]
 }
 
-func NewLoaders() *Loaders {
+func NewLoaders(matomoClient matomo.Client) *Loaders {
 	return &Loaders{
 		GoalConvertedVisitsLoader: dataloadgen.NewLoader(
-			getGoalConvertedVisits,
+			getGoalConvertedVisits(matomoClient),
 			dataloadgen.WithWait(8*time.Millisecond),
 			dataloadgen.WithBatchCapacity(8),
 		),
 		VisitorProfilesLoader: dataloadgen.NewLoader(
-			getVisitorProfiles,
+			getVisitorProfiles(matomoClient),
 			dataloadgen.WithWait(8*time.Millisecond),
 			dataloadgen.WithBatchCapacity(10),
 		),
@@ -42,10 +43,10 @@ func For(ctx context.Context) *Loaders {
 }
 
 // Middleware injects data loaders into the context
-func Middleware(next http.Handler) http.Handler {
+func Middleware(next http.Handler, matomoClient matomo.Client) http.Handler {
 	// return a middleware that injects the loader to the request context
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		loader := NewLoaders()
+		loader := NewLoaders(matomoClient)
 		r = r.WithContext(context.WithValue(r.Context(), loadersKey, loader))
 		next.ServeHTTP(w, r)
 	})

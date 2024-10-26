@@ -8,12 +8,15 @@ import (
 
 	"github.com/jalavosus/matomogql/graph"
 	"github.com/jalavosus/matomogql/graph/loaders"
+	"github.com/jalavosus/matomogql/matomo"
 )
 
 func MakeServer(enablePlayground bool) http.Handler {
-	execSchema := graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}})
+	matomoClient := matomo.NewClient(matomo.GetEnv())
 
-	var srv = loaders.Middleware(handler.NewDefaultServer(execSchema))
+	execSchema := graph.NewExecutableSchema(graph.Config{Resolvers: graph.NewResolver(matomoClient)})
+
+	var srv = loaders.Middleware(handler.NewDefaultServer(execSchema), matomoClient)
 
 	mux := http.NewServeMux()
 	mux.Handle("/query", srv)
