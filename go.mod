@@ -2,7 +2,7 @@ module github.com/jalavosus/matomogql
 
 go 1.22.5
 
-toolchain go1.23.4
+toolchain go1.23.5
 
 require (
 	github.com/99designs/gqlgen v0.17.63
