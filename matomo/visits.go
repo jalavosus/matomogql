@@ -9,7 +9,9 @@ import (
 	"github.com/jalavosus/matomogql/graph/model"
 )
 
-func (c clientImpl) GetVisitorProfile(ctx context.Context, idSite int, visitorId string) (*model.VisitorProfile, error) {
+func (c clientImpl) GetVisitorProfile(
+	ctx context.Context, idSite int, visitorId string,
+) (*model.VisitorProfile, error) {
 	params := c.buildRequestParams(idSite, "Live.getVisitorProfile")
 	params.Set("visitorId", visitorId)
 
@@ -21,7 +23,9 @@ func (c clientImpl) GetVisitorProfile(ctx context.Context, idSite int, visitorId
 	return result, nil
 }
 
-func (c clientImpl) GetVisitorProfiles(ctx context.Context, idSite int, visitorIds []string) ([]*model.VisitorProfile, error) {
+func (c clientImpl) GetVisitorProfiles(
+	ctx context.Context, idSite int, visitorIds []string,
+) ([]*model.VisitorProfile, error) {
 	idSiteStr := strconv.Itoa(idSite)
 	queries := make([][2]string, len(visitorIds))
 	for i, id := range visitorIds {
@@ -62,8 +66,20 @@ func (c clientImpl) GetLastVisits(ctx context.Context, idSite int, opts *model.L
 		opts = new(model.LastVisitsOpts)
 	}
 
+	var querySegments []string
+
 	if segments, ok := opts.Segments.ValueOK(); ok && len(segments) > 0 {
-		params.Set("segment", strings.Join(segments, ";"))
+		querySegments = append(querySegments, segments...)
+	}
+
+	if goalIds, ok := opts.GoalIds.ValueOK(); ok && len(goalIds) > 0 {
+		for _, idGoal := range goalIds {
+			querySegments = append(querySegments, "visitConvertedGoalId=="+strconv.Itoa(idGoal))
+		}
+	}
+
+	if len(querySegments) > 0 {
+		params.Set("segment", strings.Join(querySegments, ";"))
 	}
 
 	if dateOpts, ok := opts.Date.ValueOK(); ok {

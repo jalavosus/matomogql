@@ -47,6 +47,7 @@ type ResolverRoot interface {
 	Site() SiteResolver
 	Visit() VisitResolver
 	VisitActionDetails() VisitActionDetailsResolver
+	VisitorProfile() VisitorProfileResolver
 }
 
 type DirectiveRoot struct {
@@ -138,6 +139,15 @@ type ComplexityRoot struct {
 		Pattern             func(childComplexity int) int
 		PatternType         func(childComplexity int) int
 		Revenue             func(childComplexity int) int
+	}
+
+	ItemDetail struct {
+		Categories   func(childComplexity int) int
+		ItemCategory func(childComplexity int) int
+		ItemName     func(childComplexity int) int
+		ItemSku      func(childComplexity int) int
+		Price        func(childComplexity int) int
+		Quantity     func(childComplexity int) int
 	}
 
 	Location struct {
@@ -249,10 +259,14 @@ type ComplexityRoot struct {
 		DeviceModel                    func(childComplexity int) int
 		DeviceType                     func(childComplexity int) int
 		DeviceTypeIcon                 func(childComplexity int) int
+		EcommerceAbandonedCartAction   func(childComplexity int) int
+		EcommerceAction                func(childComplexity int) int
 		Events                         func(childComplexity int) int
 		Fingerprint                    func(childComplexity int) int
+		FirstAction                    func(childComplexity int) int
 		FirstActionTimestamp           func(childComplexity int) int
 		FormConversions                func(childComplexity int) int
+		GoalAction                     func(childComplexity int) int
 		GoalConversions                func(childComplexity int) int
 		IDSite                         func(childComplexity int) int
 		IDVisit                        func(childComplexity int) int
@@ -271,6 +285,12 @@ type ComplexityRoot struct {
 		OperatingSystemName            func(childComplexity int) int
 		OperatingSystemVersion         func(childComplexity int) int
 		Plugins                        func(childComplexity int) int
+		Referrer                       func(childComplexity int) int
+		ReferrerKeyword                func(childComplexity int) int
+		ReferrerName                   func(childComplexity int) int
+		ReferrerType                   func(childComplexity int) int
+		ReferrerTypeName               func(childComplexity int) int
+		ReferrerURL                    func(childComplexity int) int
 		Region                         func(childComplexity int) int
 		RegionCode                     func(childComplexity int) int
 		Resolution                     func(childComplexity int) int
@@ -307,12 +327,14 @@ type ComplexityRoot struct {
 	}
 
 	VisitActionDetails struct {
+		AdjustedRevenue  func(childComplexity int) int
 		EventAction      func(childComplexity int) int
 		EventCategory    func(childComplexity int) int
 		EventName        func(childComplexity int) int
 		GoalName         func(childComplexity int) int
 		GoalPageID       func(childComplexity int) int
 		IDPageView       func(childComplexity int) int
+		ItemDetails      func(childComplexity int) int
 		PageID           func(childComplexity int) int
 		PageIDAction     func(childComplexity int) int
 		PageTitle        func(childComplexity int) int
@@ -321,6 +343,7 @@ type ComplexityRoot struct {
 		ReferrerKeyword  func(childComplexity int) int
 		ReferrerName     func(childComplexity int) int
 		ReferrerType     func(childComplexity int) int
+		ReferrerURL      func(childComplexity int) int
 		Revenue          func(childComplexity int) int
 		RevenueSubTotal  func(childComplexity int) int
 		ServerTimePretty func(childComplexity int) int
@@ -343,13 +366,15 @@ type ComplexityRoot struct {
 	}
 
 	VisitorProfile struct {
-		Continents func(childComplexity int) int
-		Countries  func(childComplexity int) int
-		Devices    func(childComplexity int) int
-		FirstVisit func(childComplexity int) int
-		LastVisit  func(childComplexity int) int
-		LastVisits func(childComplexity int) int
-		VisitorID  func(childComplexity int) int
+		Continents     func(childComplexity int) int
+		Countries      func(childComplexity int) int
+		Devices        func(childComplexity int) int
+		FirstVisit     func(childComplexity int) int
+		FirstVisitFull func(childComplexity int) int
+		LastVisit      func(childComplexity int) int
+		LastVisitFull  func(childComplexity int) int
+		LastVisits     func(childComplexity int, orderBy *model.OrderByOptions, limit *int) int
+		VisitorID      func(childComplexity int) int
 	}
 }
 
@@ -383,6 +408,10 @@ type SiteResolver interface {
 type VisitResolver interface {
 	VisitorProfile(ctx context.Context, obj *model.Visit) (*model.VisitorProfile, error)
 
+	FirstAction(ctx context.Context, obj *model.Visit) (*model.VisitActionDetails, error)
+	GoalAction(ctx context.Context, obj *model.Visit) (*model.VisitActionDetails, error)
+	EcommerceAction(ctx context.Context, obj *model.Visit) (*model.VisitActionDetails, error)
+	EcommerceAbandonedCartAction(ctx context.Context, obj *model.Visit) (*model.VisitActionDetails, error)
 	DeviceInfo(ctx context.Context, obj *model.Visit) (*model.DeviceInfo, error)
 
 	BrowserInfo(ctx context.Context, obj *model.Visit) (*model.BrowserInfo, error)
@@ -390,9 +419,18 @@ type VisitResolver interface {
 	LocationInfo(ctx context.Context, obj *model.Visit) (*model.Location, error)
 
 	CampaignInfo(ctx context.Context, obj *model.Visit) (*model.CampaignInfo, error)
+
+	Referrer(ctx context.Context, obj *model.Visit) (*model.ReferrerInfo, error)
 }
 type VisitActionDetailsResolver interface {
+	AdjustedRevenue(ctx context.Context, obj *model.VisitActionDetails) (*decimal.Decimal, error)
+
 	Referrer(ctx context.Context, obj *model.VisitActionDetails) (*model.ReferrerInfo, error)
+}
+type VisitorProfileResolver interface {
+	FirstVisitFull(ctx context.Context, obj *model.VisitorProfile) (*model.Visit, error)
+	LastVisitFull(ctx context.Context, obj *model.VisitorProfile) (*model.Visit, error)
+	LastVisits(ctx context.Context, obj *model.VisitorProfile, orderBy *model.OrderByOptions, limit *int) ([]*model.Visit, error)
 }
 
 type executableSchema struct {
@@ -409,7 +447,7 @@ func (e *executableSchema) Schema() *ast.Schema {
 	return parsedSchema
 }
 
-func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]interface{}) (int, bool) {
+func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
@@ -864,6 +902,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Goal.Revenue(childComplexity), true
+
+	case "ItemDetail.categories":
+		if e.complexity.ItemDetail.Categories == nil {
+			break
+		}
+
+		return e.complexity.ItemDetail.Categories(childComplexity), true
+
+	case "ItemDetail.itemCategory":
+		if e.complexity.ItemDetail.ItemCategory == nil {
+			break
+		}
+
+		return e.complexity.ItemDetail.ItemCategory(childComplexity), true
+
+	case "ItemDetail.itemName":
+		if e.complexity.ItemDetail.ItemName == nil {
+			break
+		}
+
+		return e.complexity.ItemDetail.ItemName(childComplexity), true
+
+	case "ItemDetail.itemSKU":
+		if e.complexity.ItemDetail.ItemSku == nil {
+			break
+		}
+
+		return e.complexity.ItemDetail.ItemSku(childComplexity), true
+
+	case "ItemDetail.price":
+		if e.complexity.ItemDetail.Price == nil {
+			break
+		}
+
+		return e.complexity.ItemDetail.Price(childComplexity), true
+
+	case "ItemDetail.quantity":
+		if e.complexity.ItemDetail.Quantity == nil {
+			break
+		}
+
+		return e.complexity.ItemDetail.Quantity(childComplexity), true
 
 	case "Location.city":
 		if e.complexity.Location.City == nil {
@@ -1576,6 +1656,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Visit.DeviceTypeIcon(childComplexity), true
 
+	case "Visit.ecommerceAbandonedCartAction":
+		if e.complexity.Visit.EcommerceAbandonedCartAction == nil {
+			break
+		}
+
+		return e.complexity.Visit.EcommerceAbandonedCartAction(childComplexity), true
+
+	case "Visit.ecommerceAction":
+		if e.complexity.Visit.EcommerceAction == nil {
+			break
+		}
+
+		return e.complexity.Visit.EcommerceAction(childComplexity), true
+
 	case "Visit.events":
 		if e.complexity.Visit.Events == nil {
 			break
@@ -1590,6 +1684,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Visit.Fingerprint(childComplexity), true
 
+	case "Visit.firstAction":
+		if e.complexity.Visit.FirstAction == nil {
+			break
+		}
+
+		return e.complexity.Visit.FirstAction(childComplexity), true
+
 	case "Visit.firstActionTimestamp":
 		if e.complexity.Visit.FirstActionTimestamp == nil {
 			break
@@ -1603,6 +1704,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Visit.FormConversions(childComplexity), true
+
+	case "Visit.goalAction":
+		if e.complexity.Visit.GoalAction == nil {
+			break
+		}
+
+		return e.complexity.Visit.GoalAction(childComplexity), true
 
 	case "Visit.goalConversions":
 		if e.complexity.Visit.GoalConversions == nil {
@@ -1729,6 +1837,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Visit.Plugins(childComplexity), true
+
+	case "Visit.referrer":
+		if e.complexity.Visit.Referrer == nil {
+			break
+		}
+
+		return e.complexity.Visit.Referrer(childComplexity), true
+
+	case "Visit.referrerKeyword":
+		if e.complexity.Visit.ReferrerKeyword == nil {
+			break
+		}
+
+		return e.complexity.Visit.ReferrerKeyword(childComplexity), true
+
+	case "Visit.referrerName":
+		if e.complexity.Visit.ReferrerName == nil {
+			break
+		}
+
+		return e.complexity.Visit.ReferrerName(childComplexity), true
+
+	case "Visit.referrerType":
+		if e.complexity.Visit.ReferrerType == nil {
+			break
+		}
+
+		return e.complexity.Visit.ReferrerType(childComplexity), true
+
+	case "Visit.referrerTypeName":
+		if e.complexity.Visit.ReferrerTypeName == nil {
+			break
+		}
+
+		return e.complexity.Visit.ReferrerTypeName(childComplexity), true
+
+	case "Visit.referrerUrl":
+		if e.complexity.Visit.ReferrerURL == nil {
+			break
+		}
+
+		return e.complexity.Visit.ReferrerURL(childComplexity), true
 
 	case "Visit.region":
 		if e.complexity.Visit.Region == nil {
@@ -1961,6 +2111,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Visit.VisitorTypeIcon(childComplexity), true
 
+	case "VisitActionDetails.adjustedRevenue":
+		if e.complexity.VisitActionDetails.AdjustedRevenue == nil {
+			break
+		}
+
+		return e.complexity.VisitActionDetails.AdjustedRevenue(childComplexity), true
+
 	case "VisitActionDetails.eventAction":
 		if e.complexity.VisitActionDetails.EventAction == nil {
 			break
@@ -2002,6 +2159,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.VisitActionDetails.IDPageView(childComplexity), true
+
+	case "VisitActionDetails.itemDetails":
+		if e.complexity.VisitActionDetails.ItemDetails == nil {
+			break
+		}
+
+		return e.complexity.VisitActionDetails.ItemDetails(childComplexity), true
 
 	case "VisitActionDetails.pageId":
 		if e.complexity.VisitActionDetails.PageID == nil {
@@ -2058,6 +2222,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.VisitActionDetails.ReferrerType(childComplexity), true
+
+	case "VisitActionDetails.referrerUrl":
+		if e.complexity.VisitActionDetails.ReferrerURL == nil {
+			break
+		}
+
+		return e.complexity.VisitActionDetails.ReferrerURL(childComplexity), true
 
 	case "VisitActionDetails.revenue":
 		if e.complexity.VisitActionDetails.Revenue == nil {
@@ -2199,6 +2370,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.VisitorProfile.FirstVisit(childComplexity), true
 
+	case "VisitorProfile.firstVisitFull":
+		if e.complexity.VisitorProfile.FirstVisitFull == nil {
+			break
+		}
+
+		return e.complexity.VisitorProfile.FirstVisitFull(childComplexity), true
+
 	case "VisitorProfile.lastVisit":
 		if e.complexity.VisitorProfile.LastVisit == nil {
 			break
@@ -2206,12 +2384,24 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.VisitorProfile.LastVisit(childComplexity), true
 
+	case "VisitorProfile.lastVisitFull":
+		if e.complexity.VisitorProfile.LastVisitFull == nil {
+			break
+		}
+
+		return e.complexity.VisitorProfile.LastVisitFull(childComplexity), true
+
 	case "VisitorProfile.lastVisits":
 		if e.complexity.VisitorProfile.LastVisits == nil {
 			break
 		}
 
-		return e.complexity.VisitorProfile.LastVisits(childComplexity), true
+		args, err := ec.field_VisitorProfile_lastVisits_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.VisitorProfile.LastVisits(childComplexity, args["orderBy"].(*model.OrderByOptions), args["limit"].(*int)), true
 
 	case "VisitorProfile.visitorId":
 		if e.complexity.VisitorProfile.VisitorID == nil {
@@ -2225,8 +2415,8 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 }
 
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
-	rc := graphql.GetOperationContext(ctx)
-	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
+	opCtx := graphql.GetOperationContext(ctx)
+	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputConvertedVisitsOptions,
 		ec.unmarshalInputDateRangeOptions,
@@ -2237,7 +2427,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	)
 	first := true
 
-	switch rc.Operation.Operation {
+	switch opCtx.Operation.Operation {
 	case ast.Query:
 		return func(ctx context.Context) *graphql.Response {
 			var response graphql.Response
@@ -2245,7 +2435,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			if first {
 				first = false
 				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
-				data = ec._Query(ctx, rc.Operation.SelectionSet)
+				data = ec._Query(ctx, opCtx.Operation.SelectionSet)
 			} else {
 				if atomic.LoadInt32(&ec.pendingDeferred) > 0 {
 					result := <-ec.deferredResults
@@ -2346,349 +2536,817 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_EcommerceGoal_convertedVisits_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_EcommerceGoal_convertedVisits_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
-	var arg0 *model.ConvertedVisitsOptions
-	if tmp, ok := rawArgs["opts"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
-		arg0, err = ec.unmarshalOConvertedVisitsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐConvertedVisitsOptions(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	args := map[string]any{}
+	arg0, err := ec.field_EcommerceGoal_convertedVisits_argsOpts(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["opts"] = arg0
-	var arg1 *model.OrderByOptions
-	if tmp, ok := rawArgs["orderBy"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
-		arg1, err = ec.unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_EcommerceGoal_convertedVisits_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["orderBy"] = arg1
 	return args, nil
 }
+func (ec *executionContext) field_EcommerceGoal_convertedVisits_argsOpts(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.ConvertedVisitsOptions, error) {
+	if _, ok := rawArgs["opts"]; !ok {
+		var zeroVal *model.ConvertedVisitsOptions
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Goal_convertedVisits_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *model.ConvertedVisitsOptions
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
 	if tmp, ok := rawArgs["opts"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
-		arg0, err = ec.unmarshalOConvertedVisitsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐConvertedVisitsOptions(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+		return ec.unmarshalOConvertedVisitsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐConvertedVisitsOptions(ctx, tmp)
+	}
+
+	var zeroVal *model.ConvertedVisitsOptions
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_EcommerceGoal_convertedVisits_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.OrderByOptions, error) {
+	if _, ok := rawArgs["orderBy"]; !ok {
+		var zeroVal *model.OrderByOptions
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx, tmp)
+	}
+
+	var zeroVal *model.OrderByOptions
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Goal_convertedVisits_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Goal_convertedVisits_argsOpts(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["opts"] = arg0
-	var arg1 *model.OrderByOptions
-	if tmp, ok := rawArgs["orderBy"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
-		arg1, err = ec.unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Goal_convertedVisits_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["orderBy"] = arg1
 	return args, nil
 }
+func (ec *executionContext) field_Goal_convertedVisits_argsOpts(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.ConvertedVisitsOptions, error) {
+	if _, ok := rawArgs["opts"]; !ok {
+		var zeroVal *model.ConvertedVisitsOptions
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+	if tmp, ok := rawArgs["opts"]; ok {
+		return ec.unmarshalOConvertedVisitsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐConvertedVisitsOptions(ctx, tmp)
+	}
+
+	var zeroVal *model.ConvertedVisitsOptions
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Goal_convertedVisits_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.OrderByOptions, error) {
+	if _, ok := rawArgs["orderBy"]; !ok {
+		var zeroVal *model.OrderByOptions
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx, tmp)
+	}
+
+	var zeroVal *model.OrderByOptions
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	args := map[string]any{}
+	arg0, err := ec.field_Query___type_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
 }
+func (ec *executionContext) field_Query___type_argsName(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["name"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Query_getAllGoals_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getAllGoals_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
-	var arg0 int
-	if tmp, ok := rawArgs["idSite"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	args := map[string]any{}
+	arg0, err := ec.field_Query_getAllGoals_argsIDSite(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["idSite"] = arg0
-	var arg1 *model.GetGoalsOptions
-	if tmp, ok := rawArgs["opts"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
-		arg1, err = ec.unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_getAllGoals_argsOpts(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["opts"] = arg1
 	return args, nil
 }
+func (ec *executionContext) field_Query_getAllGoals_argsIDSite(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["idSite"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Query_getEcommerceGoalsName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 int
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
 	if tmp, ok := rawArgs["idSite"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getAllGoals_argsOpts(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.GetGoalsOptions, error) {
+	if _, ok := rawArgs["opts"]; !ok {
+		var zeroVal *model.GetGoalsOptions
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+	if tmp, ok := rawArgs["opts"]; ok {
+		return ec.unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx, tmp)
+	}
+
+	var zeroVal *model.GetGoalsOptions
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getEcommerceGoalsName_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_getEcommerceGoalsName_argsIDSite(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["idSite"] = arg0
-	var arg1 model.GetEcommerceGoalsOptions
-	if tmp, ok := rawArgs["opts"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
-		arg1, err = ec.unmarshalNGetEcommerceGoalsOptions2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetEcommerceGoalsOptions(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_getEcommerceGoalsName_argsOpts(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["opts"] = arg1
 	return args, nil
 }
+func (ec *executionContext) field_Query_getEcommerceGoalsName_argsIDSite(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["idSite"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Query_getEcommerceGoalsSku_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 int
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
 	if tmp, ok := rawArgs["idSite"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getEcommerceGoalsName_argsOpts(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (model.GetEcommerceGoalsOptions, error) {
+	if _, ok := rawArgs["opts"]; !ok {
+		var zeroVal model.GetEcommerceGoalsOptions
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+	if tmp, ok := rawArgs["opts"]; ok {
+		return ec.unmarshalNGetEcommerceGoalsOptions2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetEcommerceGoalsOptions(ctx, tmp)
+	}
+
+	var zeroVal model.GetEcommerceGoalsOptions
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getEcommerceGoalsSku_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_getEcommerceGoalsSku_argsIDSite(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["idSite"] = arg0
-	var arg1 model.GetEcommerceGoalsOptions
-	if tmp, ok := rawArgs["opts"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
-		arg1, err = ec.unmarshalNGetEcommerceGoalsOptions2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetEcommerceGoalsOptions(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_getEcommerceGoalsSku_argsOpts(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["opts"] = arg1
 	return args, nil
 }
+func (ec *executionContext) field_Query_getEcommerceGoalsSku_argsIDSite(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["idSite"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Query_getGoal_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 int
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
 	if tmp, ok := rawArgs["idSite"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getEcommerceGoalsSku_argsOpts(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (model.GetEcommerceGoalsOptions, error) {
+	if _, ok := rawArgs["opts"]; !ok {
+		var zeroVal model.GetEcommerceGoalsOptions
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+	if tmp, ok := rawArgs["opts"]; ok {
+		return ec.unmarshalNGetEcommerceGoalsOptions2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetEcommerceGoalsOptions(ctx, tmp)
+	}
+
+	var zeroVal model.GetEcommerceGoalsOptions
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getGoal_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_getGoal_argsIDSite(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["idSite"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["idGoal"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGoal"))
-		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_getGoal_argsIDGoal(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["idGoal"] = arg1
 	return args, nil
 }
+func (ec *executionContext) field_Query_getGoal_argsIDSite(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["idSite"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Query_getGoals_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 int
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
 	if tmp, ok := rawArgs["idSite"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getGoal_argsIDGoal(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["idGoal"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("idGoal"))
+	if tmp, ok := rawArgs["idGoal"]; ok {
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getGoals_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_getGoals_argsIDSite(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["idSite"] = arg0
-	var arg1 []int
-	if tmp, ok := rawArgs["goalIds"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("goalIds"))
-		arg1, err = ec.unmarshalOInt2ᚕintᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_getGoals_argsGoalIds(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["goalIds"] = arg1
-	var arg2 *model.GetGoalsOptions
-	if tmp, ok := rawArgs["opts"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
-		arg2, err = ec.unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_getGoals_argsOpts(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["opts"] = arg2
 	return args, nil
 }
+func (ec *executionContext) field_Query_getGoals_argsIDSite(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["idSite"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Query_getSiteFromID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 int
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
 	if tmp, ok := rawArgs["idSite"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getGoals_argsGoalIds(
+	ctx context.Context,
+	rawArgs map[string]any,
+) ([]int, error) {
+	if _, ok := rawArgs["goalIds"]; !ok {
+		var zeroVal []int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("goalIds"))
+	if tmp, ok := rawArgs["goalIds"]; ok {
+		return ec.unmarshalOInt2ᚕintᚄ(ctx, tmp)
+	}
+
+	var zeroVal []int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getGoals_argsOpts(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.GetGoalsOptions, error) {
+	if _, ok := rawArgs["opts"]; !ok {
+		var zeroVal *model.GetGoalsOptions
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+	if tmp, ok := rawArgs["opts"]; ok {
+		return ec.unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx, tmp)
+	}
+
+	var zeroVal *model.GetGoalsOptions
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getSiteFromID_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_getSiteFromID_argsIDSite(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["idSite"] = arg0
 	return args, nil
 }
+func (ec *executionContext) field_Query_getSiteFromID_argsIDSite(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["idSite"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Query_getSiteURLsFromID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 int
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
 	if tmp, ok := rawArgs["idSite"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getSiteURLsFromID_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_getSiteURLsFromID_argsIDSite(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["idSite"] = arg0
 	return args, nil
 }
+func (ec *executionContext) field_Query_getSiteURLsFromID_argsIDSite(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["idSite"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Query_getSitesFromID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
+	if tmp, ok := rawArgs["idSite"]; ok {
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getSitesFromID_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
-	var arg0 []int
-	if tmp, ok := rawArgs["siteIDs"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("siteIDs"))
-		arg0, err = ec.unmarshalOInt2ᚕintᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	args := map[string]any{}
+	arg0, err := ec.field_Query_getSitesFromID_argsSiteIDs(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["siteIDs"] = arg0
 	return args, nil
 }
+func (ec *executionContext) field_Query_getSitesFromID_argsSiteIDs(
+	ctx context.Context,
+	rawArgs map[string]any,
+) ([]int, error) {
+	if _, ok := rawArgs["siteIDs"]; !ok {
+		var zeroVal []int
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Query_getVisitorProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("siteIDs"))
+	if tmp, ok := rawArgs["siteIDs"]; ok {
+		return ec.unmarshalOInt2ᚕintᚄ(ctx, tmp)
+	}
+
+	var zeroVal []int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getVisitorProfile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
-	var arg0 int
-	if tmp, ok := rawArgs["idSite"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	args := map[string]any{}
+	arg0, err := ec.field_Query_getVisitorProfile_argsIDSite(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["idSite"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["visitorId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("visitorId"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_getVisitorProfile_argsVisitorID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["visitorId"] = arg1
 	return args, nil
 }
+func (ec *executionContext) field_Query_getVisitorProfile_argsIDSite(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["idSite"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Query_getVisitorProfiles_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 int
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
 	if tmp, ok := rawArgs["idSite"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getVisitorProfile_argsVisitorID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["visitorId"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("visitorId"))
+	if tmp, ok := rawArgs["visitorId"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getVisitorProfiles_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_getVisitorProfiles_argsIDSite(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["idSite"] = arg0
-	var arg1 []string
-	if tmp, ok := rawArgs["visitorIds"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("visitorIds"))
-		arg1, err = ec.unmarshalOString2ᚕstringᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_getVisitorProfiles_argsVisitorIds(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["visitorIds"] = arg1
 	return args, nil
 }
+func (ec *executionContext) field_Query_getVisitorProfiles_argsIDSite(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["idSite"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Site_goals_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("idSite"))
+	if tmp, ok := rawArgs["idSite"]; ok {
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_getVisitorProfiles_argsVisitorIds(
+	ctx context.Context,
+	rawArgs map[string]any,
+) ([]string, error) {
+	if _, ok := rawArgs["visitorIds"]; !ok {
+		var zeroVal []string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("visitorIds"))
+	if tmp, ok := rawArgs["visitorIds"]; ok {
+		return ec.unmarshalOString2ᚕstringᚄ(ctx, tmp)
+	}
+
+	var zeroVal []string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Site_goals_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
-	var arg0 *model.GetGoalsOptions
-	if tmp, ok := rawArgs["opts"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
-		arg0, err = ec.unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	args := map[string]any{}
+	arg0, err := ec.field_Site_goals_argsOpts(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["opts"] = arg0
 	return args, nil
 }
+func (ec *executionContext) field_Site_goals_argsOpts(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.GetGoalsOptions, error) {
+	if _, ok := rawArgs["opts"]; !ok {
+		var zeroVal *model.GetGoalsOptions
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field_Site_lastVisits_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *model.LastVisitsOpts
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
 	if tmp, ok := rawArgs["opts"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
-		arg0, err = ec.unmarshalOLastVisitsOpts2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLastVisitsOpts(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+		return ec.unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx, tmp)
+	}
+
+	var zeroVal *model.GetGoalsOptions
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Site_lastVisits_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Site_lastVisits_argsOpts(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["opts"] = arg0
 	return args, nil
 }
+func (ec *executionContext) field_Site_lastVisits_argsOpts(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.LastVisitsOpts, error) {
+	if _, ok := rawArgs["opts"]; !ok {
+		var zeroVal *model.LastVisitsOpts
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("opts"))
+	if tmp, ok := rawArgs["opts"]; ok {
+		return ec.unmarshalOLastVisitsOpts2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLastVisitsOpts(ctx, tmp)
+	}
+
+	var zeroVal *model.LastVisitsOpts
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_VisitorProfile_lastVisits_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
-	args := map[string]interface{}{}
-	var arg0 bool
-	if tmp, ok := rawArgs["includeDeprecated"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
-		arg0, err = ec.unmarshalOBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	args := map[string]any{}
+	arg0, err := ec.field_VisitorProfile_lastVisits_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg0
+	arg1, err := ec.field_VisitorProfile_lastVisits_argsLimit(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_VisitorProfile_lastVisits_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.OrderByOptions, error) {
+	if _, ok := rawArgs["orderBy"]; !ok {
+		var zeroVal *model.OrderByOptions
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx, tmp)
+	}
+
+	var zeroVal *model.OrderByOptions
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_VisitorProfile_lastVisits_argsLimit(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	if _, ok := rawArgs["limit"]; !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field___Directive_args_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field___Directive_args_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["includeDeprecated"] = arg0
 	return args, nil
 }
+func (ec *executionContext) field___Directive_args_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*bool, error) {
+	if _, ok := rawArgs["includeDeprecated"]; !ok {
+		var zeroVal *bool
+		return zeroVal, nil
+	}
 
-func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 bool
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
 	if tmp, ok := rawArgs["includeDeprecated"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
-		arg0, err = ec.unmarshalOBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+		return ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+	}
+
+	var zeroVal *bool
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field___Field_args_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field___Field_args_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["includeDeprecated"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field___Field_args_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*bool, error) {
+	if _, ok := rawArgs["includeDeprecated"]; !ok {
+		var zeroVal *bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
+	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		return ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+	}
+
+	var zeroVal *bool
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field___Type_enumValues_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["includeDeprecated"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field___Type_enumValues_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (bool, error) {
+	if _, ok := rawArgs["includeDeprecated"]; !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
+	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		return ec.unmarshalOBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field___Type_fields_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["includeDeprecated"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (bool, error) {
+	if _, ok := rawArgs["includeDeprecated"]; !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
+	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		return ec.unmarshalOBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
+	return zeroVal, nil
 }
 
 // endregion ***************************** args.gotpl *****************************
@@ -2711,7 +3369,7 @@ func (ec *executionContext) _AggregateContinentInfo_continent(ctx context.Contex
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Continent, nil
 	})
@@ -2755,7 +3413,7 @@ func (ec *executionContext) _AggregateContinentInfo_numVisits(ctx context.Contex
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.NumVisits, nil
 	})
@@ -2799,7 +3457,7 @@ func (ec *executionContext) _AggregateContinentInfo_prettyName(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PrettyName, nil
 	})
@@ -2843,7 +3501,7 @@ func (ec *executionContext) _AggregateCountryInfo_country(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Country, nil
 	})
@@ -2887,7 +3545,7 @@ func (ec *executionContext) _AggregateCountryInfo_numVisits(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.NumVisits, nil
 	})
@@ -2931,7 +3589,7 @@ func (ec *executionContext) _AggregateCountryInfo_flag(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Flag, nil
 	})
@@ -2972,7 +3630,7 @@ func (ec *executionContext) _AggregateCountryInfo_prettyName(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PrettyName, nil
 	})
@@ -3016,7 +3674,7 @@ func (ec *executionContext) _AggregateDeviceInfo_type(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -3060,7 +3718,7 @@ func (ec *executionContext) _AggregateDeviceInfo_count(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Count, nil
 	})
@@ -3104,7 +3762,7 @@ func (ec *executionContext) _AggregateDeviceInfo_icon(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Icon, nil
 	})
@@ -3145,7 +3803,7 @@ func (ec *executionContext) _AggregateDeviceInfo_devices(ctx context.Context, fi
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Devices, nil
 	})
@@ -3192,7 +3850,7 @@ func (ec *executionContext) _BrowserInfo_family(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Family, nil
 	})
@@ -3236,7 +3894,7 @@ func (ec *executionContext) _BrowserInfo_familyDescription(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.FamilyDescription, nil
 	})
@@ -3280,7 +3938,7 @@ func (ec *executionContext) _BrowserInfo_browser(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Browser, nil
 	})
@@ -3324,7 +3982,7 @@ func (ec *executionContext) _BrowserInfo_name(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -3368,7 +4026,7 @@ func (ec *executionContext) _BrowserInfo_icon(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Icon, nil
 	})
@@ -3409,7 +4067,7 @@ func (ec *executionContext) _BrowserInfo_code(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Code, nil
 	})
@@ -3453,7 +4111,7 @@ func (ec *executionContext) _BrowserInfo_version(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Version, nil
 	})
@@ -3497,7 +4155,7 @@ func (ec *executionContext) _CampaignInfo_id(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ID, nil
 	})
@@ -3541,7 +4199,7 @@ func (ec *executionContext) _CampaignInfo_content(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Content, nil
 	})
@@ -3585,7 +4243,7 @@ func (ec *executionContext) _CampaignInfo_keyword(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Keyword, nil
 	})
@@ -3629,7 +4287,7 @@ func (ec *executionContext) _CampaignInfo_medium(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Medium, nil
 	})
@@ -3673,7 +4331,7 @@ func (ec *executionContext) _CampaignInfo_name(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -3717,7 +4375,7 @@ func (ec *executionContext) _CampaignInfo_source(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Source, nil
 	})
@@ -3761,7 +4419,7 @@ func (ec *executionContext) _CampaignInfo_group(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Group, nil
 	})
@@ -3805,7 +4463,7 @@ func (ec *executionContext) _CampaignInfo_placement(ctx context.Context, field g
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Placement, nil
 	})
@@ -3849,7 +4507,7 @@ func (ec *executionContext) _DeviceInfo_type(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -3893,7 +4551,7 @@ func (ec *executionContext) _DeviceInfo_typeIcon(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.TypeIcon, nil
 	})
@@ -3934,7 +4592,7 @@ func (ec *executionContext) _DeviceInfo_brand(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Brand, nil
 	})
@@ -3978,7 +4636,7 @@ func (ec *executionContext) _DeviceInfo_model(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Model, nil
 	})
@@ -4022,7 +4680,7 @@ func (ec *executionContext) _DeviceInfo_operatingSystem(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OperatingSystem, nil
 	})
@@ -4066,7 +4724,7 @@ func (ec *executionContext) _DeviceInfo_operatingSystemName(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OperatingSystemName, nil
 	})
@@ -4110,7 +4768,7 @@ func (ec *executionContext) _DeviceInfo_operatingSystemIcon(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OperatingSystemIcon, nil
 	})
@@ -4151,7 +4809,7 @@ func (ec *executionContext) _DeviceInfo_operatingSystemCode(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OperatingSystemCode, nil
 	})
@@ -4195,7 +4853,7 @@ func (ec *executionContext) _DeviceInfo_operatingSystemVersion(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OperatingSystemVersion, nil
 	})
@@ -4239,7 +4897,7 @@ func (ec *executionContext) _DeviceInfo_resolution(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Resolution, nil
 	})
@@ -4280,7 +4938,7 @@ func (ec *executionContext) _EcommerceGoal_idSite(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IDSite, nil
 	})
@@ -4324,7 +4982,7 @@ func (ec *executionContext) _EcommerceGoal_label(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Label, nil
 	})
@@ -4368,7 +5026,7 @@ func (ec *executionContext) _EcommerceGoal_revenue(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Revenue, nil
 	})
@@ -4412,7 +5070,7 @@ func (ec *executionContext) _EcommerceGoal_quantity(ctx context.Context, field g
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Quantity, nil
 	})
@@ -4456,7 +5114,7 @@ func (ec *executionContext) _EcommerceGoal_orders(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Orders, nil
 	})
@@ -4500,7 +5158,7 @@ func (ec *executionContext) _EcommerceGoal_averagePrice(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.AveragePrice, nil
 	})
@@ -4544,7 +5202,7 @@ func (ec *executionContext) _EcommerceGoal_averageQuantity(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.AverageQuantity, nil
 	})
@@ -4588,7 +5246,7 @@ func (ec *executionContext) _EcommerceGoal_numVisits(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.NumVisits, nil
 	})
@@ -4632,7 +5290,7 @@ func (ec *executionContext) _EcommerceGoal_numActions(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.NumActions, nil
 	})
@@ -4676,7 +5334,7 @@ func (ec *executionContext) _EcommerceGoal_conversionRatePercent(ctx context.Con
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ConversionRatePercent, nil
 	})
@@ -4720,7 +5378,7 @@ func (ec *executionContext) _EcommerceGoal_conversionRate(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.EcommerceGoal().ConversionRate(rctx, obj)
 	})
@@ -4764,7 +5422,7 @@ func (ec *executionContext) _EcommerceGoal_segment(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Segment, nil
 	})
@@ -4808,7 +5466,7 @@ func (ec *executionContext) _EcommerceGoal_sumDailyNumUniqueVisitors(ctx context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SumDailyNumUniqueVisitors, nil
 	})
@@ -4852,7 +5510,7 @@ func (ec *executionContext) _EcommerceGoal_convertedVisits(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.EcommerceGoal().ConvertedVisits(rctx, obj, fc.Args["opts"].(*model.ConvertedVisitsOptions), fc.Args["orderBy"].(*model.OrderByOptions))
 	})
@@ -4956,6 +5614,14 @@ func (ec *executionContext) fieldContext_EcommerceGoal_convertedVisits(ctx conte
 				return ec.fieldContext_Visit_languageCode(ctx, field)
 			case "language":
 				return ec.fieldContext_Visit_language(ctx, field)
+			case "firstAction":
+				return ec.fieldContext_Visit_firstAction(ctx, field)
+			case "goalAction":
+				return ec.fieldContext_Visit_goalAction(ctx, field)
+			case "ecommerceAction":
+				return ec.fieldContext_Visit_ecommerceAction(ctx, field)
+			case "ecommerceAbandonedCartAction":
+				return ec.fieldContext_Visit_ecommerceAbandonedCartAction(ctx, field)
 			case "deviceInfo":
 				return ec.fieldContext_Visit_deviceInfo(ctx, field)
 			case "deviceType":
@@ -5058,6 +5724,18 @@ func (ec *executionContext) fieldContext_EcommerceGoal_convertedVisits(ctx conte
 				return ec.fieldContext_Visit_campaignGroup(ctx, field)
 			case "campaignPlacement":
 				return ec.fieldContext_Visit_campaignPlacement(ctx, field)
+			case "referrer":
+				return ec.fieldContext_Visit_referrer(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_Visit_referrerType(ctx, field)
+			case "referrerTypeName":
+				return ec.fieldContext_Visit_referrerTypeName(ctx, field)
+			case "referrerName":
+				return ec.fieldContext_Visit_referrerName(ctx, field)
+			case "referrerKeyword":
+				return ec.fieldContext_Visit_referrerKeyword(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_Visit_referrerUrl(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Visit", field.Name)
 		},
@@ -5088,7 +5766,7 @@ func (ec *executionContext) _Goal_idSite(ctx context.Context, field graphql.Coll
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IDSite, nil
 	})
@@ -5132,7 +5810,7 @@ func (ec *executionContext) _Goal_idGoal(ctx context.Context, field graphql.Coll
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IDGoal, nil
 	})
@@ -5176,7 +5854,7 @@ func (ec *executionContext) _Goal_name(ctx context.Context, field graphql.Collec
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -5220,7 +5898,7 @@ func (ec *executionContext) _Goal_description(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description, nil
 	})
@@ -5264,7 +5942,7 @@ func (ec *executionContext) _Goal_matchAttribute(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.MatchAttribute, nil
 	})
@@ -5308,7 +5986,7 @@ func (ec *executionContext) _Goal_pattern(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Pattern, nil
 	})
@@ -5349,7 +6027,7 @@ func (ec *executionContext) _Goal_patternType(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PatternType, nil
 	})
@@ -5390,7 +6068,7 @@ func (ec *executionContext) _Goal_caseSensitive(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CaseSensitive, nil
 	})
@@ -5431,7 +6109,7 @@ func (ec *executionContext) _Goal_allowMultiple(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.AllowMultiple, nil
 	})
@@ -5475,7 +6153,7 @@ func (ec *executionContext) _Goal_revenue(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Revenue, nil
 	})
@@ -5519,7 +6197,7 @@ func (ec *executionContext) _Goal_deleted(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Deleted, nil
 	})
@@ -5563,7 +6241,7 @@ func (ec *executionContext) _Goal_eventValueAsRevenue(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.EventValueAsRevenue, nil
 	})
@@ -5607,7 +6285,7 @@ func (ec *executionContext) _Goal_convertedVisits(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Goal().ConvertedVisits(rctx, obj, fc.Args["opts"].(*model.ConvertedVisitsOptions), fc.Args["orderBy"].(*model.OrderByOptions))
 	})
@@ -5711,6 +6389,14 @@ func (ec *executionContext) fieldContext_Goal_convertedVisits(ctx context.Contex
 				return ec.fieldContext_Visit_languageCode(ctx, field)
 			case "language":
 				return ec.fieldContext_Visit_language(ctx, field)
+			case "firstAction":
+				return ec.fieldContext_Visit_firstAction(ctx, field)
+			case "goalAction":
+				return ec.fieldContext_Visit_goalAction(ctx, field)
+			case "ecommerceAction":
+				return ec.fieldContext_Visit_ecommerceAction(ctx, field)
+			case "ecommerceAbandonedCartAction":
+				return ec.fieldContext_Visit_ecommerceAbandonedCartAction(ctx, field)
 			case "deviceInfo":
 				return ec.fieldContext_Visit_deviceInfo(ctx, field)
 			case "deviceType":
@@ -5813,6 +6499,18 @@ func (ec *executionContext) fieldContext_Goal_convertedVisits(ctx context.Contex
 				return ec.fieldContext_Visit_campaignGroup(ctx, field)
 			case "campaignPlacement":
 				return ec.fieldContext_Visit_campaignPlacement(ctx, field)
+			case "referrer":
+				return ec.fieldContext_Visit_referrer(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_Visit_referrerType(ctx, field)
+			case "referrerTypeName":
+				return ec.fieldContext_Visit_referrerTypeName(ctx, field)
+			case "referrerName":
+				return ec.fieldContext_Visit_referrerName(ctx, field)
+			case "referrerKeyword":
+				return ec.fieldContext_Visit_referrerKeyword(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_Visit_referrerUrl(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Visit", field.Name)
 		},
@@ -5831,6 +6529,264 @@ func (ec *executionContext) fieldContext_Goal_convertedVisits(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _ItemDetail_itemSKU(ctx context.Context, field graphql.CollectedField, obj *model.ItemDetail) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ItemDetail_itemSKU(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ItemSku, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ItemDetail_itemSKU(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ItemDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ItemDetail_itemName(ctx context.Context, field graphql.CollectedField, obj *model.ItemDetail) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ItemDetail_itemName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ItemName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ItemDetail_itemName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ItemDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ItemDetail_itemCategory(ctx context.Context, field graphql.CollectedField, obj *model.ItemDetail) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ItemDetail_itemCategory(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ItemCategory, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ItemDetail_itemCategory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ItemDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ItemDetail_price(ctx context.Context, field graphql.CollectedField, obj *model.ItemDetail) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ItemDetail_price(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Price, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(decimal.Decimal)
+	fc.Result = res
+	return ec.marshalNDecimal2githubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ItemDetail_price(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ItemDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Decimal does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ItemDetail_quantity(ctx context.Context, field graphql.CollectedField, obj *model.ItemDetail) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ItemDetail_quantity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ItemDetail_quantity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ItemDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ItemDetail_categories(ctx context.Context, field graphql.CollectedField, obj *model.ItemDetail) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ItemDetail_categories(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Categories, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ItemDetail_categories(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ItemDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Location_continent(ctx context.Context, field graphql.CollectedField, obj *model.Location) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Location_continent(ctx, field)
 	if err != nil {
@@ -5843,7 +6799,7 @@ func (ec *executionContext) _Location_continent(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Continent, nil
 	})
@@ -5887,7 +6843,7 @@ func (ec *executionContext) _Location_continentCode(ctx context.Context, field g
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ContinentCode, nil
 	})
@@ -5931,7 +6887,7 @@ func (ec *executionContext) _Location_country(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Country, nil
 	})
@@ -5975,7 +6931,7 @@ func (ec *executionContext) _Location_countryCode(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CountryCode, nil
 	})
@@ -6019,7 +6975,7 @@ func (ec *executionContext) _Location_countryFlag(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CountryFlag, nil
 	})
@@ -6060,7 +7016,7 @@ func (ec *executionContext) _Location_region(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Region, nil
 	})
@@ -6104,7 +7060,7 @@ func (ec *executionContext) _Location_regionCode(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.RegionCode, nil
 	})
@@ -6148,7 +7104,7 @@ func (ec *executionContext) _Location_city(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.City, nil
 	})
@@ -6192,7 +7148,7 @@ func (ec *executionContext) _Location_location(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Location, nil
 	})
@@ -6236,7 +7192,7 @@ func (ec *executionContext) _Location_latitude(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Latitude, nil
 	})
@@ -6280,7 +7236,7 @@ func (ec *executionContext) _Location_longitude(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Longitude, nil
 	})
@@ -6324,7 +7280,7 @@ func (ec *executionContext) _Query_helloWorld(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().HelloWorld(rctx)
 	})
@@ -6368,7 +7324,7 @@ func (ec *executionContext) _Query_getEcommerceGoalsName(ctx context.Context, fi
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetEcommerceGoalsName(rctx, fc.Args["idSite"].(int), fc.Args["opts"].(model.GetEcommerceGoalsOptions))
 	})
@@ -6450,7 +7406,7 @@ func (ec *executionContext) _Query_getEcommerceGoalsSku(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetEcommerceGoalsSku(rctx, fc.Args["idSite"].(int), fc.Args["opts"].(model.GetEcommerceGoalsOptions))
 	})
@@ -6532,7 +7488,7 @@ func (ec *executionContext) _Query_getGoal(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetGoal(rctx, fc.Args["idSite"].(int), fc.Args["idGoal"].(int))
 	})
@@ -6612,7 +7568,7 @@ func (ec *executionContext) _Query_getGoals(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetGoals(rctx, fc.Args["idSite"].(int), fc.Args["goalIds"].([]int), fc.Args["opts"].(*model.GetGoalsOptions))
 	})
@@ -6692,7 +7648,7 @@ func (ec *executionContext) _Query_getAllGoals(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetAllGoals(rctx, fc.Args["idSite"].(int), fc.Args["opts"].(*model.GetGoalsOptions))
 	})
@@ -6772,7 +7728,7 @@ func (ec *executionContext) _Query_getSiteFromID(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetSiteFromID(rctx, fc.Args["idSite"].(int))
 	})
@@ -6870,7 +7826,7 @@ func (ec *executionContext) _Query_getSitesFromID(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetSitesFromID(rctx, fc.Args["siteIDs"].([]int))
 	})
@@ -6968,7 +7924,7 @@ func (ec *executionContext) _Query_getSiteURLsFromID(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetSiteURLsFromID(rctx, fc.Args["idSite"].(int))
 	})
@@ -7020,7 +7976,7 @@ func (ec *executionContext) _Query_getSitesWithViewAccess(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetSitesWithViewAccess(rctx)
 	})
@@ -7107,7 +8063,7 @@ func (ec *executionContext) _Query_getSitesWithAtLeastViewAccess(ctx context.Con
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetSitesWithAtLeastViewAccess(rctx)
 	})
@@ -7194,7 +8150,7 @@ func (ec *executionContext) _Query_getVisitorProfile(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetVisitorProfile(rctx, fc.Args["idSite"].(int), fc.Args["visitorId"].(string))
 	})
@@ -7224,6 +8180,10 @@ func (ec *executionContext) fieldContext_Query_getVisitorProfile(ctx context.Con
 				return ec.fieldContext_VisitorProfile_firstVisit(ctx, field)
 			case "lastVisit":
 				return ec.fieldContext_VisitorProfile_lastVisit(ctx, field)
+			case "firstVisitFull":
+				return ec.fieldContext_VisitorProfile_firstVisitFull(ctx, field)
+			case "lastVisitFull":
+				return ec.fieldContext_VisitorProfile_lastVisitFull(ctx, field)
 			case "lastVisits":
 				return ec.fieldContext_VisitorProfile_lastVisits(ctx, field)
 			case "devices":
@@ -7262,7 +8222,7 @@ func (ec *executionContext) _Query_getVisitorProfiles(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetVisitorProfiles(rctx, fc.Args["idSite"].(int), fc.Args["visitorIds"].([]string))
 	})
@@ -7292,6 +8252,10 @@ func (ec *executionContext) fieldContext_Query_getVisitorProfiles(ctx context.Co
 				return ec.fieldContext_VisitorProfile_firstVisit(ctx, field)
 			case "lastVisit":
 				return ec.fieldContext_VisitorProfile_lastVisit(ctx, field)
+			case "firstVisitFull":
+				return ec.fieldContext_VisitorProfile_firstVisitFull(ctx, field)
+			case "lastVisitFull":
+				return ec.fieldContext_VisitorProfile_lastVisitFull(ctx, field)
 			case "lastVisits":
 				return ec.fieldContext_VisitorProfile_lastVisits(ctx, field)
 			case "devices":
@@ -7330,7 +8294,7 @@ func (ec *executionContext) _Query___type(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.introspectType(fc.Args["name"].(string))
 	})
@@ -7374,6 +8338,8 @@ func (ec *executionContext) fieldContext_Query___type(ctx context.Context, field
 				return ec.fieldContext___Type_ofType(ctx, field)
 			case "specifiedByURL":
 				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -7404,7 +8370,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.introspectSchema()
 	})
@@ -7459,7 +8425,7 @@ func (ec *executionContext) _ReferrerInfo_type(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -7500,7 +8466,7 @@ func (ec *executionContext) _ReferrerInfo_name(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -7541,7 +8507,7 @@ func (ec *executionContext) _ReferrerInfo_keyword(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Keyword, nil
 	})
@@ -7582,7 +8548,7 @@ func (ec *executionContext) _ReferrerInfo_keywordPosition(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.KeywordPosition, nil
 	})
@@ -7623,7 +8589,7 @@ func (ec *executionContext) _ReferrerInfo_url(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.URL, nil
 	})
@@ -7664,7 +8630,7 @@ func (ec *executionContext) _ReferrerInfo_searchEngineUrl(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SearchEngineURL, nil
 	})
@@ -7705,7 +8671,7 @@ func (ec *executionContext) _ReferrerInfo_searchEngineIcon(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SearchEngineIcon, nil
 	})
@@ -7746,7 +8712,7 @@ func (ec *executionContext) _ReferrerInfo_socialNetworkUrl(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SocialNetworkURL, nil
 	})
@@ -7787,7 +8753,7 @@ func (ec *executionContext) _ReferrerInfo_socialNetworkIcon(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SocialNetworkIcon, nil
 	})
@@ -7828,7 +8794,7 @@ func (ec *executionContext) _ShortDeviceInfo_name(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -7872,7 +8838,7 @@ func (ec *executionContext) _ShortDeviceInfo_count(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Count, nil
 	})
@@ -7916,7 +8882,7 @@ func (ec *executionContext) _Site_idSite(ctx context.Context, field graphql.Coll
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IDSite, nil
 	})
@@ -7960,7 +8926,7 @@ func (ec *executionContext) _Site_name(ctx context.Context, field graphql.Collec
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -8004,7 +8970,7 @@ func (ec *executionContext) _Site_mainUrl(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.MainURL, nil
 	})
@@ -8048,7 +9014,7 @@ func (ec *executionContext) _Site_tsCreated(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.TsCreated, nil
 	})
@@ -8092,7 +9058,7 @@ func (ec *executionContext) _Site_ecommerce(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Ecommerce, nil
 	})
@@ -8136,7 +9102,7 @@ func (ec *executionContext) _Site_sitesearch(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Sitesearch, nil
 	})
@@ -8180,7 +9146,7 @@ func (ec *executionContext) _Site_sitesearchKeywordParameters(ctx context.Contex
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SitesearchKeywordParameters, nil
 	})
@@ -8224,7 +9190,7 @@ func (ec *executionContext) _Site_sitesearchCategoryParameters(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SitesearchCategoryParameters, nil
 	})
@@ -8268,7 +9234,7 @@ func (ec *executionContext) _Site_timezone(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Timezone, nil
 	})
@@ -8312,7 +9278,7 @@ func (ec *executionContext) _Site_timezoneName(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.TimezoneName, nil
 	})
@@ -8356,7 +9322,7 @@ func (ec *executionContext) _Site_currency(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Currency, nil
 	})
@@ -8400,7 +9366,7 @@ func (ec *executionContext) _Site_currencyName(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CurrencyName, nil
 	})
@@ -8444,7 +9410,7 @@ func (ec *executionContext) _Site_keepURLFragment(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.KeepURLFragment, nil
 	})
@@ -8488,7 +9454,7 @@ func (ec *executionContext) _Site_excludeUnknownUrls(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ExcludeUnknownUrls, nil
 	})
@@ -8532,7 +9498,7 @@ func (ec *executionContext) _Site_excludedIPs(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ExcludedIPs, nil
 	})
@@ -8576,7 +9542,7 @@ func (ec *executionContext) _Site_excludedParameters(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ExcludedParameters, nil
 	})
@@ -8620,7 +9586,7 @@ func (ec *executionContext) _Site_excludedUserAgents(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ExcludedUserAgents, nil
 	})
@@ -8664,7 +9630,7 @@ func (ec *executionContext) _Site_excludedReferrers(ctx context.Context, field g
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ExcludedReferrers, nil
 	})
@@ -8708,7 +9674,7 @@ func (ec *executionContext) _Site_group(ctx context.Context, field graphql.Colle
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Group, nil
 	})
@@ -8752,7 +9718,7 @@ func (ec *executionContext) _Site_type(ctx context.Context, field graphql.Collec
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -8796,7 +9762,7 @@ func (ec *executionContext) _Site_goals(ctx context.Context, field graphql.Colle
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Site().Goals(rctx, obj, fc.Args["opts"].(*model.GetGoalsOptions))
 	})
@@ -8876,7 +9842,7 @@ func (ec *executionContext) _Site_lastVisits(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Site().LastVisits(rctx, obj, fc.Args["opts"].(*model.LastVisitsOpts))
 	})
@@ -8980,6 +9946,14 @@ func (ec *executionContext) fieldContext_Site_lastVisits(ctx context.Context, fi
 				return ec.fieldContext_Visit_languageCode(ctx, field)
 			case "language":
 				return ec.fieldContext_Visit_language(ctx, field)
+			case "firstAction":
+				return ec.fieldContext_Visit_firstAction(ctx, field)
+			case "goalAction":
+				return ec.fieldContext_Visit_goalAction(ctx, field)
+			case "ecommerceAction":
+				return ec.fieldContext_Visit_ecommerceAction(ctx, field)
+			case "ecommerceAbandonedCartAction":
+				return ec.fieldContext_Visit_ecommerceAbandonedCartAction(ctx, field)
 			case "deviceInfo":
 				return ec.fieldContext_Visit_deviceInfo(ctx, field)
 			case "deviceType":
@@ -9082,6 +10056,18 @@ func (ec *executionContext) fieldContext_Site_lastVisits(ctx context.Context, fi
 				return ec.fieldContext_Visit_campaignGroup(ctx, field)
 			case "campaignPlacement":
 				return ec.fieldContext_Visit_campaignPlacement(ctx, field)
+			case "referrer":
+				return ec.fieldContext_Visit_referrer(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_Visit_referrerType(ctx, field)
+			case "referrerTypeName":
+				return ec.fieldContext_Visit_referrerTypeName(ctx, field)
+			case "referrerName":
+				return ec.fieldContext_Visit_referrerName(ctx, field)
+			case "referrerKeyword":
+				return ec.fieldContext_Visit_referrerKeyword(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_Visit_referrerUrl(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Visit", field.Name)
 		},
@@ -9112,7 +10098,7 @@ func (ec *executionContext) _Visit_idSite(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IDSite, nil
 	})
@@ -9156,7 +10142,7 @@ func (ec *executionContext) _Visit_siteName(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SiteName, nil
 	})
@@ -9200,7 +10186,7 @@ func (ec *executionContext) _Visit_siteCurrency(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SiteCurrency, nil
 	})
@@ -9244,7 +10230,7 @@ func (ec *executionContext) _Visit_siteCurrencySymbol(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SiteCurrencySymbol, nil
 	})
@@ -9288,7 +10274,7 @@ func (ec *executionContext) _Visit_idVisit(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IDVisit, nil
 	})
@@ -9332,7 +10318,7 @@ func (ec *executionContext) _Visit_visitIp(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitIP, nil
 	})
@@ -9376,7 +10362,7 @@ func (ec *executionContext) _Visit_visitorId(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitorID, nil
 	})
@@ -9420,7 +10406,7 @@ func (ec *executionContext) _Visit_fingerprint(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Fingerprint, nil
 	})
@@ -9464,7 +10450,7 @@ func (ec *executionContext) _Visit_visitorProfile(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Visit().VisitorProfile(rctx, obj)
 	})
@@ -9494,6 +10480,10 @@ func (ec *executionContext) fieldContext_Visit_visitorProfile(_ context.Context,
 				return ec.fieldContext_VisitorProfile_firstVisit(ctx, field)
 			case "lastVisit":
 				return ec.fieldContext_VisitorProfile_lastVisit(ctx, field)
+			case "firstVisitFull":
+				return ec.fieldContext_VisitorProfile_firstVisitFull(ctx, field)
+			case "lastVisitFull":
+				return ec.fieldContext_VisitorProfile_lastVisitFull(ctx, field)
 			case "lastVisits":
 				return ec.fieldContext_VisitorProfile_lastVisits(ctx, field)
 			case "devices":
@@ -9521,7 +10511,7 @@ func (ec *executionContext) _Visit_visitServerHour(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitServerHour, nil
 	})
@@ -9565,7 +10555,7 @@ func (ec *executionContext) _Visit_goalConversions(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.GoalConversions, nil
 	})
@@ -9609,7 +10599,7 @@ func (ec *executionContext) _Visit_actionDetails(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ActionDetails, nil
 	})
@@ -9661,10 +10651,14 @@ func (ec *executionContext) fieldContext_Visit_actionDetails(_ context.Context, 
 				return ec.fieldContext_VisitActionDetails_timestamp(ctx, field)
 			case "goalPageId":
 				return ec.fieldContext_VisitActionDetails_goalPageId(ctx, field)
+			case "itemDetails":
+				return ec.fieldContext_VisitActionDetails_itemDetails(ctx, field)
 			case "revenue":
 				return ec.fieldContext_VisitActionDetails_revenue(ctx, field)
 			case "revenueSubTotal":
 				return ec.fieldContext_VisitActionDetails_revenueSubTotal(ctx, field)
+			case "adjustedRevenue":
+				return ec.fieldContext_VisitActionDetails_adjustedRevenue(ctx, field)
 			case "eventCategory":
 				return ec.fieldContext_VisitActionDetails_eventCategory(ctx, field)
 			case "eventAction":
@@ -9681,6 +10675,8 @@ func (ec *executionContext) fieldContext_Visit_actionDetails(_ context.Context, 
 				return ec.fieldContext_VisitActionDetails_referrerName(ctx, field)
 			case "referrerKeyword":
 				return ec.fieldContext_VisitActionDetails_referrerKeyword(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_VisitActionDetails_referrerUrl(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VisitActionDetails", field.Name)
 		},
@@ -9700,7 +10696,7 @@ func (ec *executionContext) _Visit_serverDate(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ServerDate, nil
 	})
@@ -9744,7 +10740,7 @@ func (ec *executionContext) _Visit_serverDatePretty(ctx context.Context, field g
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ServerDatePretty, nil
 	})
@@ -9788,7 +10784,7 @@ func (ec *executionContext) _Visit_serverTimestamp(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ServerTimestamp, nil
 	})
@@ -9832,7 +10828,7 @@ func (ec *executionContext) _Visit_serverTimePretty(ctx context.Context, field g
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ServerTimePretty, nil
 	})
@@ -9876,7 +10872,7 @@ func (ec *executionContext) _Visit_firstActionTimestamp(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.FirstActionTimestamp, nil
 	})
@@ -9920,7 +10916,7 @@ func (ec *executionContext) _Visit_lastActionTimestamp(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.LastActionTimestamp, nil
 	})
@@ -9964,7 +10960,7 @@ func (ec *executionContext) _Visit_lastActionDateTime(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.LastActionDateTime, nil
 	})
@@ -10008,7 +11004,7 @@ func (ec *executionContext) _Visit_serverDatePrettyFirstAction(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ServerDatePrettyFirstAction, nil
 	})
@@ -10052,7 +11048,7 @@ func (ec *executionContext) _Visit_serverTimePrettyFirstAction(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ServerTimePrettyFirstAction, nil
 	})
@@ -10096,7 +11092,7 @@ func (ec *executionContext) _Visit_userId(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.UserID, nil
 	})
@@ -10137,7 +11133,7 @@ func (ec *executionContext) _Visit_visitorType(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitorType, nil
 	})
@@ -10181,7 +11177,7 @@ func (ec *executionContext) _Visit_visitorTypeIcon(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitorTypeIcon, nil
 	})
@@ -10222,7 +11218,7 @@ func (ec *executionContext) _Visit_visitConverted(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitConverted, nil
 	})
@@ -10266,7 +11262,7 @@ func (ec *executionContext) _Visit_visitConvertedIcon(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitConvertedIcon, nil
 	})
@@ -10307,7 +11303,7 @@ func (ec *executionContext) _Visit_visitCount(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitCount, nil
 	})
@@ -10348,7 +11344,7 @@ func (ec *executionContext) _Visit_visitEcommerceStatus(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitEcommerceStatus, nil
 	})
@@ -10389,7 +11385,7 @@ func (ec *executionContext) _Visit_visitEcommerceStatusIcon(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitEcommerceStatusIcon, nil
 	})
@@ -10430,7 +11426,7 @@ func (ec *executionContext) _Visit_daysSinceFirstVisit(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DaysSinceFirstVisit, nil
 	})
@@ -10474,7 +11470,7 @@ func (ec *executionContext) _Visit_secondsSinceFirstVisit(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SecondsSinceFirstVisit, nil
 	})
@@ -10518,7 +11514,7 @@ func (ec *executionContext) _Visit_daysSinceLastEcommerceOrder(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DaysSinceLastEcommerceOrder, nil
 	})
@@ -10562,7 +11558,7 @@ func (ec *executionContext) _Visit_secondsSinceLastEcommerceOrder(ctx context.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SecondsSinceLastEcommerceOrder, nil
 	})
@@ -10603,7 +11599,7 @@ func (ec *executionContext) _Visit_visitDuration(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitDuration, nil
 	})
@@ -10647,7 +11643,7 @@ func (ec *executionContext) _Visit_visitDurationPretty(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitDurationPretty, nil
 	})
@@ -10691,7 +11687,7 @@ func (ec *executionContext) _Visit_searches(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Searches, nil
 	})
@@ -10735,7 +11731,7 @@ func (ec *executionContext) _Visit_actions(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Actions, nil
 	})
@@ -10779,7 +11775,7 @@ func (ec *executionContext) _Visit_interactions(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Interactions, nil
 	})
@@ -10823,7 +11819,7 @@ func (ec *executionContext) _Visit_languageCode(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.LanguageCode, nil
 	})
@@ -10867,7 +11863,7 @@ func (ec *executionContext) _Visit_language(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Language, nil
 	})
@@ -10899,6 +11895,394 @@ func (ec *executionContext) fieldContext_Visit_language(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Visit_firstAction(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_firstAction(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Visit().FirstAction(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.VisitActionDetails)
+	fc.Result = res
+	return ec.marshalOVisitActionDetails2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitActionDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_firstAction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_VisitActionDetails_type(ctx, field)
+			case "url":
+				return ec.fieldContext_VisitActionDetails_url(ctx, field)
+			case "title":
+				return ec.fieldContext_VisitActionDetails_title(ctx, field)
+			case "subtitle":
+				return ec.fieldContext_VisitActionDetails_subtitle(ctx, field)
+			case "pageTitle":
+				return ec.fieldContext_VisitActionDetails_pageTitle(ctx, field)
+			case "pageIdAction":
+				return ec.fieldContext_VisitActionDetails_pageIdAction(ctx, field)
+			case "idPageView":
+				return ec.fieldContext_VisitActionDetails_idPageView(ctx, field)
+			case "serverTimePretty":
+				return ec.fieldContext_VisitActionDetails_serverTimePretty(ctx, field)
+			case "pageId":
+				return ec.fieldContext_VisitActionDetails_pageId(ctx, field)
+			case "timeSpent":
+				return ec.fieldContext_VisitActionDetails_timeSpent(ctx, field)
+			case "timeSpentPretty":
+				return ec.fieldContext_VisitActionDetails_timeSpentPretty(ctx, field)
+			case "pageViewPosition":
+				return ec.fieldContext_VisitActionDetails_pageViewPosition(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_VisitActionDetails_timestamp(ctx, field)
+			case "goalPageId":
+				return ec.fieldContext_VisitActionDetails_goalPageId(ctx, field)
+			case "itemDetails":
+				return ec.fieldContext_VisitActionDetails_itemDetails(ctx, field)
+			case "revenue":
+				return ec.fieldContext_VisitActionDetails_revenue(ctx, field)
+			case "revenueSubTotal":
+				return ec.fieldContext_VisitActionDetails_revenueSubTotal(ctx, field)
+			case "adjustedRevenue":
+				return ec.fieldContext_VisitActionDetails_adjustedRevenue(ctx, field)
+			case "eventCategory":
+				return ec.fieldContext_VisitActionDetails_eventCategory(ctx, field)
+			case "eventAction":
+				return ec.fieldContext_VisitActionDetails_eventAction(ctx, field)
+			case "eventName":
+				return ec.fieldContext_VisitActionDetails_eventName(ctx, field)
+			case "goalName":
+				return ec.fieldContext_VisitActionDetails_goalName(ctx, field)
+			case "referrer":
+				return ec.fieldContext_VisitActionDetails_referrer(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_VisitActionDetails_referrerType(ctx, field)
+			case "referrerName":
+				return ec.fieldContext_VisitActionDetails_referrerName(ctx, field)
+			case "referrerKeyword":
+				return ec.fieldContext_VisitActionDetails_referrerKeyword(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_VisitActionDetails_referrerUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VisitActionDetails", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_goalAction(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_goalAction(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Visit().GoalAction(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.VisitActionDetails)
+	fc.Result = res
+	return ec.marshalOVisitActionDetails2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitActionDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_goalAction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_VisitActionDetails_type(ctx, field)
+			case "url":
+				return ec.fieldContext_VisitActionDetails_url(ctx, field)
+			case "title":
+				return ec.fieldContext_VisitActionDetails_title(ctx, field)
+			case "subtitle":
+				return ec.fieldContext_VisitActionDetails_subtitle(ctx, field)
+			case "pageTitle":
+				return ec.fieldContext_VisitActionDetails_pageTitle(ctx, field)
+			case "pageIdAction":
+				return ec.fieldContext_VisitActionDetails_pageIdAction(ctx, field)
+			case "idPageView":
+				return ec.fieldContext_VisitActionDetails_idPageView(ctx, field)
+			case "serverTimePretty":
+				return ec.fieldContext_VisitActionDetails_serverTimePretty(ctx, field)
+			case "pageId":
+				return ec.fieldContext_VisitActionDetails_pageId(ctx, field)
+			case "timeSpent":
+				return ec.fieldContext_VisitActionDetails_timeSpent(ctx, field)
+			case "timeSpentPretty":
+				return ec.fieldContext_VisitActionDetails_timeSpentPretty(ctx, field)
+			case "pageViewPosition":
+				return ec.fieldContext_VisitActionDetails_pageViewPosition(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_VisitActionDetails_timestamp(ctx, field)
+			case "goalPageId":
+				return ec.fieldContext_VisitActionDetails_goalPageId(ctx, field)
+			case "itemDetails":
+				return ec.fieldContext_VisitActionDetails_itemDetails(ctx, field)
+			case "revenue":
+				return ec.fieldContext_VisitActionDetails_revenue(ctx, field)
+			case "revenueSubTotal":
+				return ec.fieldContext_VisitActionDetails_revenueSubTotal(ctx, field)
+			case "adjustedRevenue":
+				return ec.fieldContext_VisitActionDetails_adjustedRevenue(ctx, field)
+			case "eventCategory":
+				return ec.fieldContext_VisitActionDetails_eventCategory(ctx, field)
+			case "eventAction":
+				return ec.fieldContext_VisitActionDetails_eventAction(ctx, field)
+			case "eventName":
+				return ec.fieldContext_VisitActionDetails_eventName(ctx, field)
+			case "goalName":
+				return ec.fieldContext_VisitActionDetails_goalName(ctx, field)
+			case "referrer":
+				return ec.fieldContext_VisitActionDetails_referrer(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_VisitActionDetails_referrerType(ctx, field)
+			case "referrerName":
+				return ec.fieldContext_VisitActionDetails_referrerName(ctx, field)
+			case "referrerKeyword":
+				return ec.fieldContext_VisitActionDetails_referrerKeyword(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_VisitActionDetails_referrerUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VisitActionDetails", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_ecommerceAction(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_ecommerceAction(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Visit().EcommerceAction(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.VisitActionDetails)
+	fc.Result = res
+	return ec.marshalOVisitActionDetails2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitActionDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_ecommerceAction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_VisitActionDetails_type(ctx, field)
+			case "url":
+				return ec.fieldContext_VisitActionDetails_url(ctx, field)
+			case "title":
+				return ec.fieldContext_VisitActionDetails_title(ctx, field)
+			case "subtitle":
+				return ec.fieldContext_VisitActionDetails_subtitle(ctx, field)
+			case "pageTitle":
+				return ec.fieldContext_VisitActionDetails_pageTitle(ctx, field)
+			case "pageIdAction":
+				return ec.fieldContext_VisitActionDetails_pageIdAction(ctx, field)
+			case "idPageView":
+				return ec.fieldContext_VisitActionDetails_idPageView(ctx, field)
+			case "serverTimePretty":
+				return ec.fieldContext_VisitActionDetails_serverTimePretty(ctx, field)
+			case "pageId":
+				return ec.fieldContext_VisitActionDetails_pageId(ctx, field)
+			case "timeSpent":
+				return ec.fieldContext_VisitActionDetails_timeSpent(ctx, field)
+			case "timeSpentPretty":
+				return ec.fieldContext_VisitActionDetails_timeSpentPretty(ctx, field)
+			case "pageViewPosition":
+				return ec.fieldContext_VisitActionDetails_pageViewPosition(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_VisitActionDetails_timestamp(ctx, field)
+			case "goalPageId":
+				return ec.fieldContext_VisitActionDetails_goalPageId(ctx, field)
+			case "itemDetails":
+				return ec.fieldContext_VisitActionDetails_itemDetails(ctx, field)
+			case "revenue":
+				return ec.fieldContext_VisitActionDetails_revenue(ctx, field)
+			case "revenueSubTotal":
+				return ec.fieldContext_VisitActionDetails_revenueSubTotal(ctx, field)
+			case "adjustedRevenue":
+				return ec.fieldContext_VisitActionDetails_adjustedRevenue(ctx, field)
+			case "eventCategory":
+				return ec.fieldContext_VisitActionDetails_eventCategory(ctx, field)
+			case "eventAction":
+				return ec.fieldContext_VisitActionDetails_eventAction(ctx, field)
+			case "eventName":
+				return ec.fieldContext_VisitActionDetails_eventName(ctx, field)
+			case "goalName":
+				return ec.fieldContext_VisitActionDetails_goalName(ctx, field)
+			case "referrer":
+				return ec.fieldContext_VisitActionDetails_referrer(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_VisitActionDetails_referrerType(ctx, field)
+			case "referrerName":
+				return ec.fieldContext_VisitActionDetails_referrerName(ctx, field)
+			case "referrerKeyword":
+				return ec.fieldContext_VisitActionDetails_referrerKeyword(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_VisitActionDetails_referrerUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VisitActionDetails", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_ecommerceAbandonedCartAction(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_ecommerceAbandonedCartAction(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Visit().EcommerceAbandonedCartAction(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.VisitActionDetails)
+	fc.Result = res
+	return ec.marshalOVisitActionDetails2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitActionDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_ecommerceAbandonedCartAction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_VisitActionDetails_type(ctx, field)
+			case "url":
+				return ec.fieldContext_VisitActionDetails_url(ctx, field)
+			case "title":
+				return ec.fieldContext_VisitActionDetails_title(ctx, field)
+			case "subtitle":
+				return ec.fieldContext_VisitActionDetails_subtitle(ctx, field)
+			case "pageTitle":
+				return ec.fieldContext_VisitActionDetails_pageTitle(ctx, field)
+			case "pageIdAction":
+				return ec.fieldContext_VisitActionDetails_pageIdAction(ctx, field)
+			case "idPageView":
+				return ec.fieldContext_VisitActionDetails_idPageView(ctx, field)
+			case "serverTimePretty":
+				return ec.fieldContext_VisitActionDetails_serverTimePretty(ctx, field)
+			case "pageId":
+				return ec.fieldContext_VisitActionDetails_pageId(ctx, field)
+			case "timeSpent":
+				return ec.fieldContext_VisitActionDetails_timeSpent(ctx, field)
+			case "timeSpentPretty":
+				return ec.fieldContext_VisitActionDetails_timeSpentPretty(ctx, field)
+			case "pageViewPosition":
+				return ec.fieldContext_VisitActionDetails_pageViewPosition(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_VisitActionDetails_timestamp(ctx, field)
+			case "goalPageId":
+				return ec.fieldContext_VisitActionDetails_goalPageId(ctx, field)
+			case "itemDetails":
+				return ec.fieldContext_VisitActionDetails_itemDetails(ctx, field)
+			case "revenue":
+				return ec.fieldContext_VisitActionDetails_revenue(ctx, field)
+			case "revenueSubTotal":
+				return ec.fieldContext_VisitActionDetails_revenueSubTotal(ctx, field)
+			case "adjustedRevenue":
+				return ec.fieldContext_VisitActionDetails_adjustedRevenue(ctx, field)
+			case "eventCategory":
+				return ec.fieldContext_VisitActionDetails_eventCategory(ctx, field)
+			case "eventAction":
+				return ec.fieldContext_VisitActionDetails_eventAction(ctx, field)
+			case "eventName":
+				return ec.fieldContext_VisitActionDetails_eventName(ctx, field)
+			case "goalName":
+				return ec.fieldContext_VisitActionDetails_goalName(ctx, field)
+			case "referrer":
+				return ec.fieldContext_VisitActionDetails_referrer(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_VisitActionDetails_referrerType(ctx, field)
+			case "referrerName":
+				return ec.fieldContext_VisitActionDetails_referrerName(ctx, field)
+			case "referrerKeyword":
+				return ec.fieldContext_VisitActionDetails_referrerKeyword(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_VisitActionDetails_referrerUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VisitActionDetails", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Visit_deviceInfo(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Visit_deviceInfo(ctx, field)
 	if err != nil {
@@ -10911,7 +12295,7 @@ func (ec *executionContext) _Visit_deviceInfo(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Visit().DeviceInfo(rctx, obj)
 	})
@@ -10974,7 +12358,7 @@ func (ec *executionContext) _Visit_deviceType(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DeviceType, nil
 	})
@@ -11018,7 +12402,7 @@ func (ec *executionContext) _Visit_deviceTypeIcon(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DeviceTypeIcon, nil
 	})
@@ -11059,7 +12443,7 @@ func (ec *executionContext) _Visit_deviceBrand(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DeviceBrand, nil
 	})
@@ -11103,7 +12487,7 @@ func (ec *executionContext) _Visit_deviceModel(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DeviceModel, nil
 	})
@@ -11147,7 +12531,7 @@ func (ec *executionContext) _Visit_operatingSystem(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OperatingSystem, nil
 	})
@@ -11191,7 +12575,7 @@ func (ec *executionContext) _Visit_operatingSystemName(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OperatingSystemName, nil
 	})
@@ -11235,7 +12619,7 @@ func (ec *executionContext) _Visit_operatingSystemIcon(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OperatingSystemIcon, nil
 	})
@@ -11276,7 +12660,7 @@ func (ec *executionContext) _Visit_operatingSystemCode(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OperatingSystemCode, nil
 	})
@@ -11320,7 +12704,7 @@ func (ec *executionContext) _Visit_operatingSystemVersion(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OperatingSystemVersion, nil
 	})
@@ -11364,7 +12748,7 @@ func (ec *executionContext) _Visit_resolution(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Resolution, nil
 	})
@@ -11405,7 +12789,7 @@ func (ec *executionContext) _Visit_browserInfo(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Visit().BrowserInfo(rctx, obj)
 	})
@@ -11462,7 +12846,7 @@ func (ec *executionContext) _Visit_browserFamily(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.BrowserFamily, nil
 	})
@@ -11506,7 +12890,7 @@ func (ec *executionContext) _Visit_browserFamilyDescription(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.BrowserFamilyDescription, nil
 	})
@@ -11550,7 +12934,7 @@ func (ec *executionContext) _Visit_browser(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Browser, nil
 	})
@@ -11594,7 +12978,7 @@ func (ec *executionContext) _Visit_browserName(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.BrowserName, nil
 	})
@@ -11638,7 +13022,7 @@ func (ec *executionContext) _Visit_browserIcon(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.BrowserIcon, nil
 	})
@@ -11679,7 +13063,7 @@ func (ec *executionContext) _Visit_browserCode(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.BrowserCode, nil
 	})
@@ -11723,7 +13107,7 @@ func (ec *executionContext) _Visit_browserVersion(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.BrowserVersion, nil
 	})
@@ -11767,7 +13151,7 @@ func (ec *executionContext) _Visit_events(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Events, nil
 	})
@@ -11811,7 +13195,7 @@ func (ec *executionContext) _Visit_locationInfo(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Visit().LocationInfo(rctx, obj)
 	})
@@ -11876,7 +13260,7 @@ func (ec *executionContext) _Visit_continent(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Continent, nil
 	})
@@ -11920,7 +13304,7 @@ func (ec *executionContext) _Visit_continentCode(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ContinentCode, nil
 	})
@@ -11964,7 +13348,7 @@ func (ec *executionContext) _Visit_country(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Country, nil
 	})
@@ -12008,7 +13392,7 @@ func (ec *executionContext) _Visit_countryCode(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CountryCode, nil
 	})
@@ -12052,7 +13436,7 @@ func (ec *executionContext) _Visit_countryFlag(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CountryFlag, nil
 	})
@@ -12093,7 +13477,7 @@ func (ec *executionContext) _Visit_region(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Region, nil
 	})
@@ -12137,7 +13521,7 @@ func (ec *executionContext) _Visit_regionCode(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.RegionCode, nil
 	})
@@ -12181,7 +13565,7 @@ func (ec *executionContext) _Visit_city(ctx context.Context, field graphql.Colle
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.City, nil
 	})
@@ -12225,7 +13609,7 @@ func (ec *executionContext) _Visit_location(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Location, nil
 	})
@@ -12269,7 +13653,7 @@ func (ec *executionContext) _Visit_latitude(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Latitude, nil
 	})
@@ -12313,7 +13697,7 @@ func (ec *executionContext) _Visit_longitude(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Longitude, nil
 	})
@@ -12357,7 +13741,7 @@ func (ec *executionContext) _Visit_visitLocalTime(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitLocalTime, nil
 	})
@@ -12401,7 +13785,7 @@ func (ec *executionContext) _Visit_visitLocalHour(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitLocalHour, nil
 	})
@@ -12445,7 +13829,7 @@ func (ec *executionContext) _Visit_daysSinceLastVisit(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DaysSinceLastVisit, nil
 	})
@@ -12489,7 +13873,7 @@ func (ec *executionContext) _Visit_secondsSinceLastVisit(ctx context.Context, fi
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SecondsSinceLastVisit, nil
 	})
@@ -12533,7 +13917,7 @@ func (ec *executionContext) _Visit_plugins(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Plugins, nil
 	})
@@ -12574,7 +13958,7 @@ func (ec *executionContext) _Visit_adClickId(ctx context.Context, field graphql.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.AdClickID, nil
 	})
@@ -12618,7 +14002,7 @@ func (ec *executionContext) _Visit_adProviderId(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.AdProviderID, nil
 	})
@@ -12662,7 +14046,7 @@ func (ec *executionContext) _Visit_adProviderName(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.AdProviderName, nil
 	})
@@ -12706,7 +14090,7 @@ func (ec *executionContext) _Visit_formConversions(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.FormConversions, nil
 	})
@@ -12750,7 +14134,7 @@ func (ec *executionContext) _Visit_sessionReplayUrl(ctx context.Context, field g
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SessionReplayURL, nil
 	})
@@ -12791,7 +14175,7 @@ func (ec *executionContext) _Visit_campaignInfo(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Visit().CampaignInfo(rctx, obj)
 	})
@@ -12850,7 +14234,7 @@ func (ec *executionContext) _Visit_campaignId(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CampaignID, nil
 	})
@@ -12894,7 +14278,7 @@ func (ec *executionContext) _Visit_campaignContent(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CampaignContent, nil
 	})
@@ -12938,7 +14322,7 @@ func (ec *executionContext) _Visit_campaignKeyword(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CampaignKeyword, nil
 	})
@@ -12982,7 +14366,7 @@ func (ec *executionContext) _Visit_campaignMedium(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CampaignMedium, nil
 	})
@@ -13026,7 +14410,7 @@ func (ec *executionContext) _Visit_campaignName(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CampaignName, nil
 	})
@@ -13070,7 +14454,7 @@ func (ec *executionContext) _Visit_campaignSource(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CampaignSource, nil
 	})
@@ -13114,7 +14498,7 @@ func (ec *executionContext) _Visit_campaignGroup(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CampaignGroup, nil
 	})
@@ -13158,7 +14542,7 @@ func (ec *executionContext) _Visit_campaignPlacement(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CampaignPlacement, nil
 	})
@@ -13190,6 +14574,287 @@ func (ec *executionContext) fieldContext_Visit_campaignPlacement(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Visit_referrer(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_referrer(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Visit().Referrer(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ReferrerInfo)
+	fc.Result = res
+	return ec.marshalOReferrerInfo2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐReferrerInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_referrer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_ReferrerInfo_type(ctx, field)
+			case "name":
+				return ec.fieldContext_ReferrerInfo_name(ctx, field)
+			case "keyword":
+				return ec.fieldContext_ReferrerInfo_keyword(ctx, field)
+			case "keywordPosition":
+				return ec.fieldContext_ReferrerInfo_keywordPosition(ctx, field)
+			case "url":
+				return ec.fieldContext_ReferrerInfo_url(ctx, field)
+			case "searchEngineUrl":
+				return ec.fieldContext_ReferrerInfo_searchEngineUrl(ctx, field)
+			case "searchEngineIcon":
+				return ec.fieldContext_ReferrerInfo_searchEngineIcon(ctx, field)
+			case "socialNetworkUrl":
+				return ec.fieldContext_ReferrerInfo_socialNetworkUrl(ctx, field)
+			case "socialNetworkIcon":
+				return ec.fieldContext_ReferrerInfo_socialNetworkIcon(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ReferrerInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_referrerType(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_referrerType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReferrerType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_referrerType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_referrerTypeName(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_referrerTypeName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReferrerTypeName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_referrerTypeName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_referrerName(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_referrerName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReferrerName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_referrerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_referrerKeyword(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_referrerKeyword(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReferrerKeyword, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_referrerKeyword(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Visit_referrerUrl(ctx context.Context, field graphql.CollectedField, obj *model.Visit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Visit_referrerUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReferrerURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Visit_referrerUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Visit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VisitActionDetails_type(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VisitActionDetails_type(ctx, field)
 	if err != nil {
@@ -13202,7 +14867,7 @@ func (ec *executionContext) _VisitActionDetails_type(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -13246,7 +14911,7 @@ func (ec *executionContext) _VisitActionDetails_url(ctx context.Context, field g
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.URL, nil
 	})
@@ -13290,7 +14955,7 @@ func (ec *executionContext) _VisitActionDetails_title(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Title, nil
 	})
@@ -13334,7 +14999,7 @@ func (ec *executionContext) _VisitActionDetails_subtitle(ctx context.Context, fi
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Subtitle, nil
 	})
@@ -13378,7 +15043,7 @@ func (ec *executionContext) _VisitActionDetails_pageTitle(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PageTitle, nil
 	})
@@ -13422,7 +15087,7 @@ func (ec *executionContext) _VisitActionDetails_pageIdAction(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PageIDAction, nil
 	})
@@ -13466,7 +15131,7 @@ func (ec *executionContext) _VisitActionDetails_idPageView(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IDPageView, nil
 	})
@@ -13510,7 +15175,7 @@ func (ec *executionContext) _VisitActionDetails_serverTimePretty(ctx context.Con
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ServerTimePretty, nil
 	})
@@ -13554,7 +15219,7 @@ func (ec *executionContext) _VisitActionDetails_pageId(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PageID, nil
 	})
@@ -13598,7 +15263,7 @@ func (ec *executionContext) _VisitActionDetails_timeSpent(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.TimeSpent, nil
 	})
@@ -13642,7 +15307,7 @@ func (ec *executionContext) _VisitActionDetails_timeSpentPretty(ctx context.Cont
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.TimeSpentPretty, nil
 	})
@@ -13686,7 +15351,7 @@ func (ec *executionContext) _VisitActionDetails_pageViewPosition(ctx context.Con
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PageViewPosition, nil
 	})
@@ -13730,7 +15395,7 @@ func (ec *executionContext) _VisitActionDetails_timestamp(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Timestamp, nil
 	})
@@ -13774,7 +15439,7 @@ func (ec *executionContext) _VisitActionDetails_goalPageId(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.GoalPageID, nil
 	})
@@ -13803,6 +15468,61 @@ func (ec *executionContext) fieldContext_VisitActionDetails_goalPageId(_ context
 	return fc, nil
 }
 
+func (ec *executionContext) _VisitActionDetails_itemDetails(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitActionDetails_itemDetails(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ItemDetails, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.ItemDetail)
+	fc.Result = res
+	return ec.marshalOItemDetail2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐItemDetailᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitActionDetails_itemDetails(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitActionDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "itemSKU":
+				return ec.fieldContext_ItemDetail_itemSKU(ctx, field)
+			case "itemName":
+				return ec.fieldContext_ItemDetail_itemName(ctx, field)
+			case "itemCategory":
+				return ec.fieldContext_ItemDetail_itemCategory(ctx, field)
+			case "price":
+				return ec.fieldContext_ItemDetail_price(ctx, field)
+			case "quantity":
+				return ec.fieldContext_ItemDetail_quantity(ctx, field)
+			case "categories":
+				return ec.fieldContext_ItemDetail_categories(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ItemDetail", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VisitActionDetails_revenue(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VisitActionDetails_revenue(ctx, field)
 	if err != nil {
@@ -13815,7 +15535,7 @@ func (ec *executionContext) _VisitActionDetails_revenue(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Revenue, nil
 	})
@@ -13856,7 +15576,7 @@ func (ec *executionContext) _VisitActionDetails_revenueSubTotal(ctx context.Cont
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.RevenueSubTotal, nil
 	})
@@ -13885,6 +15605,47 @@ func (ec *executionContext) fieldContext_VisitActionDetails_revenueSubTotal(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _VisitActionDetails_adjustedRevenue(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitActionDetails_adjustedRevenue(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.VisitActionDetails().AdjustedRevenue(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*decimal.Decimal)
+	fc.Result = res
+	return ec.marshalODecimal2ᚖgithubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitActionDetails_adjustedRevenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitActionDetails",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Decimal does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VisitActionDetails_eventCategory(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VisitActionDetails_eventCategory(ctx, field)
 	if err != nil {
@@ -13897,7 +15658,7 @@ func (ec *executionContext) _VisitActionDetails_eventCategory(ctx context.Contex
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.EventCategory, nil
 	})
@@ -13938,7 +15699,7 @@ func (ec *executionContext) _VisitActionDetails_eventAction(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.EventAction, nil
 	})
@@ -13979,7 +15740,7 @@ func (ec *executionContext) _VisitActionDetails_eventName(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.EventName, nil
 	})
@@ -14020,7 +15781,7 @@ func (ec *executionContext) _VisitActionDetails_goalName(ctx context.Context, fi
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.GoalName, nil
 	})
@@ -14061,7 +15822,7 @@ func (ec *executionContext) _VisitActionDetails_referrer(ctx context.Context, fi
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.VisitActionDetails().Referrer(rctx, obj)
 	})
@@ -14122,7 +15883,7 @@ func (ec *executionContext) _VisitActionDetails_referrerType(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ReferrerType, nil
 	})
@@ -14163,7 +15924,7 @@ func (ec *executionContext) _VisitActionDetails_referrerName(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ReferrerName, nil
 	})
@@ -14204,7 +15965,7 @@ func (ec *executionContext) _VisitActionDetails_referrerKeyword(ctx context.Cont
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ReferrerKeyword, nil
 	})
@@ -14233,6 +15994,47 @@ func (ec *executionContext) fieldContext_VisitActionDetails_referrerKeyword(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _VisitActionDetails_referrerUrl(ctx context.Context, field graphql.CollectedField, obj *model.VisitActionDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitActionDetails_referrerUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReferrerURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitActionDetails_referrerUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitActionDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VisitorFirstLastVisit_date(ctx context.Context, field graphql.CollectedField, obj *model.VisitorFirstLastVisit) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VisitorFirstLastVisit_date(ctx, field)
 	if err != nil {
@@ -14245,7 +16047,7 @@ func (ec *executionContext) _VisitorFirstLastVisit_date(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Date, nil
 	})
@@ -14289,7 +16091,7 @@ func (ec *executionContext) _VisitorFirstLastVisit_prettyDate(ctx context.Contex
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PrettyDate, nil
 	})
@@ -14333,7 +16135,7 @@ func (ec *executionContext) _VisitorFirstLastVisit_daysAgo(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DaysAgo, nil
 	})
@@ -14377,7 +16179,7 @@ func (ec *executionContext) _VisitorFirstLastVisit_referrerType(ctx context.Cont
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ReferrerType, nil
 	})
@@ -14421,7 +16223,7 @@ func (ec *executionContext) _VisitorFirstLastVisit_referrerUrl(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ReferrerURL, nil
 	})
@@ -14465,7 +16267,7 @@ func (ec *executionContext) _VisitorFirstLastVisit_refferalSummary(ctx context.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.RefferalSummary, nil
 	})
@@ -14509,7 +16311,7 @@ func (ec *executionContext) _VisitorProfile_visitorId(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.VisitorID, nil
 	})
@@ -14553,7 +16355,7 @@ func (ec *executionContext) _VisitorProfile_firstVisit(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.FirstVisit, nil
 	})
@@ -14611,7 +16413,7 @@ func (ec *executionContext) _VisitorProfile_lastVisit(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.LastVisit, nil
 	})
@@ -14657,8 +16459,8 @@ func (ec *executionContext) fieldContext_VisitorProfile_lastVisit(_ context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _VisitorProfile_lastVisits(ctx context.Context, field graphql.CollectedField, obj *model.VisitorProfile) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VisitorProfile_lastVisits(ctx, field)
+func (ec *executionContext) _VisitorProfile_firstVisitFull(ctx context.Context, field graphql.CollectedField, obj *model.VisitorProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorProfile_firstVisitFull(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14669,28 +16471,31 @@ func (ec *executionContext) _VisitorProfile_lastVisits(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.LastVisits, nil
+		return ec.resolvers.VisitorProfile().FirstVisitFull(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Visit)
+	res := resTmp.(*model.Visit)
 	fc.Result = res
-	return ec.marshalOVisit2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx, field.Selections, res)
+	return ec.marshalNVisit2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VisitorProfile_lastVisits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VisitorProfile_firstVisitFull(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "VisitorProfile",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "idSite":
@@ -14773,6 +16578,14 @@ func (ec *executionContext) fieldContext_VisitorProfile_lastVisits(_ context.Con
 				return ec.fieldContext_Visit_languageCode(ctx, field)
 			case "language":
 				return ec.fieldContext_Visit_language(ctx, field)
+			case "firstAction":
+				return ec.fieldContext_Visit_firstAction(ctx, field)
+			case "goalAction":
+				return ec.fieldContext_Visit_goalAction(ctx, field)
+			case "ecommerceAction":
+				return ec.fieldContext_Visit_ecommerceAction(ctx, field)
+			case "ecommerceAbandonedCartAction":
+				return ec.fieldContext_Visit_ecommerceAbandonedCartAction(ctx, field)
 			case "deviceInfo":
 				return ec.fieldContext_Visit_deviceInfo(ctx, field)
 			case "deviceType":
@@ -14875,9 +16688,525 @@ func (ec *executionContext) fieldContext_VisitorProfile_lastVisits(_ context.Con
 				return ec.fieldContext_Visit_campaignGroup(ctx, field)
 			case "campaignPlacement":
 				return ec.fieldContext_Visit_campaignPlacement(ctx, field)
+			case "referrer":
+				return ec.fieldContext_Visit_referrer(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_Visit_referrerType(ctx, field)
+			case "referrerTypeName":
+				return ec.fieldContext_Visit_referrerTypeName(ctx, field)
+			case "referrerName":
+				return ec.fieldContext_Visit_referrerName(ctx, field)
+			case "referrerKeyword":
+				return ec.fieldContext_Visit_referrerKeyword(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_Visit_referrerUrl(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Visit", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VisitorProfile_lastVisitFull(ctx context.Context, field graphql.CollectedField, obj *model.VisitorProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorProfile_lastVisitFull(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.VisitorProfile().LastVisitFull(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Visit)
+	fc.Result = res
+	return ec.marshalNVisit2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitorProfile_lastVisitFull(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitorProfile",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_Visit_idSite(ctx, field)
+			case "siteName":
+				return ec.fieldContext_Visit_siteName(ctx, field)
+			case "siteCurrency":
+				return ec.fieldContext_Visit_siteCurrency(ctx, field)
+			case "siteCurrencySymbol":
+				return ec.fieldContext_Visit_siteCurrencySymbol(ctx, field)
+			case "idVisit":
+				return ec.fieldContext_Visit_idVisit(ctx, field)
+			case "visitIp":
+				return ec.fieldContext_Visit_visitIp(ctx, field)
+			case "visitorId":
+				return ec.fieldContext_Visit_visitorId(ctx, field)
+			case "fingerprint":
+				return ec.fieldContext_Visit_fingerprint(ctx, field)
+			case "visitorProfile":
+				return ec.fieldContext_Visit_visitorProfile(ctx, field)
+			case "visitServerHour":
+				return ec.fieldContext_Visit_visitServerHour(ctx, field)
+			case "goalConversions":
+				return ec.fieldContext_Visit_goalConversions(ctx, field)
+			case "actionDetails":
+				return ec.fieldContext_Visit_actionDetails(ctx, field)
+			case "serverDate":
+				return ec.fieldContext_Visit_serverDate(ctx, field)
+			case "serverDatePretty":
+				return ec.fieldContext_Visit_serverDatePretty(ctx, field)
+			case "serverTimestamp":
+				return ec.fieldContext_Visit_serverTimestamp(ctx, field)
+			case "serverTimePretty":
+				return ec.fieldContext_Visit_serverTimePretty(ctx, field)
+			case "firstActionTimestamp":
+				return ec.fieldContext_Visit_firstActionTimestamp(ctx, field)
+			case "lastActionTimestamp":
+				return ec.fieldContext_Visit_lastActionTimestamp(ctx, field)
+			case "lastActionDateTime":
+				return ec.fieldContext_Visit_lastActionDateTime(ctx, field)
+			case "serverDatePrettyFirstAction":
+				return ec.fieldContext_Visit_serverDatePrettyFirstAction(ctx, field)
+			case "serverTimePrettyFirstAction":
+				return ec.fieldContext_Visit_serverTimePrettyFirstAction(ctx, field)
+			case "userId":
+				return ec.fieldContext_Visit_userId(ctx, field)
+			case "visitorType":
+				return ec.fieldContext_Visit_visitorType(ctx, field)
+			case "visitorTypeIcon":
+				return ec.fieldContext_Visit_visitorTypeIcon(ctx, field)
+			case "visitConverted":
+				return ec.fieldContext_Visit_visitConverted(ctx, field)
+			case "visitConvertedIcon":
+				return ec.fieldContext_Visit_visitConvertedIcon(ctx, field)
+			case "visitCount":
+				return ec.fieldContext_Visit_visitCount(ctx, field)
+			case "visitEcommerceStatus":
+				return ec.fieldContext_Visit_visitEcommerceStatus(ctx, field)
+			case "visitEcommerceStatusIcon":
+				return ec.fieldContext_Visit_visitEcommerceStatusIcon(ctx, field)
+			case "daysSinceFirstVisit":
+				return ec.fieldContext_Visit_daysSinceFirstVisit(ctx, field)
+			case "secondsSinceFirstVisit":
+				return ec.fieldContext_Visit_secondsSinceFirstVisit(ctx, field)
+			case "daysSinceLastEcommerceOrder":
+				return ec.fieldContext_Visit_daysSinceLastEcommerceOrder(ctx, field)
+			case "secondsSinceLastEcommerceOrder":
+				return ec.fieldContext_Visit_secondsSinceLastEcommerceOrder(ctx, field)
+			case "visitDuration":
+				return ec.fieldContext_Visit_visitDuration(ctx, field)
+			case "visitDurationPretty":
+				return ec.fieldContext_Visit_visitDurationPretty(ctx, field)
+			case "searches":
+				return ec.fieldContext_Visit_searches(ctx, field)
+			case "actions":
+				return ec.fieldContext_Visit_actions(ctx, field)
+			case "interactions":
+				return ec.fieldContext_Visit_interactions(ctx, field)
+			case "languageCode":
+				return ec.fieldContext_Visit_languageCode(ctx, field)
+			case "language":
+				return ec.fieldContext_Visit_language(ctx, field)
+			case "firstAction":
+				return ec.fieldContext_Visit_firstAction(ctx, field)
+			case "goalAction":
+				return ec.fieldContext_Visit_goalAction(ctx, field)
+			case "ecommerceAction":
+				return ec.fieldContext_Visit_ecommerceAction(ctx, field)
+			case "ecommerceAbandonedCartAction":
+				return ec.fieldContext_Visit_ecommerceAbandonedCartAction(ctx, field)
+			case "deviceInfo":
+				return ec.fieldContext_Visit_deviceInfo(ctx, field)
+			case "deviceType":
+				return ec.fieldContext_Visit_deviceType(ctx, field)
+			case "deviceTypeIcon":
+				return ec.fieldContext_Visit_deviceTypeIcon(ctx, field)
+			case "deviceBrand":
+				return ec.fieldContext_Visit_deviceBrand(ctx, field)
+			case "deviceModel":
+				return ec.fieldContext_Visit_deviceModel(ctx, field)
+			case "operatingSystem":
+				return ec.fieldContext_Visit_operatingSystem(ctx, field)
+			case "operatingSystemName":
+				return ec.fieldContext_Visit_operatingSystemName(ctx, field)
+			case "operatingSystemIcon":
+				return ec.fieldContext_Visit_operatingSystemIcon(ctx, field)
+			case "operatingSystemCode":
+				return ec.fieldContext_Visit_operatingSystemCode(ctx, field)
+			case "operatingSystemVersion":
+				return ec.fieldContext_Visit_operatingSystemVersion(ctx, field)
+			case "resolution":
+				return ec.fieldContext_Visit_resolution(ctx, field)
+			case "browserInfo":
+				return ec.fieldContext_Visit_browserInfo(ctx, field)
+			case "browserFamily":
+				return ec.fieldContext_Visit_browserFamily(ctx, field)
+			case "browserFamilyDescription":
+				return ec.fieldContext_Visit_browserFamilyDescription(ctx, field)
+			case "browser":
+				return ec.fieldContext_Visit_browser(ctx, field)
+			case "browserName":
+				return ec.fieldContext_Visit_browserName(ctx, field)
+			case "browserIcon":
+				return ec.fieldContext_Visit_browserIcon(ctx, field)
+			case "browserCode":
+				return ec.fieldContext_Visit_browserCode(ctx, field)
+			case "browserVersion":
+				return ec.fieldContext_Visit_browserVersion(ctx, field)
+			case "events":
+				return ec.fieldContext_Visit_events(ctx, field)
+			case "locationInfo":
+				return ec.fieldContext_Visit_locationInfo(ctx, field)
+			case "continent":
+				return ec.fieldContext_Visit_continent(ctx, field)
+			case "continentCode":
+				return ec.fieldContext_Visit_continentCode(ctx, field)
+			case "country":
+				return ec.fieldContext_Visit_country(ctx, field)
+			case "countryCode":
+				return ec.fieldContext_Visit_countryCode(ctx, field)
+			case "countryFlag":
+				return ec.fieldContext_Visit_countryFlag(ctx, field)
+			case "region":
+				return ec.fieldContext_Visit_region(ctx, field)
+			case "regionCode":
+				return ec.fieldContext_Visit_regionCode(ctx, field)
+			case "city":
+				return ec.fieldContext_Visit_city(ctx, field)
+			case "location":
+				return ec.fieldContext_Visit_location(ctx, field)
+			case "latitude":
+				return ec.fieldContext_Visit_latitude(ctx, field)
+			case "longitude":
+				return ec.fieldContext_Visit_longitude(ctx, field)
+			case "visitLocalTime":
+				return ec.fieldContext_Visit_visitLocalTime(ctx, field)
+			case "visitLocalHour":
+				return ec.fieldContext_Visit_visitLocalHour(ctx, field)
+			case "daysSinceLastVisit":
+				return ec.fieldContext_Visit_daysSinceLastVisit(ctx, field)
+			case "secondsSinceLastVisit":
+				return ec.fieldContext_Visit_secondsSinceLastVisit(ctx, field)
+			case "plugins":
+				return ec.fieldContext_Visit_plugins(ctx, field)
+			case "adClickId":
+				return ec.fieldContext_Visit_adClickId(ctx, field)
+			case "adProviderId":
+				return ec.fieldContext_Visit_adProviderId(ctx, field)
+			case "adProviderName":
+				return ec.fieldContext_Visit_adProviderName(ctx, field)
+			case "formConversions":
+				return ec.fieldContext_Visit_formConversions(ctx, field)
+			case "sessionReplayUrl":
+				return ec.fieldContext_Visit_sessionReplayUrl(ctx, field)
+			case "campaignInfo":
+				return ec.fieldContext_Visit_campaignInfo(ctx, field)
+			case "campaignId":
+				return ec.fieldContext_Visit_campaignId(ctx, field)
+			case "campaignContent":
+				return ec.fieldContext_Visit_campaignContent(ctx, field)
+			case "campaignKeyword":
+				return ec.fieldContext_Visit_campaignKeyword(ctx, field)
+			case "campaignMedium":
+				return ec.fieldContext_Visit_campaignMedium(ctx, field)
+			case "campaignName":
+				return ec.fieldContext_Visit_campaignName(ctx, field)
+			case "campaignSource":
+				return ec.fieldContext_Visit_campaignSource(ctx, field)
+			case "campaignGroup":
+				return ec.fieldContext_Visit_campaignGroup(ctx, field)
+			case "campaignPlacement":
+				return ec.fieldContext_Visit_campaignPlacement(ctx, field)
+			case "referrer":
+				return ec.fieldContext_Visit_referrer(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_Visit_referrerType(ctx, field)
+			case "referrerTypeName":
+				return ec.fieldContext_Visit_referrerTypeName(ctx, field)
+			case "referrerName":
+				return ec.fieldContext_Visit_referrerName(ctx, field)
+			case "referrerKeyword":
+				return ec.fieldContext_Visit_referrerKeyword(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_Visit_referrerUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Visit", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VisitorProfile_lastVisits(ctx context.Context, field graphql.CollectedField, obj *model.VisitorProfile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VisitorProfile_lastVisits(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.VisitorProfile().LastVisits(rctx, obj, fc.Args["orderBy"].(*model.OrderByOptions), fc.Args["limit"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Visit)
+	fc.Result = res
+	return ec.marshalOVisit2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VisitorProfile_lastVisits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VisitorProfile",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "idSite":
+				return ec.fieldContext_Visit_idSite(ctx, field)
+			case "siteName":
+				return ec.fieldContext_Visit_siteName(ctx, field)
+			case "siteCurrency":
+				return ec.fieldContext_Visit_siteCurrency(ctx, field)
+			case "siteCurrencySymbol":
+				return ec.fieldContext_Visit_siteCurrencySymbol(ctx, field)
+			case "idVisit":
+				return ec.fieldContext_Visit_idVisit(ctx, field)
+			case "visitIp":
+				return ec.fieldContext_Visit_visitIp(ctx, field)
+			case "visitorId":
+				return ec.fieldContext_Visit_visitorId(ctx, field)
+			case "fingerprint":
+				return ec.fieldContext_Visit_fingerprint(ctx, field)
+			case "visitorProfile":
+				return ec.fieldContext_Visit_visitorProfile(ctx, field)
+			case "visitServerHour":
+				return ec.fieldContext_Visit_visitServerHour(ctx, field)
+			case "goalConversions":
+				return ec.fieldContext_Visit_goalConversions(ctx, field)
+			case "actionDetails":
+				return ec.fieldContext_Visit_actionDetails(ctx, field)
+			case "serverDate":
+				return ec.fieldContext_Visit_serverDate(ctx, field)
+			case "serverDatePretty":
+				return ec.fieldContext_Visit_serverDatePretty(ctx, field)
+			case "serverTimestamp":
+				return ec.fieldContext_Visit_serverTimestamp(ctx, field)
+			case "serverTimePretty":
+				return ec.fieldContext_Visit_serverTimePretty(ctx, field)
+			case "firstActionTimestamp":
+				return ec.fieldContext_Visit_firstActionTimestamp(ctx, field)
+			case "lastActionTimestamp":
+				return ec.fieldContext_Visit_lastActionTimestamp(ctx, field)
+			case "lastActionDateTime":
+				return ec.fieldContext_Visit_lastActionDateTime(ctx, field)
+			case "serverDatePrettyFirstAction":
+				return ec.fieldContext_Visit_serverDatePrettyFirstAction(ctx, field)
+			case "serverTimePrettyFirstAction":
+				return ec.fieldContext_Visit_serverTimePrettyFirstAction(ctx, field)
+			case "userId":
+				return ec.fieldContext_Visit_userId(ctx, field)
+			case "visitorType":
+				return ec.fieldContext_Visit_visitorType(ctx, field)
+			case "visitorTypeIcon":
+				return ec.fieldContext_Visit_visitorTypeIcon(ctx, field)
+			case "visitConverted":
+				return ec.fieldContext_Visit_visitConverted(ctx, field)
+			case "visitConvertedIcon":
+				return ec.fieldContext_Visit_visitConvertedIcon(ctx, field)
+			case "visitCount":
+				return ec.fieldContext_Visit_visitCount(ctx, field)
+			case "visitEcommerceStatus":
+				return ec.fieldContext_Visit_visitEcommerceStatus(ctx, field)
+			case "visitEcommerceStatusIcon":
+				return ec.fieldContext_Visit_visitEcommerceStatusIcon(ctx, field)
+			case "daysSinceFirstVisit":
+				return ec.fieldContext_Visit_daysSinceFirstVisit(ctx, field)
+			case "secondsSinceFirstVisit":
+				return ec.fieldContext_Visit_secondsSinceFirstVisit(ctx, field)
+			case "daysSinceLastEcommerceOrder":
+				return ec.fieldContext_Visit_daysSinceLastEcommerceOrder(ctx, field)
+			case "secondsSinceLastEcommerceOrder":
+				return ec.fieldContext_Visit_secondsSinceLastEcommerceOrder(ctx, field)
+			case "visitDuration":
+				return ec.fieldContext_Visit_visitDuration(ctx, field)
+			case "visitDurationPretty":
+				return ec.fieldContext_Visit_visitDurationPretty(ctx, field)
+			case "searches":
+				return ec.fieldContext_Visit_searches(ctx, field)
+			case "actions":
+				return ec.fieldContext_Visit_actions(ctx, field)
+			case "interactions":
+				return ec.fieldContext_Visit_interactions(ctx, field)
+			case "languageCode":
+				return ec.fieldContext_Visit_languageCode(ctx, field)
+			case "language":
+				return ec.fieldContext_Visit_language(ctx, field)
+			case "firstAction":
+				return ec.fieldContext_Visit_firstAction(ctx, field)
+			case "goalAction":
+				return ec.fieldContext_Visit_goalAction(ctx, field)
+			case "ecommerceAction":
+				return ec.fieldContext_Visit_ecommerceAction(ctx, field)
+			case "ecommerceAbandonedCartAction":
+				return ec.fieldContext_Visit_ecommerceAbandonedCartAction(ctx, field)
+			case "deviceInfo":
+				return ec.fieldContext_Visit_deviceInfo(ctx, field)
+			case "deviceType":
+				return ec.fieldContext_Visit_deviceType(ctx, field)
+			case "deviceTypeIcon":
+				return ec.fieldContext_Visit_deviceTypeIcon(ctx, field)
+			case "deviceBrand":
+				return ec.fieldContext_Visit_deviceBrand(ctx, field)
+			case "deviceModel":
+				return ec.fieldContext_Visit_deviceModel(ctx, field)
+			case "operatingSystem":
+				return ec.fieldContext_Visit_operatingSystem(ctx, field)
+			case "operatingSystemName":
+				return ec.fieldContext_Visit_operatingSystemName(ctx, field)
+			case "operatingSystemIcon":
+				return ec.fieldContext_Visit_operatingSystemIcon(ctx, field)
+			case "operatingSystemCode":
+				return ec.fieldContext_Visit_operatingSystemCode(ctx, field)
+			case "operatingSystemVersion":
+				return ec.fieldContext_Visit_operatingSystemVersion(ctx, field)
+			case "resolution":
+				return ec.fieldContext_Visit_resolution(ctx, field)
+			case "browserInfo":
+				return ec.fieldContext_Visit_browserInfo(ctx, field)
+			case "browserFamily":
+				return ec.fieldContext_Visit_browserFamily(ctx, field)
+			case "browserFamilyDescription":
+				return ec.fieldContext_Visit_browserFamilyDescription(ctx, field)
+			case "browser":
+				return ec.fieldContext_Visit_browser(ctx, field)
+			case "browserName":
+				return ec.fieldContext_Visit_browserName(ctx, field)
+			case "browserIcon":
+				return ec.fieldContext_Visit_browserIcon(ctx, field)
+			case "browserCode":
+				return ec.fieldContext_Visit_browserCode(ctx, field)
+			case "browserVersion":
+				return ec.fieldContext_Visit_browserVersion(ctx, field)
+			case "events":
+				return ec.fieldContext_Visit_events(ctx, field)
+			case "locationInfo":
+				return ec.fieldContext_Visit_locationInfo(ctx, field)
+			case "continent":
+				return ec.fieldContext_Visit_continent(ctx, field)
+			case "continentCode":
+				return ec.fieldContext_Visit_continentCode(ctx, field)
+			case "country":
+				return ec.fieldContext_Visit_country(ctx, field)
+			case "countryCode":
+				return ec.fieldContext_Visit_countryCode(ctx, field)
+			case "countryFlag":
+				return ec.fieldContext_Visit_countryFlag(ctx, field)
+			case "region":
+				return ec.fieldContext_Visit_region(ctx, field)
+			case "regionCode":
+				return ec.fieldContext_Visit_regionCode(ctx, field)
+			case "city":
+				return ec.fieldContext_Visit_city(ctx, field)
+			case "location":
+				return ec.fieldContext_Visit_location(ctx, field)
+			case "latitude":
+				return ec.fieldContext_Visit_latitude(ctx, field)
+			case "longitude":
+				return ec.fieldContext_Visit_longitude(ctx, field)
+			case "visitLocalTime":
+				return ec.fieldContext_Visit_visitLocalTime(ctx, field)
+			case "visitLocalHour":
+				return ec.fieldContext_Visit_visitLocalHour(ctx, field)
+			case "daysSinceLastVisit":
+				return ec.fieldContext_Visit_daysSinceLastVisit(ctx, field)
+			case "secondsSinceLastVisit":
+				return ec.fieldContext_Visit_secondsSinceLastVisit(ctx, field)
+			case "plugins":
+				return ec.fieldContext_Visit_plugins(ctx, field)
+			case "adClickId":
+				return ec.fieldContext_Visit_adClickId(ctx, field)
+			case "adProviderId":
+				return ec.fieldContext_Visit_adProviderId(ctx, field)
+			case "adProviderName":
+				return ec.fieldContext_Visit_adProviderName(ctx, field)
+			case "formConversions":
+				return ec.fieldContext_Visit_formConversions(ctx, field)
+			case "sessionReplayUrl":
+				return ec.fieldContext_Visit_sessionReplayUrl(ctx, field)
+			case "campaignInfo":
+				return ec.fieldContext_Visit_campaignInfo(ctx, field)
+			case "campaignId":
+				return ec.fieldContext_Visit_campaignId(ctx, field)
+			case "campaignContent":
+				return ec.fieldContext_Visit_campaignContent(ctx, field)
+			case "campaignKeyword":
+				return ec.fieldContext_Visit_campaignKeyword(ctx, field)
+			case "campaignMedium":
+				return ec.fieldContext_Visit_campaignMedium(ctx, field)
+			case "campaignName":
+				return ec.fieldContext_Visit_campaignName(ctx, field)
+			case "campaignSource":
+				return ec.fieldContext_Visit_campaignSource(ctx, field)
+			case "campaignGroup":
+				return ec.fieldContext_Visit_campaignGroup(ctx, field)
+			case "campaignPlacement":
+				return ec.fieldContext_Visit_campaignPlacement(ctx, field)
+			case "referrer":
+				return ec.fieldContext_Visit_referrer(ctx, field)
+			case "referrerType":
+				return ec.fieldContext_Visit_referrerType(ctx, field)
+			case "referrerTypeName":
+				return ec.fieldContext_Visit_referrerTypeName(ctx, field)
+			case "referrerName":
+				return ec.fieldContext_Visit_referrerName(ctx, field)
+			case "referrerKeyword":
+				return ec.fieldContext_Visit_referrerKeyword(ctx, field)
+			case "referrerUrl":
+				return ec.fieldContext_Visit_referrerUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Visit", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_VisitorProfile_lastVisits_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14894,7 +17223,7 @@ func (ec *executionContext) _VisitorProfile_devices(ctx context.Context, field g
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Devices, nil
 	})
@@ -14945,7 +17274,7 @@ func (ec *executionContext) _VisitorProfile_countries(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Countries, nil
 	})
@@ -14996,7 +17325,7 @@ func (ec *executionContext) _VisitorProfile_continents(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Continents, nil
 	})
@@ -15045,7 +17374,7 @@ func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -15089,7 +17418,7 @@ func (ec *executionContext) ___Directive_description(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -15130,7 +17459,7 @@ func (ec *executionContext) ___Directive_locations(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Locations, nil
 	})
@@ -15174,7 +17503,7 @@ func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Args, nil
 	})
@@ -15193,7 +17522,7 @@ func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql
 	return ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_args(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_args(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -15209,9 +17538,24 @@ func (ec *executionContext) fieldContext___Directive_args(_ context.Context, fie
 				return ec.fieldContext___InputValue_type(ctx, field)
 			case "defaultValue":
 				return ec.fieldContext___InputValue_defaultValue(ctx, field)
+			case "isDeprecated":
+				return ec.fieldContext___InputValue_isDeprecated(ctx, field)
+			case "deprecationReason":
+				return ec.fieldContext___InputValue_deprecationReason(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __InputValue", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field___Directive_args_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -15228,7 +17572,7 @@ func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IsRepeatable, nil
 	})
@@ -15272,7 +17616,7 @@ func (ec *executionContext) ___EnumValue_name(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -15316,7 +17660,7 @@ func (ec *executionContext) ___EnumValue_description(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -15357,7 +17701,7 @@ func (ec *executionContext) ___EnumValue_isDeprecated(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IsDeprecated(), nil
 	})
@@ -15401,7 +17745,7 @@ func (ec *executionContext) ___EnumValue_deprecationReason(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DeprecationReason(), nil
 	})
@@ -15442,7 +17786,7 @@ func (ec *executionContext) ___Field_name(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -15486,7 +17830,7 @@ func (ec *executionContext) ___Field_description(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -15527,7 +17871,7 @@ func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Args, nil
 	})
@@ -15546,7 +17890,7 @@ func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.Col
 	return ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_args(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_args(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -15562,9 +17906,24 @@ func (ec *executionContext) fieldContext___Field_args(_ context.Context, field g
 				return ec.fieldContext___InputValue_type(ctx, field)
 			case "defaultValue":
 				return ec.fieldContext___InputValue_defaultValue(ctx, field)
+			case "isDeprecated":
+				return ec.fieldContext___InputValue_isDeprecated(ctx, field)
+			case "deprecationReason":
+				return ec.fieldContext___InputValue_deprecationReason(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __InputValue", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field___Field_args_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -15581,7 +17940,7 @@ func (ec *executionContext) ___Field_type(ctx context.Context, field graphql.Col
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -15628,6 +17987,8 @@ func (ec *executionContext) fieldContext___Field_type(_ context.Context, field g
 				return ec.fieldContext___Type_ofType(ctx, field)
 			case "specifiedByURL":
 				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -15647,7 +18008,7 @@ func (ec *executionContext) ___Field_isDeprecated(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.IsDeprecated(), nil
 	})
@@ -15691,7 +18052,7 @@ func (ec *executionContext) ___Field_deprecationReason(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DeprecationReason(), nil
 	})
@@ -15732,7 +18093,7 @@ func (ec *executionContext) ___InputValue_name(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
 	})
@@ -15776,7 +18137,7 @@ func (ec *executionContext) ___InputValue_description(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -15817,7 +18178,7 @@ func (ec *executionContext) ___InputValue_type(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
 	})
@@ -15864,6 +18225,8 @@ func (ec *executionContext) fieldContext___InputValue_type(_ context.Context, fi
 				return ec.fieldContext___Type_ofType(ctx, field)
 			case "specifiedByURL":
 				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -15883,7 +18246,7 @@ func (ec *executionContext) ___InputValue_defaultValue(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DefaultValue, nil
 	})
@@ -15912,6 +18275,91 @@ func (ec *executionContext) fieldContext___InputValue_defaultValue(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) ___InputValue_isDeprecated(ctx context.Context, field graphql.CollectedField, obj *introspection.InputValue) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext___InputValue_isDeprecated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsDeprecated(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext___InputValue_isDeprecated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "__InputValue",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) ___InputValue_deprecationReason(ctx context.Context, field graphql.CollectedField, obj *introspection.InputValue) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext___InputValue_deprecationReason(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeprecationReason(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext___InputValue_deprecationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "__InputValue",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) ___Schema_description(ctx context.Context, field graphql.CollectedField, obj *introspection.Schema) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext___Schema_description(ctx, field)
 	if err != nil {
@@ -15924,7 +18372,7 @@ func (ec *executionContext) ___Schema_description(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -15965,7 +18413,7 @@ func (ec *executionContext) ___Schema_types(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Types(), nil
 	})
@@ -16012,6 +18460,8 @@ func (ec *executionContext) fieldContext___Schema_types(_ context.Context, field
 				return ec.fieldContext___Type_ofType(ctx, field)
 			case "specifiedByURL":
 				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -16031,7 +18481,7 @@ func (ec *executionContext) ___Schema_queryType(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.QueryType(), nil
 	})
@@ -16078,6 +18528,8 @@ func (ec *executionContext) fieldContext___Schema_queryType(_ context.Context, f
 				return ec.fieldContext___Type_ofType(ctx, field)
 			case "specifiedByURL":
 				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -16097,7 +18549,7 @@ func (ec *executionContext) ___Schema_mutationType(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.MutationType(), nil
 	})
@@ -16141,6 +18593,8 @@ func (ec *executionContext) fieldContext___Schema_mutationType(_ context.Context
 				return ec.fieldContext___Type_ofType(ctx, field)
 			case "specifiedByURL":
 				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -16160,7 +18614,7 @@ func (ec *executionContext) ___Schema_subscriptionType(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SubscriptionType(), nil
 	})
@@ -16204,6 +18658,8 @@ func (ec *executionContext) fieldContext___Schema_subscriptionType(_ context.Con
 				return ec.fieldContext___Type_ofType(ctx, field)
 			case "specifiedByURL":
 				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -16223,7 +18679,7 @@ func (ec *executionContext) ___Schema_directives(ctx context.Context, field grap
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Directives(), nil
 	})
@@ -16279,7 +18735,7 @@ func (ec *executionContext) ___Type_kind(ctx context.Context, field graphql.Coll
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Kind(), nil
 	})
@@ -16323,7 +18779,7 @@ func (ec *executionContext) ___Type_name(ctx context.Context, field graphql.Coll
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name(), nil
 	})
@@ -16364,7 +18820,7 @@ func (ec *executionContext) ___Type_description(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Description(), nil
 	})
@@ -16405,7 +18861,7 @@ func (ec *executionContext) ___Type_fields(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Fields(fc.Args["includeDeprecated"].(bool)), nil
 	})
@@ -16471,7 +18927,7 @@ func (ec *executionContext) ___Type_interfaces(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Interfaces(), nil
 	})
@@ -16515,6 +18971,8 @@ func (ec *executionContext) fieldContext___Type_interfaces(_ context.Context, fi
 				return ec.fieldContext___Type_ofType(ctx, field)
 			case "specifiedByURL":
 				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -16534,7 +18992,7 @@ func (ec *executionContext) ___Type_possibleTypes(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PossibleTypes(), nil
 	})
@@ -16578,6 +19036,8 @@ func (ec *executionContext) fieldContext___Type_possibleTypes(_ context.Context,
 				return ec.fieldContext___Type_ofType(ctx, field)
 			case "specifiedByURL":
 				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -16597,7 +19057,7 @@ func (ec *executionContext) ___Type_enumValues(ctx context.Context, field graphq
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.EnumValues(fc.Args["includeDeprecated"].(bool)), nil
 	})
@@ -16659,7 +19119,7 @@ func (ec *executionContext) ___Type_inputFields(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.InputFields(), nil
 	})
@@ -16691,6 +19151,10 @@ func (ec *executionContext) fieldContext___Type_inputFields(_ context.Context, f
 				return ec.fieldContext___InputValue_type(ctx, field)
 			case "defaultValue":
 				return ec.fieldContext___InputValue_defaultValue(ctx, field)
+			case "isDeprecated":
+				return ec.fieldContext___InputValue_isDeprecated(ctx, field)
+			case "deprecationReason":
+				return ec.fieldContext___InputValue_deprecationReason(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __InputValue", field.Name)
 		},
@@ -16710,7 +19174,7 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OfType(), nil
 	})
@@ -16754,6 +19218,8 @@ func (ec *executionContext) fieldContext___Type_ofType(_ context.Context, field 
 				return ec.fieldContext___Type_ofType(ctx, field)
 			case "specifiedByURL":
 				return ec.fieldContext___Type_specifiedByURL(ctx, field)
+			case "isOneOf":
+				return ec.fieldContext___Type_isOneOf(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 		},
@@ -16773,7 +19239,7 @@ func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SpecifiedByURL(), nil
 	})
@@ -16802,14 +19268,55 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) ___Type_isOneOf(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext___Type_isOneOf(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsOneOf(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "__Type",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 // endregion **************************** field.gotpl *****************************
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputConvertedVisitsOptions(ctx context.Context, obj interface{}) (model.ConvertedVisitsOptions, error) {
+func (ec *executionContext) unmarshalInputConvertedVisitsOptions(ctx context.Context, obj any) (model.ConvertedVisitsOptions, error) {
 	var it model.ConvertedVisitsOptions
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -16833,10 +19340,10 @@ func (ec *executionContext) unmarshalInputConvertedVisitsOptions(ctx context.Con
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDateRangeOptions(ctx context.Context, obj interface{}) (model.DateRangeOptions, error) {
+func (ec *executionContext) unmarshalInputDateRangeOptions(ctx context.Context, obj any) (model.DateRangeOptions, error) {
 	var it model.DateRangeOptions
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -16874,10 +19381,10 @@ func (ec *executionContext) unmarshalInputDateRangeOptions(ctx context.Context, 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGetEcommerceGoalsOptions(ctx context.Context, obj interface{}) (model.GetEcommerceGoalsOptions, error) {
+func (ec *executionContext) unmarshalInputGetEcommerceGoalsOptions(ctx context.Context, obj any) (model.GetEcommerceGoalsOptions, error) {
 	var it model.GetEcommerceGoalsOptions
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -16901,10 +19408,10 @@ func (ec *executionContext) unmarshalInputGetEcommerceGoalsOptions(ctx context.C
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGetGoalsOptions(ctx context.Context, obj interface{}) (model.GetGoalsOptions, error) {
+func (ec *executionContext) unmarshalInputGetGoalsOptions(ctx context.Context, obj any) (model.GetGoalsOptions, error) {
 	var it model.GetGoalsOptions
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -16928,14 +19435,14 @@ func (ec *executionContext) unmarshalInputGetGoalsOptions(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputLastVisitsOpts(ctx context.Context, obj interface{}) (model.LastVisitsOpts, error) {
+func (ec *executionContext) unmarshalInputLastVisitsOpts(ctx context.Context, obj any) (model.LastVisitsOpts, error) {
 	var it model.LastVisitsOpts
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"date", "segments", "limit"}
+	fieldsInOrder := [...]string{"date", "segments", "goalIds", "limit"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16956,6 +19463,13 @@ func (ec *executionContext) unmarshalInputLastVisitsOpts(ctx context.Context, ob
 				return it, err
 			}
 			it.Segments = graphql.OmittableOf(data)
+		case "goalIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("goalIds"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GoalIds = graphql.OmittableOf(data)
 		case "limit":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
@@ -16969,10 +19483,10 @@ func (ec *executionContext) unmarshalInputLastVisitsOpts(ctx context.Context, ob
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputOrderByOptions(ctx context.Context, obj interface{}) (model.OrderByOptions, error) {
+func (ec *executionContext) unmarshalInputOrderByOptions(ctx context.Context, obj any) (model.OrderByOptions, error) {
 	var it model.OrderByOptions
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -17625,6 +20139,64 @@ func (ec *executionContext) _Goal(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var itemDetailImplementors = []string{"ItemDetail"}
+
+func (ec *executionContext) _ItemDetail(ctx context.Context, sel ast.SelectionSet, obj *model.ItemDetail) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, itemDetailImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ItemDetail")
+		case "itemSKU":
+			out.Values[i] = ec._ItemDetail_itemSKU(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "itemName":
+			out.Values[i] = ec._ItemDetail_itemName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "itemCategory":
+			out.Values[i] = ec._ItemDetail_itemCategory(ctx, field, obj)
+		case "price":
+			out.Values[i] = ec._ItemDetail_price(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "quantity":
+			out.Values[i] = ec._ItemDetail_quantity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "categories":
+			out.Values[i] = ec._ItemDetail_categories(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -18545,6 +21117,138 @@ func (ec *executionContext) _Visit(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "firstAction":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Visit_firstAction(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "goalAction":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Visit_goalAction(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "ecommerceAction":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Visit_ecommerceAction(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "ecommerceAbandonedCartAction":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Visit_ecommerceAbandonedCartAction(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "deviceInfo":
 			field := field
 
@@ -18891,6 +21595,64 @@ func (ec *executionContext) _Visit(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "referrer":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Visit_referrer(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "referrerType":
+			out.Values[i] = ec._Visit_referrerType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "referrerTypeName":
+			out.Values[i] = ec._Visit_referrerTypeName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "referrerName":
+			out.Values[i] = ec._Visit_referrerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "referrerKeyword":
+			out.Values[i] = ec._Visit_referrerKeyword(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "referrerUrl":
+			out.Values[i] = ec._Visit_referrerUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -18992,10 +21754,45 @@ func (ec *executionContext) _VisitActionDetails(ctx context.Context, sel ast.Sel
 			}
 		case "goalPageId":
 			out.Values[i] = ec._VisitActionDetails_goalPageId(ctx, field, obj)
+		case "itemDetails":
+			out.Values[i] = ec._VisitActionDetails_itemDetails(ctx, field, obj)
 		case "revenue":
 			out.Values[i] = ec._VisitActionDetails_revenue(ctx, field, obj)
 		case "revenueSubTotal":
 			out.Values[i] = ec._VisitActionDetails_revenueSubTotal(ctx, field, obj)
+		case "adjustedRevenue":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VisitActionDetails_adjustedRevenue(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "eventCategory":
 			out.Values[i] = ec._VisitActionDetails_eventCategory(ctx, field, obj)
 		case "eventAction":
@@ -19043,6 +21840,8 @@ func (ec *executionContext) _VisitActionDetails(ctx context.Context, sel ast.Sel
 			out.Values[i] = ec._VisitActionDetails_referrerName(ctx, field, obj)
 		case "referrerKeyword":
 			out.Values[i] = ec._VisitActionDetails_referrerKeyword(ctx, field, obj)
+		case "referrerUrl":
+			out.Values[i] = ec._VisitActionDetails_referrerUrl(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19144,20 +21943,123 @@ func (ec *executionContext) _VisitorProfile(ctx context.Context, sel ast.Selecti
 		case "visitorId":
 			out.Values[i] = ec._VisitorProfile_visitorId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "firstVisit":
 			out.Values[i] = ec._VisitorProfile_firstVisit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "lastVisit":
 			out.Values[i] = ec._VisitorProfile_lastVisit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "firstVisitFull":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VisitorProfile_firstVisitFull(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "lastVisitFull":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VisitorProfile_lastVisitFull(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "lastVisits":
-			out.Values[i] = ec._VisitorProfile_lastVisits(ctx, field, obj)
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VisitorProfile_lastVisits(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "devices":
 			out.Values[i] = ec._VisitorProfile_devices(ctx, field, obj)
 		case "countries":
@@ -19374,6 +22276,13 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 			}
 		case "defaultValue":
 			out.Values[i] = ec.___InputValue_defaultValue(ctx, field, obj)
+		case "isDeprecated":
+			out.Values[i] = ec.___InputValue_isDeprecated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deprecationReason":
+			out.Values[i] = ec.___InputValue_deprecationReason(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19486,6 +22395,8 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec.___Type_ofType(ctx, field, obj)
 		case "specifiedByURL":
 			out.Values[i] = ec.___Type_specifiedByURL(ctx, field, obj)
+		case "isOneOf":
+			out.Values[i] = ec.___Type_isOneOf(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19513,7 +22424,7 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
+func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -19528,12 +22439,27 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNDateRangeOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDateRangeOptions(ctx context.Context, v interface{}) (*model.DateRangeOptions, error) {
+func (ec *executionContext) unmarshalNDateRangeOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDateRangeOptions(ctx context.Context, v any) (*model.DateRangeOptions, error) {
 	res, err := ec.unmarshalInputDateRangeOptions(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+func (ec *executionContext) unmarshalNDecimal2githubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx context.Context, v any) (decimal.Decimal, error) {
+	res, err := scalars.UnmarshalDecimal(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDecimal2githubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx context.Context, sel ast.SelectionSet, v decimal.Decimal) graphql.Marshaler {
+	res := scalars.MarshalDecimal(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v any) (float64, error) {
 	res, err := graphql.UnmarshalFloatContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -19548,12 +22474,12 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) unmarshalNGetEcommerceGoalsOptions2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetEcommerceGoalsOptions(ctx context.Context, v interface{}) (model.GetEcommerceGoalsOptions, error) {
+func (ec *executionContext) unmarshalNGetEcommerceGoalsOptions2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetEcommerceGoalsOptions(ctx context.Context, v any) (model.GetEcommerceGoalsOptions, error) {
 	res, err := ec.unmarshalInputGetEcommerceGoalsOptions(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -19568,7 +22494,17 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNSegmentPeriod2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐSegmentPeriod(ctx context.Context, v interface{}) (model.SegmentPeriod, error) {
+func (ec *executionContext) marshalNItemDetail2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐItemDetail(ctx context.Context, sel ast.SelectionSet, v *model.ItemDetail) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ItemDetail(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSegmentPeriod2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐSegmentPeriod(ctx context.Context, v any) (model.SegmentPeriod, error) {
 	var res model.SegmentPeriod
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -19578,7 +22514,7 @@ func (ec *executionContext) marshalNSegmentPeriod2githubᚗcomᚋjalavosusᚋmat
 	return v
 }
 
-func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
+func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -19593,7 +22529,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNStringList2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐStringList(ctx context.Context, v interface{}) (scalars.StringList, error) {
+func (ec *executionContext) unmarshalNStringList2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋscalarsᚐStringList(ctx context.Context, v any) (scalars.StringList, error) {
 	var res scalars.StringList
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -19607,6 +22543,20 @@ func (ec *executionContext) marshalNStringList2githubᚗcomᚋjalavosusᚋmatomo
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) marshalNVisit2githubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx context.Context, sel ast.SelectionSet, v model.Visit) graphql.Marshaler {
+	return ec._Visit(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNVisit2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisit(ctx context.Context, sel ast.SelectionSet, v *model.Visit) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Visit(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNVisitorFirstLastVisit2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐVisitorFirstLastVisit(ctx context.Context, sel ast.SelectionSet, v *model.VisitorFirstLastVisit) graphql.Marshaler {
@@ -19667,7 +22617,7 @@ func (ec *executionContext) marshalN__Directive2ᚕgithubᚗcomᚋ99designsᚋgq
 	return ret
 }
 
-func (ec *executionContext) unmarshalN__DirectiveLocation2string(ctx context.Context, v interface{}) (string, error) {
+func (ec *executionContext) unmarshalN__DirectiveLocation2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -19682,8 +22632,8 @@ func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Conte
 	return res
 }
 
-func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
-	var vSlice []interface{}
+func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	var vSlice []any
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
 	}
@@ -19857,7 +22807,7 @@ func (ec *executionContext) marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgen�
 	return ec.___Type(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalN__TypeKind2string(ctx context.Context, v interface{}) (string, error) {
+func (ec *executionContext) unmarshalN__TypeKind2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -20016,7 +22966,7 @@ func (ec *executionContext) marshalOAggregateDeviceInfo2ᚖgithubᚗcomᚋjalavo
 	return ec._AggregateDeviceInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
+func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -20026,7 +22976,7 @@ func (ec *executionContext) marshalOBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalOBoolean2ᚖbool(ctx context.Context, v interface{}) (*bool, error) {
+func (ec *executionContext) unmarshalOBoolean2ᚖbool(ctx context.Context, v any) (*bool, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -20056,7 +23006,7 @@ func (ec *executionContext) marshalOCampaignInfo2ᚖgithubᚗcomᚋjalavosusᚋm
 	return ec._CampaignInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOConvertedVisitsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐConvertedVisitsOptions(ctx context.Context, v interface{}) (*model.ConvertedVisitsOptions, error) {
+func (ec *executionContext) unmarshalOConvertedVisitsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐConvertedVisitsOptions(ctx context.Context, v any) (*model.ConvertedVisitsOptions, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -20064,7 +23014,7 @@ func (ec *executionContext) unmarshalOConvertedVisitsOptions2ᚖgithubᚗcomᚋj
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalODateRangeOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDateRangeOptions(ctx context.Context, v interface{}) (*model.DateRangeOptions, error) {
+func (ec *executionContext) unmarshalODateRangeOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐDateRangeOptions(ctx context.Context, v any) (*model.DateRangeOptions, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -20072,7 +23022,7 @@ func (ec *executionContext) unmarshalODateRangeOptions2ᚖgithubᚗcomᚋjalavos
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalODecimal2ᚖgithubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx context.Context, v interface{}) (*decimal.Decimal, error) {
+func (ec *executionContext) unmarshalODecimal2ᚖgithubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx context.Context, v any) (*decimal.Decimal, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -20143,7 +23093,7 @@ func (ec *executionContext) marshalOEcommerceGoal2ᚖgithubᚗcomᚋjalavosusᚋ
 	return ec._EcommerceGoal(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx context.Context, v interface{}) (*model.GetGoalsOptions, error) {
+func (ec *executionContext) unmarshalOGetGoalsOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐGetGoalsOptions(ctx context.Context, v any) (*model.GetGoalsOptions, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -20199,11 +23149,11 @@ func (ec *executionContext) marshalOGoal2ᚖgithubᚗcomᚋjalavosusᚋmatomogql
 	return ec._Goal(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOInt2ᚕintᚄ(ctx context.Context, v interface{}) ([]int, error) {
+func (ec *executionContext) unmarshalOInt2ᚕintᚄ(ctx context.Context, v any) ([]int, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var vSlice []interface{}
+	var vSlice []any
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
 	}
@@ -20237,7 +23187,7 @@ func (ec *executionContext) marshalOInt2ᚕintᚄ(ctx context.Context, sel ast.S
 	return ret
 }
 
-func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -20253,7 +23203,54 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) unmarshalOLastVisitsOpts2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLastVisitsOpts(ctx context.Context, v interface{}) (*model.LastVisitsOpts, error) {
+func (ec *executionContext) marshalOItemDetail2ᚕᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐItemDetailᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ItemDetail) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNItemDetail2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐItemDetail(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOLastVisitsOpts2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐLastVisitsOpts(ctx context.Context, v any) (*model.LastVisitsOpts, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -20268,7 +23265,7 @@ func (ec *executionContext) marshalOLocation2ᚖgithubᚗcomᚋjalavosusᚋmatom
 	return ec._Location(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOOrderBy2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderBy(ctx context.Context, v interface{}) (*model.OrderBy, error) {
+func (ec *executionContext) unmarshalOOrderBy2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderBy(ctx context.Context, v any) (*model.OrderBy, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -20284,7 +23281,7 @@ func (ec *executionContext) marshalOOrderBy2ᚖgithubᚗcomᚋjalavosusᚋmatomo
 	return v
 }
 
-func (ec *executionContext) unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx context.Context, v interface{}) (*model.OrderByOptions, error) {
+func (ec *executionContext) unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx context.Context, v any) (*model.OrderByOptions, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -20395,11 +23392,11 @@ func (ec *executionContext) marshalOSite2ᚖgithubᚗcomᚋjalavosusᚋmatomogql
 	return ec._Site(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var vSlice []interface{}
+	var vSlice []any
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
 	}
@@ -20433,7 +23430,7 @@ func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel
 	return ret
 }
 
-func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {
 	if v == nil {
 		return nil, nil
 	}

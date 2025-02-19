@@ -5,7 +5,14 @@ type VisitorProfile {
     firstVisit: VisitorFirstLastVisit!
     lastVisit:  VisitorFirstLastVisit!
 
-    lastVisits: [Visit]
+    firstVisitFull: Visit! @goField(forceResolver: true)
+    lastVisitFull: Visit! @goField(forceResolver: true)
+
+    # Note: orderBy is applied before limit
+    lastVisits(
+        orderBy: OrderByOptions,
+        limit: Int
+    ): [Visit] @goField(forceResolver: true)
 
     devices:    [AggregateDeviceInfo]
     countries:  [AggregateCountryInfo]

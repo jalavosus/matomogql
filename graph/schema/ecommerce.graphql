@@ -20,6 +20,15 @@ type EcommerceGoal {
     ): [Visit] @goField(forceResolver: true)
 }
 
+type ItemDetail {
+    itemSKU: String!
+    itemName: String!
+    itemCategory: String
+    price: Decimal!
+    quantity: Int!
+    categories: [String!]
+}
+
 input GetEcommerceGoalsOptions {
     date: DateRangeOptions!
 }

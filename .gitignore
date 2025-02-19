@@ -1,10 +1,13 @@
 .env
 
+bin/
+
 server.go
 main.go
 
 server
 !cmd/server
+!cmd/server/main.go
 
 verceller.json
 .vercel

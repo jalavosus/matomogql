@@ -46,6 +46,11 @@ type Visit {
     languageCode:        String!
     language:            String!
 
+    firstAction:                  VisitActionDetails @goField(forceResolver: true)
+    goalAction:                   VisitActionDetails @goField(forceResolver: true)
+    ecommerceAction:              VisitActionDetails @goField(forceResolver: true)
+    ecommerceAbandonedCartAction: VisitActionDetails @goField(forceResolver: true)
+
     deviceInfo:             DeviceInfo @goField(forceResolver: true)
     deviceType:             String!
     deviceTypeIcon:         String
@@ -69,12 +74,12 @@ type Visit {
 
     # @TODO: make these somehow work.
     # Sometimes they're strings, sometimes they're ints. Who knew.
-#    totalEcommerceRevenue:      Int!
-#    totalEcommerceConversions:  Int!
-#    totalEcommerceItems:        Int!
-#    totalAbandonedCartsRevenue: Int!
-#    totalAbandonedCarts:        Int!
-#    totalAbandonedCartsItems:   Int!
+#    totalEcommerceRevenue:      Int! @goField(forceResolver: true)
+#    totalEcommerceConversions:  Int! @goField(forceResolver: true)
+#    totalEcommerceItems:        Int! @goField(forceResolver: true)
+#    totalAbandonedCartsRevenue: Int! @goField(forceResolver: true)
+#    totalAbandonedCarts:        Int! @goField(forceResolver: true)
+#    totalAbandonedCartsItems:   Int! @goField(forceResolver: true)
 
     events:         Int!
 
@@ -113,6 +118,13 @@ type Visit {
     campaignSource:     String!
     campaignGroup:      String!
     campaignPlacement:  String!
+
+    referrer:           ReferrerInfo @goField(forceResolver: true)
+    referrerType:       String!
+    referrerTypeName:   String!
+    referrerName:       String!
+    referrerKeyword:    String!
+    referrerUrl:        String!
 }
 
 type VisitActionDetails {
@@ -132,8 +144,10 @@ type VisitActionDetails {
 
     goalPageId:         Int
 
+    itemDetails:       [ItemDetail!]
     revenue:            Decimal
     revenueSubTotal:    Decimal
+    adjustedRevenue:    Decimal @goField(forceResolver: true)
 
     eventCategory:      String
     eventAction:        String
@@ -144,4 +158,9 @@ type VisitActionDetails {
     referrerType:               String
     referrerName:               String
     referrerKeyword:            String
+    referrerUrl:                String
+
+    # ecommerce stuff
+
+
 }

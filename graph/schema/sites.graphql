@@ -34,8 +34,9 @@ type Site {
 }
 
 input LastVisitsOpts {
-    date:      DateRangeOptions,
-    segments: [String!],
+    date:      DateRangeOptions
+    segments: [String!]
+    goalIds:  [Int!]
     limit:     Int
 }
 

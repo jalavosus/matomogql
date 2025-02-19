@@ -1,5 +1,8 @@
 GO = $(shell which go)
 
+PROJECT = matomogql
+APP_SERVER = server
+
 CMD_DIR = ./cmd
 BIN_DIR = ./bin
 OUT_DIR = ./out
@@ -23,3 +26,8 @@ test :
 .PHONY: clean
 clean :
 	rm -rf $(BIN_DIR)
+
+
+.PHONY: build-server
+build-server :
+	$(GO) build -o $(BIN_DIR)/$(APP_SERVER) $(CMD_DIR)/$(APP_SERVER)

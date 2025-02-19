@@ -118,9 +118,19 @@ type Goal struct {
 	ConvertedVisits     []*Visit `json:"convertedVisits,omitempty"`
 }
 
+type ItemDetail struct {
+	ItemSku      string          `json:"itemSKU"`
+	ItemName     string          `json:"itemName"`
+	ItemCategory *string         `json:"itemCategory,omitempty"`
+	Price        decimal.Decimal `json:"price"`
+	Quantity     int             `json:"quantity"`
+	Categories   []string        `json:"categories,omitempty"`
+}
+
 type LastVisitsOpts struct {
 	Date     graphql.Omittable[*DateRangeOptions] `json:"date,omitempty"`
 	Segments graphql.Omittable[[]string]          `json:"segments,omitempty"`
+	GoalIds  graphql.Omittable[[]int]             `json:"goalIds,omitempty"`
 	Limit    graphql.Omittable[*int]              `json:"limit,omitempty"`
 }
 
@@ -228,6 +238,10 @@ type Visit struct {
 	Interactions                   int                   `json:"interactions"`
 	LanguageCode                   string                `json:"languageCode"`
 	Language                       string                `json:"language"`
+	FirstAction                    *VisitActionDetails   `json:"firstAction,omitempty"`
+	GoalAction                     *VisitActionDetails   `json:"goalAction,omitempty"`
+	EcommerceAction                *VisitActionDetails   `json:"ecommerceAction,omitempty"`
+	EcommerceAbandonedCartAction   *VisitActionDetails   `json:"ecommerceAbandonedCartAction,omitempty"`
 	DeviceInfo                     *DeviceInfo           `json:"deviceInfo,omitempty"`
 	DeviceType                     string                `json:"deviceType"`
 	DeviceTypeIcon                 *string               `json:"deviceTypeIcon,omitempty"`
@@ -279,6 +293,12 @@ type Visit struct {
 	CampaignSource                 string                `json:"campaignSource"`
 	CampaignGroup                  string                `json:"campaignGroup"`
 	CampaignPlacement              string                `json:"campaignPlacement"`
+	Referrer                       *ReferrerInfo         `json:"referrer,omitempty"`
+	ReferrerType                   string                `json:"referrerType"`
+	ReferrerTypeName               string                `json:"referrerTypeName"`
+	ReferrerName                   string                `json:"referrerName"`
+	ReferrerKeyword                string                `json:"referrerKeyword"`
+	ReferrerURL                    string                `json:"referrerUrl"`
 }
 
 type VisitActionDetails struct {
@@ -296,8 +316,10 @@ type VisitActionDetails struct {
 	PageViewPosition int              `json:"pageViewPosition"`
 	Timestamp        int              `json:"timestamp"`
 	GoalPageID       *int             `json:"goalPageId,omitempty"`
+	ItemDetails      []*ItemDetail    `json:"itemDetails,omitempty"`
 	Revenue          *decimal.Decimal `json:"revenue,omitempty"`
 	RevenueSubTotal  *decimal.Decimal `json:"revenueSubTotal,omitempty"`
+	AdjustedRevenue  *decimal.Decimal `json:"adjustedRevenue,omitempty"`
 	EventCategory    *string          `json:"eventCategory,omitempty"`
 	EventAction      *string          `json:"eventAction,omitempty"`
 	EventName        *string          `json:"eventName,omitempty"`
@@ -306,6 +328,7 @@ type VisitActionDetails struct {
 	ReferrerType     *string          `json:"referrerType,omitempty"`
 	ReferrerName     *string          `json:"referrerName,omitempty"`
 	ReferrerKeyword  *string          `json:"referrerKeyword,omitempty"`
+	ReferrerURL      *string          `json:"referrerUrl,omitempty"`
 }
 
 type VisitorFirstLastVisit struct {
@@ -318,13 +341,15 @@ type VisitorFirstLastVisit struct {
 }
 
 type VisitorProfile struct {
-	VisitorID  string                    `json:"visitorId"`
-	FirstVisit *VisitorFirstLastVisit    `json:"firstVisit"`
-	LastVisit  *VisitorFirstLastVisit    `json:"lastVisit"`
-	LastVisits []*Visit                  `json:"lastVisits,omitempty"`
-	Devices    []*AggregateDeviceInfo    `json:"devices,omitempty"`
-	Countries  []*AggregateCountryInfo   `json:"countries,omitempty"`
-	Continents []*AggregateContinentInfo `json:"continents,omitempty"`
+	VisitorID      string                    `json:"visitorId"`
+	FirstVisit     *VisitorFirstLastVisit    `json:"firstVisit"`
+	LastVisit      *VisitorFirstLastVisit    `json:"lastVisit"`
+	FirstVisitFull *Visit                    `json:"firstVisitFull"`
+	LastVisitFull  *Visit                    `json:"lastVisitFull"`
+	LastVisits     []*Visit                  `json:"lastVisits,omitempty"`
+	Devices        []*AggregateDeviceInfo    `json:"devices,omitempty"`
+	Countries      []*AggregateCountryInfo   `json:"countries,omitempty"`
+	Continents     []*AggregateContinentInfo `json:"continents,omitempty"`
 }
 
 type OrderBy string
@@ -351,7 +376,7 @@ func (e OrderBy) String() string {
 	return string(e)
 }
 
-func (e *OrderBy) UnmarshalGQL(v interface{}) error {
+func (e *OrderBy) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
@@ -396,7 +421,7 @@ func (e SegmentPeriod) String() string {
 	return string(e)
 }
 
-func (e *SegmentPeriod) UnmarshalGQL(v interface{}) error {
+func (e *SegmentPeriod) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
