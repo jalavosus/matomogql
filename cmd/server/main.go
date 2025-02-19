@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jalavosus/matomogql/handlers"
 	"github.com/jalavosus/matomogql/utils/gql"
 )
 
@@ -19,7 +18,7 @@ var (
 
 func main() {
 	handler := gql.MakeServer(true)
-	handler = handlers.HandleAuth(handler)
+	//handler = handlers.HandleAuth(handler)
 
 	log.Printf("connect to http://localhost:%d/ for GraphQL playground", defaultPort)
 
