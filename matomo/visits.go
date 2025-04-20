@@ -3,6 +3,7 @@ package matomo
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -98,6 +99,20 @@ func (c clientImpl) GetLastVisits(ctx context.Context, idSite int, opts *model.L
 	var result []*model.Visit
 	if err := c.httpGet(ctx, params, &result); err != nil {
 		return nil, err
+	}
+
+	orderByOpts, orderByOptsSet := opts.OrderBy.ValueOK()
+	if orderByOptsSet {
+		orderBy, orderBySet := orderByOpts.Timestamp.ValueOK()
+		if orderBySet && orderBy != nil {
+			sort.Slice(result, func(i, j int) bool {
+				if *orderBy == model.OrderByAsc {
+					return result[i].ServerTimestamp < result[j].ServerTimestamp
+				} else {
+					return result[i].ServerTimestamp > result[j].ServerTimestamp
+				}
+			})
+		}
 	}
 
 	return result, nil

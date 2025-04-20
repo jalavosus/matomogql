@@ -38,6 +38,7 @@ input LastVisitsOpts {
     segments: [String!]
     goalIds:  [Int!]
     limit:     Int
+    orderBy:   OrderByOptions
 }
 
 extend type Query {

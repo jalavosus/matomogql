@@ -19,7 +19,8 @@ type Goal {
 }
 
 input ConvertedVisitsOptions {
-    date: DateRangeOptions
+    date:    DateRangeOptions
+    orderBy: OrderByOptions
 }
 
 input GetGoalsOptions {

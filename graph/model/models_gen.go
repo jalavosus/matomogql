@@ -55,7 +55,8 @@ type CampaignInfo struct {
 }
 
 type ConvertedVisitsOptions struct {
-	Date graphql.Omittable[*DateRangeOptions] `json:"date,omitempty"`
+	Date    graphql.Omittable[*DateRangeOptions] `json:"date,omitempty"`
+	OrderBy graphql.Omittable[*OrderByOptions]   `json:"orderBy,omitempty"`
 }
 
 type DateRangeOptions struct {
@@ -133,6 +134,7 @@ type LastVisitsOpts struct {
 	Segments graphql.Omittable[[]string]          `json:"segments,omitempty"`
 	GoalIds  graphql.Omittable[[]int]             `json:"goalIds,omitempty"`
 	Limit    graphql.Omittable[*int]              `json:"limit,omitempty"`
+	OrderBy  graphql.Omittable[*OrderByOptions]   `json:"orderBy,omitempty"`
 }
 
 type Location struct {

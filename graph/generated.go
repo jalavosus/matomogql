@@ -19320,7 +19320,7 @@ func (ec *executionContext) unmarshalInputConvertedVisitsOptions(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"date"}
+	fieldsInOrder := [...]string{"date", "orderBy"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19334,6 +19334,13 @@ func (ec *executionContext) unmarshalInputConvertedVisitsOptions(ctx context.Con
 				return it, err
 			}
 			it.Date = graphql.OmittableOf(data)
+		case "orderBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+			data, err := ec.unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrderBy = graphql.OmittableOf(data)
 		}
 	}
 
@@ -19442,7 +19449,7 @@ func (ec *executionContext) unmarshalInputLastVisitsOpts(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"date", "segments", "goalIds", "limit"}
+	fieldsInOrder := [...]string{"date", "segments", "goalIds", "limit", "orderBy"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19477,6 +19484,13 @@ func (ec *executionContext) unmarshalInputLastVisitsOpts(ctx context.Context, ob
 				return it, err
 			}
 			it.Limit = graphql.OmittableOf(data)
+		case "orderBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+			data, err := ec.unmarshalOOrderByOptions2ᚖgithubᚗcomᚋjalavosusᚋmatomogqlᚋgraphᚋmodelᚐOrderByOptions(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrderBy = graphql.OmittableOf(data)
 		}
 	}
 
