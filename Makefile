@@ -1,33 +1,27 @@
 GO = $(shell which go)
 
 PROJECT = matomogql
-APP_SERVER = server
+BIN = server
 
 CMD_DIR = ./cmd
 BIN_DIR = ./bin
 OUT_DIR = ./out
 
-.PHONY: all
-all : clean
+.PHONY: all build lint test clean generate
 
-.PHONY: generate-schema
-generate-schema :
-	$(GO) generate graph/resolver.go
+all : clean build
 
-.PHONY: lint
+clean :
+	rm -rf $(BIN_DIR)/$(BIN)
+
+build :
+	$(GO) build -o $(BIN_DIR)/$(BIN) $(CMD_DIR)/$(BIN)
+
 lint :
 	golangci-lint run -c .golangci.yml
 
-.PHONY: test
 test :
 	$(GO) test ./...
 
-
-.PHONY: clean
-clean :
-	rm -rf $(BIN_DIR)
-
-
-.PHONY: build-server
-build-server :
-	$(GO) build -o $(BIN_DIR)/$(APP_SERVER) $(CMD_DIR)/$(APP_SERVER)
+generate : # just add $(GO) generate [target] as needed
+	$(GO) generate graph/resolver.go
