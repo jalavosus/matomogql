@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/jalavosus/matomogql/matomo"
+	"github.com/stretchr/testify/assert"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 const (
@@ -35,10 +38,10 @@ func TestGetGoal(t *testing.T) {
 			name: "valid_idsite",
 			args: args{
 				ctx:    testCtx,
-				idSite: 11,
+				idSite: 3,
 				idGoal: 3,
 			},
-			want:    testWant{name: "Contact Us"},
+			want:    testWant{name: "RFQ Form"},
 			wantErr: false,
 		},
 		{
@@ -51,21 +54,19 @@ func TestGetGoal(t *testing.T) {
 		},
 	}
 
+	client := matomo.NewClient(matomo.GetEnv())
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := matomo.GetGoal(tt.args.ctx, tt.args.idSite, tt.args.idGoal)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetGoal() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
+			got, err := client.GetGoal(tt.args.ctx, tt.args.idSite, tt.args.idGoal)
 			if tt.wantErr {
+				assert.Error(t, err)
 				return
 			}
 
-			if tt.want.name != got.Name {
-				t.Errorf("GetGoal() got.name = %v, want %v", got, tt.want)
-			}
+			assert.NoErrorf(t, err, "GetGoal() returned an error")
+
+			assert.Equal(t, tt.want.name, got.Name)
 		})
 	}
 }
@@ -95,11 +96,12 @@ func TestGetGoals(t *testing.T) {
 			name: "valid_data",
 			args: args{
 				ctx:    testCtx,
-				idSite: 11,
+				idSite: 3,
 			},
 			want: []testWant{
-				{index: 2, name: "Contact Us", idGoal: 3},
-				{index: 3, name: "Phone Number Clicks", idGoal: 4},
+				{index: 0, name: "Email clicks", idGoal: 2},
+				{index: 1, name: "RFQ Form", idGoal: 3},
+				{index: 2, name: "Phone Number Clicks", idGoal: 4},
 			},
 			wantErr: false,
 		},
@@ -113,31 +115,25 @@ func TestGetGoals(t *testing.T) {
 		},
 	}
 
+	client := matomo.NewClient(matomo.GetEnv())
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := matomo.GetAllGoals(tt.args.ctx, tt.args.idSite, nil)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetAllGoals() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			got, err := client.GetAllGoals(tt.args.ctx, tt.args.idSite, nil)
 
 			if tt.wantErr {
+				assert.Error(t, err)
 				return
 			}
 
+			assert.NoErrorf(t, err, "GetAllGoals() returned an error")
+
 			for _, want := range tt.want {
-				if want.index > len(got) {
-					t.Errorf("GetAllGoals() len(got) = %v, want >= %v", len(got), want.index)
-				}
+				assert.GreaterOrEqual(t, len(got), want.index)
 
 				item := got[want.index]
-				if item.Name != want.name {
-					t.Errorf("GetAllGoals() got[%d].Name = %v, want %v", want.index, item.Name, want.name)
-				}
-				if item.IDGoal != want.idGoal {
-					t.Errorf("GetAllGoals() got[%d].IDGoal = %v, want %v", want.index, item.IDGoal, want.idGoal)
-				}
+				assert.Equal(t, want.name, item.Name)
+				assert.Equalf(t, want.idGoal, item.IDGoal, "expected goal %[1]s item.IDGoal to be %[2]d, got %[3]d", item.Name, want.idGoal, item.IDGoal)
 			}
 		})
 	}
