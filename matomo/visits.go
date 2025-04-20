@@ -106,11 +106,11 @@ func (c clientImpl) GetLastVisits(ctx context.Context, idSite int, opts *model.L
 		orderBy, orderBySet := orderByOpts.Timestamp.ValueOK()
 		if orderBySet && orderBy != nil {
 			sort.Slice(result, func(i, j int) bool {
-				if *orderBy == model.OrderByAsc {
-					return result[i].ServerTimestamp < result[j].ServerTimestamp
-				} else {
+				if *orderBy == model.OrderByDesc {
 					return result[i].ServerTimestamp > result[j].ServerTimestamp
 				}
+
+				return result[i].ServerTimestamp < result[j].ServerTimestamp
 			})
 		}
 	}
