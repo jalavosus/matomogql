@@ -1,111 +1,96 @@
-# see: https://golangci-lint.run/usage/configuration/ for config info
+version: "2"
 run:
-  # default concurrency is a available CPU number
   concurrency: 5
-  # include test files or not, default is true
   tests: false
-  # timeout for analysis; set high due to the default
-  # 1m timeout sometimes causing failures in CI
-  timeout: 10m
-
-output:
-  sort-results: true
-
 linters:
-  disable-all: true
+  default: none
+  enable:
+    - bodyclose
+    - gocritic
+    - govet
+    - importas
+    - ineffassign
+    - nolintlint
+    - unconvert
+    - unused
+    - usestdlibvars
+    - whitespace
+  settings:
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+        - experimental
+        - opinionated
+    govet:
+      enable:
+        - assign
+        - errorsas
+        - tests
+        - unreachable
+        - fieldalignment
+        - atomic
+        - atomicalign
+        - bools
+        - defers
+        - shadow
+    nolintlint:
+      require-explanation: false
+      require-specific: false
+      allow-unused: false
+    usestdlibvars:
+      http-method: true
+      http-status-code: true
+      time-weekday: true
+      time-month: true
+      time-layout: true
+      crypto-hash: true
+    whitespace:
+      multi-if: true
+      multi-func: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - govet
+          - staticcheck
+        path: _test\.go
+      - linters:
+          - bodyclose
+          - gocritic
+          - govet
+          - importas
+          - ineffassign
+          - nolintlint
+          - staticcheck
+          - unconvert
+          - unused
+          - usestdlibvars
+          - whitespace
+        path: graph
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  fix: false
+formatters:
   enable:
     - gofmt
-    - govet
-    - unconvert
-    - goimports
-    - ineffassign
-    - unused
-    - bodyclose
-    - whitespace
-    - nolintlint
-    - importas
-    - usestdlibvars
-    - gocritic
-  fast: true
-
-linters-settings:
-  gofmt:
-    # simplify code: gofmt with `-s` option, true by default
-    simplify: true
-
-  govet:
-    enable:
-      - assign
-      - errorsas
-      - tests
-      - unreachable
-      - fieldalignment
-      - atomic
-      - atomicalign
-      - bools
-      - defers
-      - shadow
-
-  whitespace:
-    multi-if: true
-    multi-func: true
-
-  nolintlint:
-    allow-unused: false
-    require-explanation: false
-    require-specific: false
-
-  usestdlibvars:
-    # Suggest the use of http.MethodXX.
-    http-method:          true
-    # Suggest the use of http.StatusXX.
-    http-status-code:     true
-    # Suggest the use of time.Weekday.String().
-    time-weekday:         true
-    # Suggest the use of time.Month.String().
-    time-month:           true
-    # Suggest the use of time.Layout.
-    time-layout:          true
-    # Suggest the use of crypto.Hash.String().
-    crypto-hash:          true
-
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - style
-      - performance
-      - experimental
-      - opinionated
-
-    settings: {}
-
-
-issues:
-
-  skip-dirs-use-default: true
-  fix: false
-
-  exclude-rules:
-    # Exclude some linters from running on tests files.
-    - path: _test\.go
-      linters:
-        - gosimple
-        - gofmt
-        - goimports
-        - govet
-
-    - path: graph
-      linters:
-        - gofmt
-        - govet
-        - gosimple
-        - unconvert
-        - goimports
-        - ineffassign
-        - unused
-        - bodyclose
-        - whitespace
-        - nolintlint
-        - importas
-        - usestdlibvars
-        - gocritic
+  settings:
+    gofmt:
+      simplify: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - _test\.go
+      - graph
