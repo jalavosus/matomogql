@@ -27,6 +27,7 @@ func (c clientImpl) GetGoal(ctx context.Context, idSite, idGoal int) (*model.Goa
 func (c clientImpl) GetGoals(
 	ctx context.Context, idSite int, goalIds []int, opts *model.GetGoalsOptions,
 ) ([]*model.Goal, error) {
+
 	params := c.buildRequestParams(-1, "API.getBulkRequest")
 
 	if opts == nil {
@@ -91,6 +92,7 @@ func (c clientImpl) GetAllGoals(ctx context.Context, idSite int, opts *model.Get
 func (c clientImpl) GetConvertedVisits(
 	ctx context.Context, idSite, idGoal int, opts *model.ConvertedVisitsOptions,
 ) ([]*model.Visit, error) {
+
 	visitsOpts := &model.LastVisitsOpts{
 		Date:     opts.Date,
 		Segments: graphql.OmittableOf([]string{fmt.Sprintf("visitConvertedGoalId==%d", idGoal)}),
