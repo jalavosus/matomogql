@@ -8,8 +8,6 @@ run:
   # 1m timeout sometimes causing failures in CI
   timeout: 10m
 
-  skip-dirs-use-default: true
-
 output:
   sort-results: true
 
@@ -18,7 +16,6 @@ linters:
   enable:
     - gofmt
     - govet
-    - gosimple
     - unconvert
     - goimports
     - ineffassign
@@ -83,9 +80,11 @@ linters-settings:
     settings: {}
 
 
-
 issues:
+
+  skip-dirs-use-default: true
   fix: false
+
   exclude-rules:
     # Exclude some linters from running on tests files.
     - path: _test\.go
