@@ -12,6 +12,7 @@ import (
 func (c clientImpl) GetVisitorProfile(
 	ctx context.Context, idSite int, visitorId string,
 ) (*model.VisitorProfile, error) {
+
 	params := c.buildRequestParams(idSite, "Live.getVisitorProfile")
 	params.Set("visitorId", visitorId)
 
@@ -26,6 +27,7 @@ func (c clientImpl) GetVisitorProfile(
 func (c clientImpl) GetVisitorProfiles(
 	ctx context.Context, idSite int, visitorIds []string,
 ) ([]*model.VisitorProfile, error) {
+
 	idSiteStr := strconv.Itoa(idSite)
 	queries := make([][2]string, len(visitorIds))
 	for i, id := range visitorIds {
