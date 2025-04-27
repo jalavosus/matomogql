@@ -26,6 +26,10 @@ func (r *visitResolver) FirstAction(ctx context.Context, obj *model.Visit) (*mod
 		return actions[i].Timestamp < actions[j].Timestamp
 	})
 
+	if len(actions) == 0 {
+		return nil, nil
+	}
+
 	return actions[0], nil
 }
 
@@ -40,7 +44,9 @@ func (r *visitResolver) EcommerceAction(ctx context.Context, obj *model.Visit) (
 }
 
 // EcommerceAbandonedCartAction is the resolver for the ecommerceAbandonedCartAction field.
-func (r *visitResolver) EcommerceAbandonedCartAction(ctx context.Context, obj *model.Visit) (*model.VisitActionDetails, error) {
+func (r *visitResolver) EcommerceAbandonedCartAction(
+	ctx context.Context, obj *model.Visit,
+) (*model.VisitActionDetails, error) {
 	return visitActionByType(obj, "ecommerceAbandonedCart"), nil
 }
 
@@ -115,7 +121,9 @@ func (r *visitResolver) Referrer(ctx context.Context, obj *model.Visit) (*model.
 }
 
 // AdjustedRevenue is the resolver for the adjustedRevenue field.
-func (r *visitActionDetailsResolver) AdjustedRevenue(ctx context.Context, obj *model.VisitActionDetails) (*decimal.Decimal, error) {
+func (r *visitActionDetailsResolver) AdjustedRevenue(
+	ctx context.Context, obj *model.VisitActionDetails,
+) (*decimal.Decimal, error) {
 	if obj.Revenue == nil || obj.ItemDetails == nil {
 		return nil, nil
 	}
@@ -130,7 +138,9 @@ func (r *visitActionDetailsResolver) AdjustedRevenue(ctx context.Context, obj *m
 }
 
 // Referrer is the resolver for the referrer field.
-func (r *visitActionDetailsResolver) Referrer(ctx context.Context, obj *model.VisitActionDetails) (*model.ReferrerInfo, error) {
+func (r *visitActionDetailsResolver) Referrer(
+	ctx context.Context, obj *model.VisitActionDetails,
+) (*model.ReferrerInfo, error) {
 	return &model.ReferrerInfo{
 		Type:    obj.ReferrerType,
 		Name:    obj.ReferrerName,

@@ -1,8 +1,9 @@
 package graph
 
 import (
-	"github.com/jalavosus/matomogql/graph/model"
 	"sort"
+	
+	"github.com/jalavosus/matomogql/graph/model"
 )
 
 func orderLastVisits(lastVisits []*model.Visit, order *model.OrderByOptions) []*model.Visit {
@@ -15,10 +16,10 @@ func orderLastVisits(lastVisits []*model.Visit, order *model.OrderByOptions) []*
 
 	sort.Slice(lastVisits, func(i, j int) bool {
 		if orderBy == model.OrderByAsc {
-			return lastVisits[i].ServerDate < lastVisits[j].ServerDate
+			return lastVisits[i].ServerTimestamp < lastVisits[j].ServerTimestamp
 		}
 
-		return lastVisits[i].ServerDate > lastVisits[j].ServerDate
+		return lastVisits[i].ServerTimestamp > lastVisits[j].ServerTimestamp
 	})
 
 	return lastVisits
