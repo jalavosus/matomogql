@@ -9,7 +9,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v3 v3.3.3
 	github.com/vektah/gqlparser/v2 v2.5.27
-	github.com/vikstrous/dataloadgen v0.0.6
+	github.com/vikstrous/dataloadgen v0.0.8
 	golang.org/x/sync v0.14.0
 )
 
