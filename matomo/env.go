@@ -35,8 +35,7 @@ var envOnce = sync.OnceValue(func() envData {
 	return data
 })
 
-//nolint:gocritic // don't care
-func GetEnv() (string, string) {
+func GetEnv() (apiKey, endpoint string) {
 	data := envOnce()
 	return data.apiKey, data.endpoint
 }
