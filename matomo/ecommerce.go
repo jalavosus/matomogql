@@ -19,11 +19,10 @@ func (c clientImpl) getEcommerceItems(ctx context.Context, idSite int, opts *mod
 	params := c.buildRequestParams(idSite, "Goals.getItems"+searchType)
 	params.Set("period", strings.ToLower(opts.Date.Period.String()))
 
-	var date = opts.Date.StartDate
+	date := opts.Date.StartDate
 	if endDate, ok := opts.Date.EndDate.ValueOK(); ok && *endDate != "" {
 		date += "," + *endDate
 	}
-
 	params.Set("date", date)
 
 	var result []*model.EcommerceGoal

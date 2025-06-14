@@ -2,7 +2,7 @@ package graph
 
 import (
 	"sort"
-	
+
 	"github.com/jalavosus/matomogql/graph/model"
 )
 
