@@ -45,8 +45,6 @@ func appMain(ctx context.Context, cmd *cli.Command) error {
 	addr := ":" + strconv.Itoa(serverPort)
 
 	handler := gql.MakeServer(true)
-	//nolint:gocritic
-	// handler = handlers.HandleAuth(handler)
 
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, os.Kill)
 	defer cancel()
