@@ -128,7 +128,7 @@ func (r *visitActionDetailsResolver) AdjustedRevenue(
 		return nil, nil
 	}
 
-	var d = decimal.Zero
+	d := decimal.Zero
 	for _, item := range obj.ItemDetails {
 		itemPrice := item.Price.Mul(decimal.NewFromInt(int64(item.Quantity)))
 		d = d.Add(itemPrice)

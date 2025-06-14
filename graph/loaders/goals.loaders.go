@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strconv"
 
@@ -9,49 +10,78 @@ import (
 	"github.com/jalavosus/matomogql/matomo"
 )
 
-func getGoalConvertedVisits(matomoClient matomo.Client) func(ctx context.Context, queries [][6]string) (rets [][]*model.Visit, errs []error) {
-	return func(ctx context.Context, queries [][6]string) (rets [][]*model.Visit, errs []error) {
-		rets = make([][]*model.Visit, len(queries))
-		errs = make([]error, len(queries))
+func getGoalConvertedVisits(matomoClient matomo.Client) func(
+	ctx context.Context, queries [][6]string,
+) (rets [][]*model.Visit, errs []error) {
 
-		res, err := matomoClient.GetConvertedVisitsBulk(ctx, queries...)
+	return func(ctx context.Context, queries [][6]string) ([][]*model.Visit, []error) {
+		n := len(queries)
+
+		// Pre-allocate result slices.
+		results := make([][]*model.Visit, n)
+		errs := make([]error, n)
+
+		// Matomo bulk call.
+		visits, err := matomoClient.GetConvertedVisitsBulk(ctx, queries...)
 		if err != nil {
-			for i := range len(queries) {
-				rets[i] = nil
+			// Surface the same error for every requested element.
+			for i := range errs {
 				errs[i] = err
 			}
-
-			return
+			return results, errs
 		}
 
-		for i := range len(queries) {
-			rets[i] = res[i]
+		// Defensive: Matomo should return exactly n entries.
+		if len(visits) != n {
+			e := fmt.Errorf("matomo: unexpected response length %d (want %d)", len(visits), n)
+			for i := range errs {
+				errs[i] = e
+			}
+			return results, errs
 		}
 
-		return
+		// Happy path – copy slice-of-slices.
+		copy(results, visits)
+		return results, errs
 	}
+
 }
 
-func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal, segment string, opts *model.ConvertedVisitsOptions, orderBy *model.OrderByOptions) ([]*model.Visit, error) {
-	var dateOpts *model.DateRangeOptions
+// GetGoalConvertedVisits returns the visits that converted a given goal.
+// The optional parameters allow date-range filtering, segmentation and in-memory
+// ordering by server timestamp (ASC/DESC). Any ordering is applied client-side
+// after the Matomo bulk API response has been received.
+func GetGoalConvertedVisits(
+	ctx context.Context,
+	idSite int,
+	idGoal, segment string,
+	opts *model.ConvertedVisitsOptions,
+	orderBy *model.OrderByOptions,
+) ([]*model.Visit, error) {
+
+	const (
+		qSite = iota
+		qGoal
+		qPeriod
+		qStart
+		qEnd
+		qSegment
+	)
+
+	var query [6]string
+	query[qSite] = strconv.Itoa(idSite)
+	query[qGoal] = idGoal
+	query[qSegment] = segment
+
 	if opts != nil && opts.Date.IsSet() {
-		dateOpts = opts.Date.Value()
-	}
-
-	var query = [6]string{
-		strconv.Itoa(idSite),
-		idGoal,
-	}
-
-	if dateOpts != nil {
-		query[2] = dateOpts.Period.String()
-		query[3] = dateOpts.StartDate
-		if endDate, ok := dateOpts.EndDate.ValueOK(); ok && *endDate != "" {
-			query[4] = *endDate
+		if date := opts.Date.Value(); date != nil {
+			query[qPeriod] = date.Period.String()
+			query[qStart] = date.StartDate
+			if end, ok := date.EndDate.ValueOK(); ok && *end != "" {
+				query[qEnd] = *end
+			}
 		}
 	}
-
-	query[5] = segment
 
 	loaders := For(ctx)
 	res, err := loaders.GoalConvertedVisitsLoader.Load(ctx, query)
@@ -59,18 +89,16 @@ func GetGoalConvertedVisits(ctx context.Context, idSite int, idGoal, segment str
 		return nil, err
 	}
 
-	if orderBy == nil {
-		orderBy = new(model.OrderByOptions)
-	}
-
-	if ob, ok := orderBy.Timestamp.ValueOK(); ok {
-		sort.Slice(res, func(i, j int) bool {
-			if ob.String() == "ASC" {
-				return res[i].ServerTimestamp < res[j].ServerTimestamp
-			}
-
-			return res[i].ServerTimestamp > res[j].ServerTimestamp
-		})
+	if orderBy != nil {
+		if ts, ok := orderBy.Timestamp.ValueOK(); ok {
+			asc := ts.String() == "ASC"
+			sort.SliceStable(res, func(i, j int) bool {
+				if asc {
+					return res[i].ServerTimestamp < res[j].ServerTimestamp
+				}
+				return res[i].ServerTimestamp > res[j].ServerTimestamp
+			})
+		}
 	}
 
 	return res, nil
