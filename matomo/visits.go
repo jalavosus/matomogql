@@ -3,6 +3,7 @@ package matomo
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -28,7 +29,6 @@ func (c clientImpl) GetVisitorProfile(
 func (c clientImpl) GetVisitorProfiles(
 	ctx context.Context, idSite int, visitorIds []string,
 ) ([]*model.VisitorProfile, error) {
-
 	idSiteStr := strconv.Itoa(idSite)
 	queries := make([][2]string, len(visitorIds))
 	for i, id := range visitorIds {
@@ -69,6 +69,28 @@ func (c clientImpl) GetLastVisits(ctx context.Context, idSite int, opts *model.L
 		opts = new(model.LastVisitsOpts)
 	}
 
+	// Build segments
+	if err := c.setSegmentParams(params, opts); err != nil {
+		return nil, fmt.Errorf("failed to set segment parameters: %w", err)
+	}
+
+	// Set date parameters
+	c.setDateParams(params, opts)
+
+	// Make HTTP request
+	var result []*model.Visit
+	if err := c.httpGet(ctx, params, &result); err != nil {
+		return nil, err
+	}
+
+	// Apply sorting if specified
+	c.sortVisitsByTimestamp(result, opts)
+
+	return result, nil
+}
+
+// setSegmentParams builds and sets the segment parameter from options
+func (c clientImpl) setSegmentParams(params url.Values, opts *model.LastVisitsOpts) error {
 	var querySegments []string
 
 	if segments, ok := opts.Segments.ValueOK(); ok && len(segments) > 0 {
@@ -85,39 +107,43 @@ func (c clientImpl) GetLastVisits(ctx context.Context, idSite int, opts *model.L
 		params.Set("segment", strings.Join(querySegments, ";"))
 	}
 
-	if dateOpts, ok := opts.Date.ValueOK(); ok {
-		params.Set("period", strings.ToLower(dateOpts.Period.String()))
+	return nil
+}
 
-		var date = dateOpts.StartDate
-		if endDate, ok := dateOpts.EndDate.ValueOK(); ok && *endDate != "" {
-			date += "," + *endDate
-		}
-
-		params.Set("date", date)
+// setDateParams sets date-related parameters from options
+func (c clientImpl) setDateParams(params url.Values, opts *model.LastVisitsOpts) {
+	dateOpts, ok := opts.Date.ValueOK()
+	if !ok {
+		return
 	}
 
-	var result []*model.Visit
-	if err := c.httpGet(ctx, params, &result); err != nil {
-		return nil, err
+	params.Set("period", strings.ToLower(dateOpts.Period.String()))
+
+	date := dateOpts.StartDate
+	if endDate, ok := dateOpts.EndDate.ValueOK(); ok && *endDate != "" {
+		date += "," + *endDate
 	}
 
+	params.Set("date", date)
+}
+
+// sortVisitsByTimestamp sorts the visits by timestamp if ordering is specified
+func (c clientImpl) sortVisitsByTimestamp(visits []*model.Visit, opts *model.LastVisitsOpts) {
 	orderByOpts, ok := opts.OrderBy.ValueOK()
 	if !ok {
-		return result, nil
+		return
 	}
 
 	orderBy, ok := orderByOpts.Timestamp.ValueOK()
 	if !ok || orderBy == nil {
-		return result, nil
+		return
 	}
 
 	desc := *orderBy == model.OrderByDesc
-	sort.Slice(result, func(i, j int) bool {
+	sort.Slice(visits, func(i, j int) bool {
 		if desc {
-			return result[i].ServerTimestamp > result[j].ServerTimestamp
+			return visits[i].ServerTimestamp > visits[j].ServerTimestamp
 		}
-		return result[i].ServerTimestamp < result[j].ServerTimestamp
+		return visits[i].ServerTimestamp < visits[j].ServerTimestamp
 	})
-
-	return result, nil
 }
