@@ -3,8 +3,20 @@ package graph
 import (
 	"sort"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/jalavosus/matomogql/graph/model"
+	"github.com/jalavosus/matomogql/utils"
 )
+
+func (r *visitorProfileResolver) getVisitBySortOrder(obj *model.VisitorProfile, order model.OrderBy) (*model.Visit, error) {
+	visits := obj.LastVisits
+	if len(visits) == 0 {
+		return nil, nil // or return an appropriate error
+	}
+
+	sortedVisits := orderLastVisits(visits, &model.OrderByOptions{Timestamp: graphql.OmittableOf(utils.ToPointer(order))})
+	return sortedVisits[0], nil
+}
 
 // orderLastVisits sorts lastVisits in-place by ServerTimestamp.
 // It defaults to descending order unless a valid ordering option is provided.

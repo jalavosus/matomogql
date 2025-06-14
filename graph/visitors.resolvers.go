@@ -7,37 +7,37 @@ package graph
 import (
 	"context"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/jalavosus/matomogql/graph/model"
-	"github.com/jalavosus/matomogql/utils"
 )
 
 // GetVisitorProfile is the resolver for the getVisitorProfile field.
-func (r *queryResolver) GetVisitorProfile(ctx context.Context, idSite int, visitorID string) (*model.VisitorProfile, error) {
+func (r *queryResolver) GetVisitorProfile(
+	ctx context.Context, idSite int, visitorID string,
+) (*model.VisitorProfile, error) {
 	return r.matomoClient.GetVisitorProfile(ctx, idSite, visitorID)
 }
 
 // GetVisitorProfiles is the resolver for the getVisitorProfiles field.
-func (r *queryResolver) GetVisitorProfiles(ctx context.Context, idSite int, visitorIds []string) ([]*model.VisitorProfile, error) {
+func (r *queryResolver) GetVisitorProfiles(
+	ctx context.Context, idSite int, visitorIds []string,
+) ([]*model.VisitorProfile, error) {
 	return r.matomoClient.GetVisitorProfiles(ctx, idSite, visitorIds)
 }
 
 // FirstVisitFull is the resolver for the firstVisitFull field.
 func (r *visitorProfileResolver) FirstVisitFull(ctx context.Context, obj *model.VisitorProfile) (*model.Visit, error) {
-	visits := obj.LastVisits
-	sortedVisits := orderLastVisits(visits, &model.OrderByOptions{Timestamp: graphql.OmittableOf(utils.ToPointer(model.OrderByAsc))})
-	return sortedVisits[0], nil
+	return r.getVisitBySortOrder(obj, model.OrderByAsc)
 }
 
 // LastVisitFull is the resolver for the lastVisitFull field.
 func (r *visitorProfileResolver) LastVisitFull(ctx context.Context, obj *model.VisitorProfile) (*model.Visit, error) {
-	visits := obj.LastVisits
-	sortedVisits := orderLastVisits(visits, &model.OrderByOptions{Timestamp: graphql.OmittableOf(utils.ToPointer(model.OrderByDesc))})
-	return sortedVisits[0], nil
+	return r.getVisitBySortOrder(obj, model.OrderByDesc)
 }
 
 // LastVisits is the resolver for the lastVisits field.
-func (r *visitorProfileResolver) LastVisits(ctx context.Context, obj *model.VisitorProfile, orderBy *model.OrderByOptions, limit *int) ([]*model.Visit, error) {
+func (r *visitorProfileResolver) LastVisits(
+	ctx context.Context, obj *model.VisitorProfile, orderBy *model.OrderByOptions, limit *int,
+) ([]*model.Visit, error) {
 	if obj == nil {
 		return nil, nil
 	}
