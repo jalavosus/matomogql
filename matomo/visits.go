@@ -101,19 +101,23 @@ func (c clientImpl) GetLastVisits(ctx context.Context, idSite int, opts *model.L
 		return nil, err
 	}
 
-	orderByOpts, orderByOptsSet := opts.OrderBy.ValueOK()
-	if orderByOptsSet {
-		orderBy, orderBySet := orderByOpts.Timestamp.ValueOK()
-		if orderBySet && orderBy != nil {
-			sort.Slice(result, func(i, j int) bool {
-				if *orderBy == model.OrderByDesc {
-					return result[i].ServerTimestamp > result[j].ServerTimestamp
-				}
-
-				return result[i].ServerTimestamp < result[j].ServerTimestamp
-			})
-		}
+	orderByOpts, ok := opts.OrderBy.ValueOK()
+	if !ok {
+		return result, nil
 	}
+
+	orderBy, ok := orderByOpts.Timestamp.ValueOK()
+	if !ok || orderBy == nil {
+		return result, nil
+	}
+
+	desc := *orderBy == model.OrderByDesc
+	sort.Slice(result, func(i, j int) bool {
+		if desc {
+			return result[i].ServerTimestamp > result[j].ServerTimestamp
+		}
+		return result[i].ServerTimestamp < result[j].ServerTimestamp
+	})
 
 	return result, nil
 }
