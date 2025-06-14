@@ -29,7 +29,7 @@ func (c clientImpl) GetSitesFromIDs(ctx context.Context, siteIds ...int) ([]*mod
 		)
 	}
 
-	var result []*model.Site
+	result := make([]*model.Site, len(siteIds))
 	if err := c.httpGet(ctx, params, &result); err != nil {
 		return nil, err
 	}
@@ -49,18 +49,15 @@ func (c clientImpl) GetSiteURLsFromID(ctx context.Context, idSite int) ([]string
 }
 
 func (c clientImpl) GetSitesWithViewAccess(ctx context.Context) ([]*model.Site, error) {
-	params := c.buildRequestParams(noIdSite, "SitesManager.getSitesWithViewAccess")
-
-	var result []*model.Site
-	if err := c.httpGet(ctx, params, &result); err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return c.getSites(ctx, "SitesManager.getSitesWithViewAccess")
 }
 
 func (c clientImpl) GetSitesWithAtLeastViewAccess(ctx context.Context) ([]*model.Site, error) {
-	params := c.buildRequestParams(noIdSite, "SitesManager.getSitesWithAtLeastViewAccess")
+	return c.getSites(ctx, "SitesManager.getSitesWithAtLeastViewAccess")
+}
+
+func (c clientImpl) getSites(ctx context.Context, method string) ([]*model.Site, error) {
+	params := c.buildRequestParams(noIdSite, method)
 
 	var result []*model.Site
 	if err := c.httpGet(ctx, params, &result); err != nil {
