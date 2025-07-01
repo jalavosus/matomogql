@@ -8,7 +8,7 @@ require (
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v3 v3.3.8
-	github.com/vektah/gqlparser/v2 v2.5.27
+	github.com/vektah/gqlparser/v2 v2.5.30
 	github.com/vikstrous/dataloadgen v0.0.9
 	golang.org/x/sync v0.15.0
 )
