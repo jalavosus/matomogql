@@ -6,7 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.17.78
 	github.com/joho/godotenv v1.5.1
 	github.com/shopspring/decimal v1.4.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	github.com/urfave/cli/v3 v3.4.1
 	github.com/vektah/gqlparser/v2 v2.5.30
 	github.com/vikstrous/dataloadgen v0.0.10
