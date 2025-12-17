@@ -3,7 +3,7 @@ module github.com/jalavosus/matomogql
 go 1.23.8
 
 require (
-	github.com/99designs/gqlgen v0.17.78
+	github.com/99designs/gqlgen v0.17.85
 	github.com/joho/godotenv v1.5.1
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.11.1
