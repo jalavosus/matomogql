@@ -1,16 +1,18 @@
 module github.com/jalavosus/matomogql
 
-go 1.23.8
+go 1.24.0
+
+toolchain go1.24.11
 
 require (
-	github.com/99designs/gqlgen v0.17.78
+	github.com/99designs/gqlgen v0.17.86
 	github.com/joho/godotenv v1.5.1
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v3 v3.6.1
 	github.com/vektah/gqlparser/v2 v2.5.31
 	github.com/vikstrous/dataloadgen v0.0.10
-	golang.org/x/sync v0.16.0
+	golang.org/x/sync v0.19.0
 )
 
 require (
@@ -28,8 +30,8 @@ require (
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opentelemetry.io/otel v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
-	golang.org/x/mod v0.26.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
-	golang.org/x/tools v0.35.0 // indirect
+	golang.org/x/mod v0.31.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
+	golang.org/x/tools v0.40.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
