@@ -24,7 +24,7 @@ jobs:
         run: echo ::set-output name=filename::"matomogql_${{ steps.git_tag.outputs.tag }}.tar.gz"
 
       - id: import_gpg
-        uses: crazy-max/ghaction-import-gpg@v6
+        uses: crazy-max/ghaction-import-gpg@v7
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase:      ${{ secrets.GPG_PASSWORD }}
